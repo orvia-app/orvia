@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 
 import { AppShell } from "@/components/AppShell";
-import { tasks as initialTasks } from "@/data/mock";
+import { getTasks, saveTasks } from "@/lib/tasks";
 import type { Task, TaskPriority, TaskStatus } from "@/types";
-
-const TASKS_STORAGE_KEY = "personal-os.tasks";
 
 const TASK_STATUSES: TaskStatus[] = ["todo", "in-progress", "done"];
 const TASK_PRIORITIES: TaskPriority[] = [
@@ -15,50 +13,6 @@ const TASK_PRIORITIES: TaskPriority[] = [
   "high",
   "critical",
 ];
-
-function isTaskStatus(value: unknown): value is TaskStatus {
-  return (
-    typeof value === "string" &&
-    (TASK_STATUSES as readonly string[]).includes(value)
-  );
-}
-
-function isTaskPriority(value: unknown): value is TaskPriority {
-  return (
-    typeof value === "string" &&
-    (TASK_PRIORITIES as readonly string[]).includes(value)
-  );
-}
-
-function isTaskRecord(value: unknown): value is Task {
-  if (typeof value !== "object" || value === null) return false;
-  const o = value as Record<string, unknown>;
-  if (typeof o.id !== "string" || typeof o.title !== "string") return false;
-  if (!isTaskStatus(o.status) || !isTaskPriority(o.priority)) return false;
-  if (typeof o.workspaceId !== "string" || typeof o.createdAt !== "string") {
-    return false;
-  }
-  if (
-    o.description !== undefined &&
-    typeof o.description !== "string"
-  ) {
-    return false;
-  }
-  if (o.dueDate !== undefined && typeof o.dueDate !== "string") {
-    return false;
-  }
-  return true;
-}
-
-function parseTasksFromStorage(raw: string): Task[] | null {
-  try {
-    const data: unknown = JSON.parse(raw);
-    if (!Array.isArray(data) || !data.every(isTaskRecord)) return null;
-    return data;
-  } catch {
-    return null;
-  }
-}
 
 type FilterValue = "all" | TaskStatus;
 
@@ -69,69 +23,63 @@ const filters: { label: string; value: FilterValue }[] = [
   { label: "Done", value: "done" },
 ];
 
-function statusLabel(status: TaskStatus) {
-  if (status === "in-progress") return "In Progress";
+function statusLabel(status: TaskStatus): string {
+  if (status === "in-progress") {
+    return "In Progress";
+  }
+
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 type WorkspaceChoice = "Personal" | "Work";
 
-const emptyForm = {
+type TaskFormState = {
+  title: string;
+  description: string;
+  priority: TaskPriority;
+  status: TaskStatus;
+  workspace: WorkspaceChoice;
+};
+
+const emptyForm: TaskFormState = {
   title: "",
   description: "",
-  priority: "medium" as TaskPriority,
-  status: "todo" as TaskStatus,
-  workspace: "Personal" as WorkspaceChoice,
+  priority: "medium",
+  status: "todo",
+  workspace: "Personal",
 };
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [storageReady, setStorageReady] = useState(false);
+  const [tasks, setTasks] = useState<Task[]>(() => getTasks());
   const [statusFilter, setStatusFilter] = useState<FilterValue>("all");
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState<TaskFormState>(emptyForm);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem(TASKS_STORAGE_KEY);
-      if (raw) {
-        const parsed = parseTasksFromStorage(raw);
-        if (parsed) setTasks(parsed);
-      }
-    } catch {
-      /* ignore corrupt storage */
+  const filteredTasks = useMemo(() => {
+    if (statusFilter === "all") {
+      return tasks;
     }
-    setStorageReady(true);
-  }, []);
 
-  useEffect(() => {
-    if (typeof window === "undefined" || !storageReady) return;
-    try {
-      window.localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
-    } catch {
-      /* ignore quota / private mode */
-    }
-  }, [tasks, storageReady]);
+    return tasks.filter((task) => task.status === statusFilter);
+  }, [statusFilter, tasks]);
 
-  const filtered =
-    statusFilter === "all"
-      ? tasks
-      : tasks.filter((t) => t.status === statusFilter);
-
-  function openModal() {
+  function openModal(): void {
     setModalOpen(true);
   }
 
-  function closeModal() {
+  function closeModal(): void {
     setModalOpen(false);
     setForm(emptyForm);
   }
 
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
+
     const title = form.title.trim();
-    if (!title) return;
+
+    if (!title) {
+      return;
+    }
 
     const workspaceId = form.workspace === "Personal" ? "1" : "2";
 
@@ -145,7 +93,10 @@ export default function TasksPage() {
       createdAt: new Date().toISOString(),
     };
 
-    setTasks((prev) => [...prev, newTask]);
+    const nextTasks = [newTask, ...tasks];
+
+    setTasks(nextTasks);
+    saveTasks(nextTasks);
     closeModal();
   }
 
@@ -162,6 +113,7 @@ export default function TasksPage() {
                 AI-powered task management
               </p>
             </div>
+
             <button
               type="button"
               onClick={openModal}
@@ -193,7 +145,7 @@ export default function TasksPage() {
           </div>
 
           <div className="mt-8 space-y-4">
-            {filtered.map((task) => (
+            {filteredTasks.map((task) => (
               <div
                 key={task.id}
                 className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950 sm:p-6"
@@ -203,26 +155,36 @@ export default function TasksPage() {
                     <h2 className="text-lg font-semibold text-zinc-950 dark:text-white sm:text-xl">
                       {task.title}
                     </h2>
+
                     {task.description ? (
                       <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400 sm:text-base">
                         {task.description}
                       </p>
                     ) : null}
+
                     <div className="mt-4 flex flex-wrap gap-2">
                       <span className="rounded-full bg-zinc-200 px-3 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
                         {task.priority}
                       </span>
+
                       <span className="rounded-full bg-zinc-200 px-3 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
                         Workspace {task.workspaceId}
                       </span>
                     </div>
                   </div>
+
                   <span className="inline-flex w-fit shrink-0 rounded-full bg-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 sm:text-sm">
                     {statusLabel(task.status)}
                   </span>
                 </div>
               </div>
             ))}
+
+            {filteredTasks.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-zinc-300 p-10 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-500">
+                No tasks found for this filter.
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
@@ -231,8 +193,10 @@ export default function TasksPage() {
         <div
           className="fixed inset-0 z-50 flex items-end justify-center bg-zinc-950/70 p-4 dark:bg-black/70 sm:items-center"
           role="presentation"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) closeModal();
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              closeModal();
+            }
           }}
         >
           <div
@@ -240,7 +204,7 @@ export default function TasksPage() {
             aria-modal="true"
             aria-labelledby="new-task-title"
             className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
               <h2
@@ -249,6 +213,7 @@ export default function TasksPage() {
               >
                 New task
               </h2>
+
               <button
                 type="button"
                 onClick={closeModal}
@@ -266,12 +231,16 @@ export default function TasksPage() {
                 >
                   Title <span className="text-red-400">*</span>
                 </label>
+
                 <input
                   id="task-title"
                   required
                   value={form.title}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, title: e.target.value }))
+                  onChange={(event) =>
+                    setForm((currentForm) => ({
+                      ...currentForm,
+                      title: event.target.value,
+                    }))
                   }
                   className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
                   placeholder="What needs to be done?"
@@ -285,12 +254,16 @@ export default function TasksPage() {
                 >
                   Description
                 </label>
+
                 <textarea
                   id="task-description"
                   rows={3}
                   value={form.description}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, description: e.target.value }))
+                  onChange={(event) =>
+                    setForm((currentForm) => ({
+                      ...currentForm,
+                      description: event.target.value,
+                    }))
                   }
                   className="mt-1.5 w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
                   placeholder="Optional details"
@@ -304,21 +277,23 @@ export default function TasksPage() {
                 >
                   Priority
                 </label>
+
                 <select
                   id="task-priority"
                   value={form.priority}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      priority: e.target.value as TaskPriority,
+                  onChange={(event) =>
+                    setForm((currentForm) => ({
+                      ...currentForm,
+                      priority: event.target.value as TaskPriority,
                     }))
                   }
                   className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
                 >
-                  <option value="low">low</option>
-                  <option value="medium">medium</option>
-                  <option value="high">high</option>
-                  <option value="critical">critical</option>
+                  {TASK_PRIORITIES.map((priority) => (
+                    <option key={priority} value={priority}>
+                      {priority}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -329,20 +304,23 @@ export default function TasksPage() {
                 >
                   Status
                 </label>
+
                 <select
                   id="task-status"
                   value={form.status}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      status: e.target.value as TaskStatus,
+                  onChange={(event) =>
+                    setForm((currentForm) => ({
+                      ...currentForm,
+                      status: event.target.value as TaskStatus,
                     }))
                   }
                   className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
                 >
-                  <option value="todo">todo</option>
-                  <option value="in-progress">in-progress</option>
-                  <option value="done">done</option>
+                  {TASK_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -353,13 +331,14 @@ export default function TasksPage() {
                 >
                   Workspace
                 </label>
+
                 <select
                   id="task-workspace"
                   value={form.workspace}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      workspace: e.target.value as WorkspaceChoice,
+                  onChange={(event) =>
+                    setForm((currentForm) => ({
+                      ...currentForm,
+                      workspace: event.target.value as WorkspaceChoice,
                     }))
                   }
                   className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
@@ -377,6 +356,7 @@ export default function TasksPage() {
                 >
                   Cancel
                 </button>
+
                 <button
                   type="submit"
                   className="rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
