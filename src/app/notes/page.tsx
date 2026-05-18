@@ -15,7 +15,7 @@ type NoteFormState = {
 
 const NOTE_TYPES: NoteType[] = ["note", "idea", "book", "course", "link"];
 
-const filters: { label: string; value: FilterValue }[] = [
+const FILTERS: { label: string; value: FilterValue }[] = [
   { label: "All", value: "all" },
   { label: "Notes", value: "note" },
   { label: "Ideas", value: "idea" },
@@ -24,22 +24,26 @@ const filters: { label: string; value: FilterValue }[] = [
   { label: "Links", value: "link" },
 ];
 
-const emptyForm: NoteFormState = {
+const EMPTY_FORM: NoteFormState = {
   title: "",
   content: "",
   type: "note",
 };
 
-function typeBadgeLabel(type: NoteType): string {
+function getTypeBadgeLabel(type: NoteType): string {
   switch (type) {
     case "note":
       return "Note";
+
     case "idea":
       return "Idea";
+
     case "book":
       return "Book";
+
     case "course":
       return "Course";
+
     case "link":
       return "Link";
   }
@@ -49,7 +53,7 @@ export default function NotesPage() {
   const [notes, setNotes] = useState<Note[]>(() => getNotes());
   const [typeFilter, setTypeFilter] = useState<FilterValue>("all");
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState<NoteFormState>(emptyForm);
+  const [form, setForm] = useState<NoteFormState>(EMPTY_FORM);
 
   const filteredNotes = useMemo(() => {
     if (typeFilter === "all") {
@@ -65,7 +69,7 @@ export default function NotesPage() {
 
   function closeModal(): void {
     setModalOpen(false);
-    setForm(emptyForm);
+    setForm(EMPTY_FORM);
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
@@ -79,7 +83,7 @@ export default function NotesPage() {
     }
 
     const newNote: Note = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       title,
       content,
       type: form.type,
@@ -94,7 +98,7 @@ export default function NotesPage() {
 
   return (
     <AppShell>
-      <div className="p-6 sm:p-10">
+      <main className="p-6 sm:p-10">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
@@ -117,7 +121,7 @@ export default function NotesPage() {
           </div>
 
           <div className="mt-8 flex flex-wrap gap-2">
-            {filters.map(({ label, value }) => {
+            {FILTERS.map(({ label, value }) => {
               const active = typeFilter === value;
 
               return (
@@ -149,7 +153,7 @@ export default function NotesPage() {
                   </h2>
 
                   <span className="shrink-0 rounded-full bg-zinc-200 px-3 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                    {typeBadgeLabel(note.type)}
+                    {getTypeBadgeLabel(note.type)}
                   </span>
                 </div>
 
@@ -166,7 +170,7 @@ export default function NotesPage() {
             </div>
           ) : null}
         </div>
-      </div>
+      </main>
 
       {modalOpen ? (
         <div
@@ -271,7 +275,7 @@ export default function NotesPage() {
                 >
                   {NOTE_TYPES.map((type) => (
                     <option key={type} value={type}>
-                      {typeBadgeLabel(type)}
+                      {getTypeBadgeLabel(type)}
                     </option>
                   ))}
                 </select>
