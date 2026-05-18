@@ -1,72 +1,19 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 
 import { AppShell } from "@/components/AppShell";
+import { getNotes, saveNotes, type Note, type NoteType } from "@/lib/notes";
 
-type NoteType = "note" | "idea" | "book" | "course" | "link";
+type FilterValue = "all" | NoteType;
 
-type Note = {
-  id: string;
+type NoteFormState = {
   title: string;
   content: string;
   type: NoteType;
 };
 
-const NOTES_STORAGE_KEY = "personal-os.notes";
-
 const NOTE_TYPES: NoteType[] = ["note", "idea", "book", "course", "link"];
-
-function isNoteType(value: unknown): value is NoteType {
-  return (
-    typeof value === "string" &&
-    (NOTE_TYPES as readonly string[]).includes(value)
-  );
-}
-
-function isNoteRecord(value: unknown): value is Note {
-  if (typeof value !== "object" || value === null) return false;
-  const o = value as Record<string, unknown>;
-  return (
-    typeof o.id === "string" &&
-    typeof o.title === "string" &&
-    typeof o.content === "string" &&
-    isNoteType(o.type)
-  );
-}
-
-function parseNotesFromStorage(raw: string): Note[] | null {
-  try {
-    const data: unknown = JSON.parse(raw);
-    if (!Array.isArray(data) || !data.every(isNoteRecord)) return null;
-    return data;
-  } catch {
-    return null;
-  }
-}
-
-type FilterValue = "all" | NoteType;
-
-const initialNotes: Note[] = [
-  {
-    id: "1",
-    title: "Personal OS idea",
-    content: "Add AI weekly review and Telegram reminders.",
-    type: "idea",
-  },
-  {
-    id: "2",
-    title: "DevOps course",
-    content: "Track Docker, Kubernetes, CI/CD learning progress.",
-    type: "course",
-  },
-  {
-    id: "3",
-    title: "Book list",
-    content: "Atomic Habits, Deep Work, The Psychology of Money.",
-    type: "book",
-  },
-];
 
 const filters: { label: string; value: FilterValue }[] = [
   { label: "All", value: "all" },
@@ -76,6 +23,12 @@ const filters: { label: string; value: FilterValue }[] = [
   { label: "Courses", value: "course" },
   { label: "Links", value: "link" },
 ];
+
+const emptyForm: NoteFormState = {
+  title: "",
+  content: "",
+  type: "note",
+};
 
 function typeBadgeLabel(type: NoteType): string {
   switch (type) {
@@ -92,61 +45,38 @@ function typeBadgeLabel(type: NoteType): string {
   }
 }
 
-const emptyForm = {
-  title: "",
-  content: "",
-  type: "note" as NoteType,
-};
-
 export default function NotesPage() {
-  const [notes, setNotes] = useState<Note[]>(initialNotes);
-  const [storageReady, setStorageReady] = useState(false);
+  const [notes, setNotes] = useState<Note[]>(() => getNotes());
   const [typeFilter, setTypeFilter] = useState<FilterValue>("all");
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState<NoteFormState>(emptyForm);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem(NOTES_STORAGE_KEY);
-      if (raw) {
-        const parsed = parseNotesFromStorage(raw);
-        if (parsed) setNotes(parsed);
-      }
-    } catch {
-      /* ignore corrupt storage */
+  const filteredNotes = useMemo(() => {
+    if (typeFilter === "all") {
+      return notes;
     }
-    setStorageReady(true);
-  }, []);
 
-  useEffect(() => {
-    if (typeof window === "undefined" || !storageReady) return;
-    try {
-      window.localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
-    } catch {
-      /* ignore quota / private mode */
-    }
-  }, [notes, storageReady]);
+    return notes.filter((note) => note.type === typeFilter);
+  }, [notes, typeFilter]);
 
-  const filtered =
-    typeFilter === "all"
-      ? notes
-      : notes.filter((n) => n.type === typeFilter);
-
-  function openModal() {
+  function openModal(): void {
     setModalOpen(true);
   }
 
-  function closeModal() {
+  function closeModal(): void {
     setModalOpen(false);
     setForm(emptyForm);
   }
 
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
+
     const title = form.title.trim();
     const content = form.content.trim();
-    if (!title || !content) return;
+
+    if (!title || !content) {
+      return;
+    }
 
     const newNote: Note = {
       id: Date.now().toString(),
@@ -155,7 +85,10 @@ export default function NotesPage() {
       type: form.type,
     };
 
-    setNotes((prev) => [...prev, newNote]);
+    const nextNotes = [newNote, ...notes];
+
+    setNotes(nextNotes);
+    saveNotes(nextNotes);
     closeModal();
   }
 
@@ -168,10 +101,12 @@ export default function NotesPage() {
               <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
                 Notes
               </h1>
+
               <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">
                 Capture ideas, books, courses, and useful knowledge.
               </p>
             </div>
+
             <button
               type="button"
               onClick={openModal}
@@ -202,36 +137,34 @@ export default function NotesPage() {
             })}
           </div>
 
-          <div className="mt-8 space-y-4">
-            {filtered.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-100/80 px-6 py-14 text-center dark:border-zinc-800 dark:bg-zinc-950/50">
-                <p className="text-sm text-zinc-600 dark:text-zinc-500">
-                  No notes match this filter.
-                </p>
-              </div>
-            ) : (
-              filtered.map((note) => (
-                <div
-                  key={note.id}
-                  className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950 sm:p-6"
-                >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0 flex-1">
-                      <h2 className="text-lg font-semibold text-zinc-950 dark:text-white sm:text-xl">
-                        {note.title}
-                      </h2>
-                      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-zinc-600 dark:text-zinc-400 sm:text-base">
-                        {note.content}
-                      </p>
-                    </div>
-                    <span className="inline-flex w-fit shrink-0 rounded-full bg-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 sm:text-sm">
-                      {typeBadgeLabel(note.type)}
-                    </span>
-                  </div>
+          <div className="mt-8 grid gap-4 md:grid-cols-2">
+            {filteredNotes.map((note) => (
+              <article
+                key={note.id}
+                className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950 sm:p-6"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <h2 className="text-lg font-semibold text-zinc-950 dark:text-white sm:text-xl">
+                    {note.title}
+                  </h2>
+
+                  <span className="shrink-0 rounded-full bg-zinc-200 px-3 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                    {typeBadgeLabel(note.type)}
+                  </span>
                 </div>
-              ))
-            )}
+
+                <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-zinc-600 dark:text-zinc-400 sm:text-base">
+                  {note.content}
+                </p>
+              </article>
+            ))}
           </div>
+
+          {filteredNotes.length === 0 ? (
+            <div className="mt-8 rounded-2xl border border-dashed border-zinc-300 p-10 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-500">
+              No notes found for this filter.
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -239,8 +172,10 @@ export default function NotesPage() {
         <div
           className="fixed inset-0 z-50 flex items-end justify-center bg-zinc-950/70 p-4 dark:bg-black/70 sm:items-center"
           role="presentation"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) closeModal();
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              closeModal();
+            }
           }}
         >
           <div
@@ -248,7 +183,7 @@ export default function NotesPage() {
             aria-modal="true"
             aria-labelledby="new-note-title"
             className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
               <h2
@@ -257,6 +192,7 @@ export default function NotesPage() {
               >
                 New note
               </h2>
+
               <button
                 type="button"
                 onClick={closeModal}
@@ -274,15 +210,19 @@ export default function NotesPage() {
                 >
                   Title <span className="text-red-400">*</span>
                 </label>
+
                 <input
                   id="note-title"
                   required
                   value={form.title}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, title: e.target.value }))
+                  onChange={(event) =>
+                    setForm((currentForm) => ({
+                      ...currentForm,
+                      title: event.target.value,
+                    }))
                   }
                   className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
-                  placeholder="Short title"
+                  placeholder="Note title"
                 />
               </div>
 
@@ -293,16 +233,20 @@ export default function NotesPage() {
                 >
                   Content <span className="text-red-400">*</span>
                 </label>
+
                 <textarea
                   id="note-content"
                   required
-                  rows={5}
+                  rows={6}
                   value={form.content}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, content: e.target.value }))
+                  onChange={(event) =>
+                    setForm((currentForm) => ({
+                      ...currentForm,
+                      content: event.target.value,
+                    }))
                   }
                   className="mt-1.5 w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
-                  placeholder="Write it down…"
+                  placeholder="Write anything worth remembering..."
                 />
               </div>
 
@@ -313,22 +257,23 @@ export default function NotesPage() {
                 >
                   Type
                 </label>
+
                 <select
                   id="note-type"
                   value={form.type}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      type: e.target.value as NoteType,
+                  onChange={(event) =>
+                    setForm((currentForm) => ({
+                      ...currentForm,
+                      type: event.target.value as NoteType,
                     }))
                   }
                   className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
                 >
-                  <option value="note">note</option>
-                  <option value="idea">idea</option>
-                  <option value="book">book</option>
-                  <option value="course">course</option>
-                  <option value="link">link</option>
+                  {NOTE_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {typeBadgeLabel(type)}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -340,6 +285,7 @@ export default function NotesPage() {
                 >
                   Cancel
                 </button>
+
                 <button
                   type="submit"
                   className="rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
