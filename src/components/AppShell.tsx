@@ -14,6 +14,7 @@ import {
   Monitor,
   Moon,
   Settings,
+  Search,
   Sun,
   Wallet,
   Zap,
@@ -30,6 +31,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/", icon: House },
+  { label: "Search", href: "/search", icon: Search},
   { label: "Today", href: "/today", icon: CalendarDays },
   { label: "Inbox", href: "/inbox", icon: Inbox },
   { label: "Tasks", href: "/tasks", icon: CheckSquare },
