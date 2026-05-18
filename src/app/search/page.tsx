@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { tasks as initialTasks } from "@/data/mock";
+import { safeReadStorage, STORAGE_KEYS } from "@/lib/storage";
+import type { Task } from "@/types";
 
 type NoteItem = {
   id: string;
@@ -12,52 +14,67 @@ type NoteItem = {
   type: string;
 };
 
+type SearchResult = {
+  id: string;
+  type: "Task" | "Note";
+  title: string;
+  description: string;
+};
+
 export default function SearchPage() {
   const [query, setQuery] = useState("");
-  const [tasks, setTasks] = useState(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [notes, setNotes] = useState<NoteItem[]>([]);
 
   useEffect(() => {
-    try {
-      const storedTasks = localStorage.getItem("personal-os.tasks");
-      const storedNotes = localStorage.getItem("personal-os.notes");
+    const storedTasks = safeReadStorage<Task[]>(
+      STORAGE_KEYS.tasks,
+      initialTasks,
+    );
 
-      if (storedTasks) {
-        setTasks(JSON.parse(storedTasks));
-      }
+    const storedNotes = safeReadStorage<NoteItem[]>(
+      STORAGE_KEYS.notes,
+      [],
+    );
 
-      if (storedNotes) {
-        setNotes(JSON.parse(storedNotes));
-      }
-    } catch {}
+    setTasks(Array.isArray(storedTasks) ? storedTasks : initialTasks);
+    setNotes(Array.isArray(storedNotes) ? storedNotes : []);
   }, []);
 
-  const results = useMemo(() => {
-    if (!query.trim()) {
+  const results = useMemo<SearchResult[]>(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    if (!normalizedQuery) {
       return [];
     }
 
-    const q = query.toLowerCase();
+    const taskResults: SearchResult[] = tasks
+      .filter((task) => {
+        const title = task.title.toLowerCase();
+        const description = task.description?.toLowerCase() ?? "";
 
-    const taskResults = tasks
-      .filter(
-        (task) =>
-          task.title.toLowerCase().includes(q) ||
-          task.description?.toLowerCase().includes(q)
-      )
+        return (
+          title.includes(normalizedQuery) ||
+          description.includes(normalizedQuery)
+        );
+      })
       .map((task) => ({
         id: task.id,
         type: "Task",
         title: task.title,
-        description: task.description || "",
+        description: task.description ?? "",
       }));
 
-    const noteResults = notes
-      .filter(
-        (note) =>
-          note.title.toLowerCase().includes(q) ||
-          note.content.toLowerCase().includes(q)
-      )
+    const noteResults: SearchResult[] = notes
+      .filter((note) => {
+        const title = note.title.toLowerCase();
+        const content = note.content.toLowerCase();
+
+        return (
+          title.includes(normalizedQuery) ||
+          content.includes(normalizedQuery)
+        );
+      })
       .map((note) => ({
         id: note.id,
         type: "Note",
@@ -86,9 +103,9 @@ export default function SearchPage() {
 
           <input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(event) => setQuery(event.target.value)}
             placeholder="Search anything..."
-            className="w-full rounded-3xl border border-zinc-800 bg-zinc-950 py-4 pl-12 pr-4 text-white outline-none focus:border-zinc-600 dark:bg-zinc-950"
+            className="w-full rounded-3xl border border-zinc-200 bg-white py-4 pl-12 pr-4 text-zinc-950 outline-none transition focus:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:focus:border-zinc-600"
           />
         </div>
 
@@ -96,10 +113,10 @@ export default function SearchPage() {
           {results.map((item) => (
             <div
               key={`${item.type}-${item.id}`}
-              className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6"
+              className="rounded-3xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950"
             >
               <div className="mb-3 flex items-center gap-3">
-                <span className="rounded-full bg-zinc-800 px-3 py-1 text-xs">
+                <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
                   {item.type}
                 </span>
 
@@ -108,14 +125,14 @@ export default function SearchPage() {
                 </h2>
               </div>
 
-              <p className="text-zinc-400">
+              <p className="text-zinc-600 dark:text-zinc-400">
                 {item.description}
               </p>
             </div>
           ))}
 
-          {!results.length && query && (
-            <div className="rounded-3xl border border-dashed border-zinc-800 p-10 text-center text-zinc-500">
+          {!results.length && query.trim() && (
+            <div className="rounded-3xl border border-dashed border-zinc-300 p-10 text-center text-zinc-500 dark:border-zinc-800">
               Nothing found.
             </div>
           )}
