@@ -5,15 +5,9 @@ import { Search } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { tasks as initialTasks } from "@/data/mock";
 import { getStoredNotes, type Note } from "@/lib/notes";
+import { createSearchableEntities, searchEntities } from "@/lib/search";
 import { getTasks } from "@/lib/tasks";
 import type { Task } from "@/types";
-
-type SearchResult = {
-  id: string;
-  type: "Task" | "Note";
-  title: string;
-  description: string;
-};
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
@@ -25,49 +19,15 @@ export default function SearchPage() {
     setNotes(getStoredNotes());
   }, []);
 
-  const results = useMemo<SearchResult[]>(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+  const searchableEntities = useMemo(
+    () => createSearchableEntities({ tasks, notes }),
+    [notes, tasks],
+  );
 
-    if (!normalizedQuery) {
-      return [];
-    }
-
-    const taskResults: SearchResult[] = tasks
-      .filter((task) => {
-        const title = task.title.toLowerCase();
-        const description = task.description?.toLowerCase() ?? "";
-
-        return (
-          title.includes(normalizedQuery) ||
-          description.includes(normalizedQuery)
-        );
-      })
-      .map((task) => ({
-        id: task.id,
-        type: "Task",
-        title: task.title,
-        description: task.description ?? "",
-      }));
-
-    const noteResults: SearchResult[] = notes
-      .filter((note) => {
-        const title = note.title.toLowerCase();
-        const content = note.content.toLowerCase();
-
-        return (
-          title.includes(normalizedQuery) ||
-          content.includes(normalizedQuery)
-        );
-      })
-      .map((note) => ({
-        id: note.id,
-        type: "Note",
-        title: note.title,
-        description: note.content,
-      }));
-
-    return [...taskResults, ...noteResults];
-  }, [query, tasks, notes]);
+  const results = useMemo(
+    () => searchEntities(searchableEntities, query),
+    [query, searchableEntities],
+  );
 
   return (
     <AppShell>
@@ -96,12 +56,12 @@ export default function SearchPage() {
         <div className="space-y-4">
           {results.map((item) => (
             <div
-              key={`${item.type}-${item.id}`}
+              key={item.id}
               className="rounded-3xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950"
             >
               <div className="mb-3 flex items-center gap-3">
                 <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                  {item.type}
+                  {item.typeLabel}
                 </span>
 
                 <h2 className="text-2xl font-semibold">
@@ -110,7 +70,7 @@ export default function SearchPage() {
               </div>
 
               <p className="text-zinc-600 dark:text-zinc-400">
-                {item.description}
+                {item.subtitle}
               </p>
             </div>
           ))}

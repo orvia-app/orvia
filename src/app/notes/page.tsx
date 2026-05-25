@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 import { AppShell } from "@/components/AppShell";
 import {
   getNotes,
+  initialNotes,
   NOTE_TYPES,
   saveNotes,
   type Note,
@@ -54,10 +55,14 @@ function getTypeBadgeLabel(type: NoteType): string {
 }
 
 export default function NotesPage() {
-  const [notes, setNotes] = useState<Note[]>(() => getNotes());
+  const [notes, setNotes] = useState<Note[]>(initialNotes);
   const [typeFilter, setTypeFilter] = useState<FilterValue>("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<NoteFormState>(EMPTY_FORM);
+
+  useEffect(() => {
+    setNotes(getNotes());
+  }, []);
 
   const filteredNotes = useMemo(() => {
     if (typeFilter === "all") {
