@@ -2,20 +2,25 @@ import { tasks as initialTasks } from "@/data/mock";
 import type { Task } from "@/types";
 import { safeReadStorage, safeWriteStorage, STORAGE_KEYS } from "@/lib/storage";
 
+export const TASK_STATUSES: readonly Task["status"][] = [
+  "todo",
+  "in-progress",
+  "done",
+];
+
+export const TASK_PRIORITIES: readonly Task["priority"][] = [
+  "low",
+  "medium",
+  "high",
+  "critical",
+];
+
 export function isTask(value: unknown): value is Task {
   if (!value || typeof value !== "object") {
     return false;
   }
 
   const task = value as Partial<Task>;
-
-  const validStatuses: Task["status"][] = ["todo", "in-progress", "done"];
-  const validPriorities: Task["priority"][] = [
-    "low",
-    "medium",
-    "high",
-    "critical",
-  ];
 
   return (
     typeof task.id === "string" &&
@@ -25,8 +30,8 @@ export function isTask(value: unknown): value is Task {
     typeof task.workspaceId === "string" &&
     typeof task.createdAt === "string" &&
     (task.dueDate === undefined || typeof task.dueDate === "string") &&
-    validStatuses.includes(task.status as Task["status"]) &&
-    validPriorities.includes(task.priority as Task["priority"])
+    TASK_STATUSES.includes(task.status as Task["status"]) &&
+    TASK_PRIORITIES.includes(task.priority as Task["priority"])
   );
 }
 

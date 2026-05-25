@@ -15,203 +15,11 @@ import {
 } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
+import { getStoredCars } from "@/lib/cars";
+import { getTransactions } from "@/lib/finance";
+import { getStoredNotes } from "@/lib/notes";
+import { getTasks } from "@/lib/tasks";
 import { tasks as mockTasks } from "@/data/mock";
-import type { Task, TaskPriority, TaskStatus } from "@/types";
-
-const TASKS_KEY = "personal-os.tasks";
-const NOTES_KEY = "personal-os.notes";
-const FINANCE_KEY = "personal-os.finance.transactions";
-const CARS_KEY = "personal-os.cars";
-
-const TASK_STATUSES: TaskStatus[] = ["todo", "in-progress", "done"];
-const TASK_PRIORITIES: TaskPriority[] = [
-  "low",
-  "medium",
-  "high",
-  "critical",
-];
-
-type NoteType = "note" | "idea" | "book" | "course" | "link";
-
-type NoteRecord = {
-  id: string;
-  title: string;
-  content: string;
-  type: NoteType;
-};
-
-const NOTE_TYPES: NoteType[] = ["note", "idea", "book", "course", "link"];
-
-type TxType = "income" | "expense";
-
-type CurrencyCode = "UAH" | "USD" | "EUR";
-
-type Transaction = {
-  id: string;
-  type: TxType;
-  category: string;
-  amount: number;
-  currency: CurrencyCode;
-  note: string;
-  createdAt: string;
-};
-
-type CarRecord = {
-  id: string;
-  name: string;
-  owner: string;
-  mileage: string;
-  notes: string;
-};
-
-const CURRENCIES: CurrencyCode[] = ["UAH", "USD", "EUR"];
-
-function isTaskStatus(value: unknown): value is TaskStatus {
-  return (
-    typeof value === "string" &&
-    (TASK_STATUSES as readonly string[]).includes(value)
-  );
-}
-
-function isTaskPriority(value: unknown): value is TaskPriority {
-  return (
-    typeof value === "string" &&
-    (TASK_PRIORITIES as readonly string[]).includes(value)
-  );
-}
-
-function isTaskRecord(value: unknown): value is Task {
-  if (typeof value !== "object" || value === null) return false;
-  const o = value as Record<string, unknown>;
-  if (typeof o.id !== "string" || typeof o.title !== "string") return false;
-  if (!isTaskStatus(o.status) || !isTaskPriority(o.priority)) return false;
-  if (typeof o.workspaceId !== "string" || typeof o.createdAt !== "string") {
-    return false;
-  }
-  if (
-    o.description !== undefined &&
-    typeof o.description !== "string"
-  ) {
-    return false;
-  }
-  if (o.dueDate !== undefined && typeof o.dueDate !== "string") {
-    return false;
-  }
-  return true;
-}
-
-function readTasks(): Task[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(TASKS_KEY);
-    if (!raw) return [];
-    const data: unknown = JSON.parse(raw);
-    if (!Array.isArray(data)) return [];
-    return data.filter(isTaskRecord);
-  } catch {
-    return [];
-  }
-}
-
-function tasksWithFallback(): Task[] {
-  const stored = readTasks();
-  return stored.length > 0 ? stored : mockTasks;
-}
-
-function isNoteType(value: unknown): value is NoteType {
-  return (
-    typeof value === "string" &&
-    (NOTE_TYPES as readonly string[]).includes(value)
-  );
-}
-
-function isNoteRecord(value: unknown): value is NoteRecord {
-  if (typeof value !== "object" || value === null) return false;
-  const o = value as Record<string, unknown>;
-  return (
-    typeof o.id === "string" &&
-    typeof o.title === "string" &&
-    typeof o.content === "string" &&
-    isNoteType(o.type)
-  );
-}
-
-function readNotes(): NoteRecord[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(NOTES_KEY);
-    if (!raw) return [];
-    const data: unknown = JSON.parse(raw);
-    if (!Array.isArray(data)) return [];
-    return data.filter(isNoteRecord);
-  } catch {
-    return [];
-  }
-}
-
-function isTxType(value: unknown): value is TxType {
-  return value === "income" || value === "expense";
-}
-
-function isCurrency(value: unknown): value is CurrencyCode {
-  return (
-    typeof value === "string" &&
-    (CURRENCIES as readonly string[]).includes(value)
-  );
-}
-
-function isTransaction(value: unknown): value is Transaction {
-  if (typeof value !== "object" || value === null) return false;
-  const o = value as Record<string, unknown>;
-  return (
-    typeof o.id === "string" &&
-    isTxType(o.type) &&
-    typeof o.category === "string" &&
-    typeof o.amount === "number" &&
-    Number.isFinite(o.amount) &&
-    isCurrency(o.currency) &&
-    typeof o.note === "string" &&
-    typeof o.createdAt === "string"
-  );
-}
-
-function readTransactions(): Transaction[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(FINANCE_KEY);
-    if (!raw) return [];
-    const data: unknown = JSON.parse(raw);
-    if (!Array.isArray(data)) return [];
-    return data.filter(isTransaction);
-  } catch {
-    return [];
-  }
-}
-
-function isCarRecord(value: unknown): value is CarRecord {
-  if (typeof value !== "object" || value === null) return false;
-  const o = value as Record<string, unknown>;
-  return (
-    typeof o.id === "string" &&
-    typeof o.name === "string" &&
-    typeof o.owner === "string" &&
-    typeof o.mileage === "string" &&
-    typeof o.notes === "string"
-  );
-}
-
-function readCars(): CarRecord[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(CARS_KEY);
-    if (!raw) return [];
-    const data: unknown = JSON.parse(raw);
-    if (!Array.isArray(data)) return [];
-    return data.filter(isCarRecord);
-  } catch {
-    return [];
-  }
-}
 
 type OverviewStats = {
   totalTasks: number;
@@ -231,10 +39,10 @@ function computeOverview(): OverviewStats {
       carsCount: 0,
     };
   }
-  const taskList = tasksWithFallback();
-  const notes = readNotes();
-  const txs = readTransactions();
-  const cars = readCars();
+  const taskList = getTasks();
+  const notes = getStoredNotes();
+  const txs = getTransactions();
+  const cars = getStoredCars();
   return {
     totalTasks: taskList.length,
     activeTasks: taskList.filter((t) => t.status !== "done").length,

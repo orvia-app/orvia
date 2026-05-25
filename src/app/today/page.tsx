@@ -5,72 +5,10 @@ import { CalendarDays, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 import { AppShell } from "@/components/AppShell";
+import { createQuickCapture } from "@/lib/quick-captures";
+import { getTasks } from "@/lib/tasks";
 import { tasks as mockTasks } from "@/data/mock";
-import type { Task, TaskPriority, TaskStatus } from "@/types";
-
-const TASKS_STORAGE_KEY = "personal-os.tasks";
-const QUICK_CAPTURES_KEY = "personal-os.quick-captures";
-
-const TASK_STATUSES: TaskStatus[] = ["todo", "in-progress", "done"];
-const TASK_PRIORITIES: TaskPriority[] = [
-  "low",
-  "medium",
-  "high",
-  "critical",
-];
-
-function isTaskStatus(value: unknown): value is TaskStatus {
-  return (
-    typeof value === "string" &&
-    (TASK_STATUSES as readonly string[]).includes(value)
-  );
-}
-
-function isTaskPriority(value: unknown): value is TaskPriority {
-  return (
-    typeof value === "string" &&
-    (TASK_PRIORITIES as readonly string[]).includes(value)
-  );
-}
-
-function isTaskRecord(value: unknown): value is Task {
-  if (typeof value !== "object" || value === null) return false;
-  const o = value as Record<string, unknown>;
-  if (typeof o.id !== "string" || typeof o.title !== "string") return false;
-  if (!isTaskStatus(o.status) || !isTaskPriority(o.priority)) return false;
-  if (typeof o.workspaceId !== "string" || typeof o.createdAt !== "string") {
-    return false;
-  }
-  if (
-    o.description !== undefined &&
-    typeof o.description !== "string"
-  ) {
-    return false;
-  }
-  if (o.dueDate !== undefined && typeof o.dueDate !== "string") {
-    return false;
-  }
-  return true;
-}
-
-function readTasksFromLocalStorage(): Task[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(TASKS_STORAGE_KEY);
-    if (!raw) return [];
-    const data: unknown = JSON.parse(raw);
-    if (!Array.isArray(data)) return [];
-    return data.filter(isTaskRecord);
-  } catch {
-    return [];
-  }
-}
-
-function tasksForToday(): Task[] {
-  const stored = readTasksFromLocalStorage();
-  if (stored.length > 0) return stored;
-  return mockTasks;
-}
+import type { Task, TaskPriority } from "@/types";
 
 const PRIORITY_RANK: Record<TaskPriority, number> = {
   critical: 4,
@@ -81,35 +19,6 @@ const PRIORITY_RANK: Record<TaskPriority, number> = {
 
 function sortByPriorityDesc(a: Task, b: Task): number {
   return PRIORITY_RANK[b.priority] - PRIORITY_RANK[a.priority];
-}
-
-type QuickCapture = {
-  id: string;
-  text: string;
-  createdAt: string;
-};
-
-function isQuickCapture(value: unknown): value is QuickCapture {
-  if (typeof value !== "object" || value === null) return false;
-  const o = value as Record<string, unknown>;
-  return (
-    typeof o.id === "string" &&
-    typeof o.text === "string" &&
-    typeof o.createdAt === "string"
-  );
-}
-
-function readQuickCaptures(): QuickCapture[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(QUICK_CAPTURES_KEY);
-    if (!raw) return [];
-    const data: unknown = JSON.parse(raw);
-    if (!Array.isArray(data)) return [];
-    return data.filter(isQuickCapture);
-  } catch {
-    return [];
-  }
 }
 
 const AI_SUGGESTIONS = [
@@ -125,8 +34,7 @@ export default function TodayPage() {
   const [captureSuccess, setCaptureSuccess] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    setTasks(tasksForToday());
+    setTasks(getTasks());
     setHydrated(true);
   }, []);
 
@@ -141,15 +49,13 @@ export default function TodayPage() {
 
   function sendToInbox() {
     const text = captureText.trim();
-    if (typeof window === "undefined" || !text) return;
+    if (!text) return;
     try {
-      const list = readQuickCaptures();
-      list.push({
+      createQuickCapture({
         id: Date.now().toString(),
         text,
         createdAt: new Date().toISOString(),
       });
-      window.localStorage.setItem(QUICK_CAPTURES_KEY, JSON.stringify(list));
       setCaptureText("");
       setCaptureSuccess(true);
       window.setTimeout(() => setCaptureSuccess(false), 3200);

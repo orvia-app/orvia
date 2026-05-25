@@ -9,6 +9,14 @@ export type Note = {
   type: NoteType;
 };
 
+export const NOTE_TYPES: readonly NoteType[] = [
+  "note",
+  "idea",
+  "book",
+  "course",
+  "link",
+];
+
 export const initialNotes: Note[] = [
   {
     id: "1",
@@ -36,7 +44,6 @@ export function isNote(value: unknown): value is Note {
   }
 
   const note = value as Partial<Note>;
-  const validTypes: NoteType[] = ["note", "idea", "book", "course", "link"];
 
   return (
     typeof note.id === "string" &&
@@ -44,7 +51,7 @@ export function isNote(value: unknown): value is Note {
     note.title.trim().length > 0 &&
     typeof note.content === "string" &&
     note.content.trim().length > 0 &&
-    validTypes.includes(note.type as NoteType)
+    NOTE_TYPES.includes(note.type as NoteType)
   );
 }
 
@@ -59,6 +66,15 @@ export function getNotes(): Note[] {
     : [];
 
   return validNotes.length > 0 ? validNotes : initialNotes;
+}
+
+export function getStoredNotes(): Note[] {
+  const storedNotes = safeReadStorage<unknown[]>(
+    STORAGE_KEYS.notes,
+    [],
+  );
+
+  return Array.isArray(storedNotes) ? storedNotes.filter(isNote) : [];
 }
 
 export function saveNotes(notes: Note[]): void {

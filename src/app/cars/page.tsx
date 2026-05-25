@@ -4,35 +4,12 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Car } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
-
-const CARS_STORAGE_KEY = "personal-os.cars";
-
-type CarRecord = {
-  id: string;
-  name: string;
-  owner: string;
-  mileage: string;
-  notes: string;
-};
-
-const DEFAULT_CARS: CarRecord[] = [
-  {
-    id: "car-1",
-    name: "Infiniti G37x",
-    owner: "Me",
-    mileage: "",
-    notes:
-      "Track maintenance, fuel, alignment, insurance, repairs.",
-  },
-  {
-    id: "car-2",
-    name: "Audi A3 8P",
-    owner: "Wife",
-    mileage: "",
-    notes:
-      "Track service, insurance, maintenance and expenses.",
-  },
-];
+import {
+  DEFAULT_CARS,
+  ensureCarsSeeded,
+  saveCars,
+  type CarRecord,
+} from "@/lib/cars";
 
 const SERVICE_REMINDERS = [
   "Oil change",
@@ -42,31 +19,6 @@ const SERVICE_REMINDERS = [
   "Brakes",
 ] as const;
 
-function isCarRecord(value: unknown): value is CarRecord {
-  if (typeof value !== "object" || value === null) return false;
-  const o = value as Record<string, unknown>;
-  return (
-    typeof o.id === "string" &&
-    typeof o.name === "string" &&
-    typeof o.owner === "string" &&
-    typeof o.mileage === "string" &&
-    typeof o.notes === "string"
-  );
-}
-
-function readCars(): CarRecord[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(CARS_STORAGE_KEY);
-    if (!raw) return [];
-    const data: unknown = JSON.parse(raw);
-    if (!Array.isArray(data)) return [];
-    return data.filter(isCarRecord);
-  } catch {
-    return [];
-  }
-}
-
 const emptyForm = {
   name: "",
   owner: "",
@@ -75,37 +27,19 @@ const emptyForm = {
 };
 
 export default function CarsPage() {
-  const [cars, setCars] = useState<CarRecord[]>(DEFAULT_CARS);
+  const [cars, setCars] = useState<CarRecord[]>(() => [...DEFAULT_CARS]);
   const [storageReady, setStorageReady] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const stored = readCars();
-    if (stored.length > 0) {
-      setCars(stored);
-    } else {
-      setCars(DEFAULT_CARS);
-      try {
-        window.localStorage.setItem(
-          CARS_STORAGE_KEY,
-          JSON.stringify(DEFAULT_CARS),
-        );
-      } catch {
-        /* ignore */
-      }
-    }
+    setCars(ensureCarsSeeded());
     setStorageReady(true);
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !storageReady) return;
-    try {
-      window.localStorage.setItem(CARS_STORAGE_KEY, JSON.stringify(cars));
-    } catch {
-      /* ignore */
-    }
+    if (!storageReady) return;
+    saveCars(cars);
   }, [cars, storageReady]);
 
   function openModal() {

@@ -7,16 +7,13 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { getTasks, saveTasks } from "@/lib/tasks";
+import {
+  getTasks,
+  saveTasks,
+  TASK_PRIORITIES,
+  TASK_STATUSES,
+} from "@/lib/tasks";
 import type { Task, TaskPriority, TaskStatus } from "@/types";
-
-const TASK_STATUSES: TaskStatus[] = ["todo", "in-progress", "done"];
-const TASK_PRIORITIES: TaskPriority[] = [
-  "low",
-  "medium",
-  "high",
-  "critical",
-];
 
 type FilterValue = "all" | TaskStatus;
 type WorkspaceChoice = "Personal" | "Work";

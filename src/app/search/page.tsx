@@ -4,15 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { tasks as initialTasks } from "@/data/mock";
-import { safeReadStorage, STORAGE_KEYS } from "@/lib/storage";
+import { getStoredNotes, type Note } from "@/lib/notes";
+import { getTasks } from "@/lib/tasks";
 import type { Task } from "@/types";
-
-type NoteItem = {
-  id: string;
-  title: string;
-  content: string;
-  type: string;
-};
 
 type SearchResult = {
   id: string;
@@ -24,21 +18,11 @@ type SearchResult = {
 export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [notes, setNotes] = useState<NoteItem[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
 
   useEffect(() => {
-    const storedTasks = safeReadStorage<Task[]>(
-      STORAGE_KEYS.tasks,
-      initialTasks,
-    );
-
-    const storedNotes = safeReadStorage<NoteItem[]>(
-      STORAGE_KEYS.notes,
-      [],
-    );
-
-    setTasks(Array.isArray(storedTasks) ? storedTasks : initialTasks);
-    setNotes(Array.isArray(storedNotes) ? storedNotes : []);
+    setTasks(getTasks());
+    setNotes(getStoredNotes());
   }, []);
 
   const results = useMemo<SearchResult[]>(() => {

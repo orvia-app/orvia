@@ -11,11 +11,12 @@ import {
   useState,
 } from "react";
 
+import { safeReadStorage, safeWriteStorage, STORAGE_KEYS } from "@/lib/storage";
+
 export type Theme = "dark" | "light" | "system";
 
 export type ResolvedTheme = "dark" | "light";
 
-const STORAGE_KEY = "personal-os.theme";
 const DEFAULT_THEME: Theme = "dark";
 
 type ThemeContextValue = {
@@ -28,13 +29,13 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function readStoredTheme(): Theme | null {
   if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw === "dark" || raw === "light" || raw === "system") return raw;
-    return null;
-  } catch {
-    return null;
+  const raw = safeReadStorage<unknown>(STORAGE_KEYS.theme, null);
+
+  if (raw === "dark" || raw === "light" || raw === "system") {
+    return raw;
   }
+
+  return null;
 }
 
 function resolveTheme(theme: Theme): ResolvedTheme {
@@ -83,11 +84,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (typeof window === "undefined") return;
     themeRef.current = next;
     setThemeState(next);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, next);
-    } catch {
-      /* ignore */
-    }
+    safeWriteStorage(STORAGE_KEYS.theme, next);
     const resolved = resolveTheme(next);
     setResolvedTheme(resolved);
     applyDarkClass(resolved === "dark");

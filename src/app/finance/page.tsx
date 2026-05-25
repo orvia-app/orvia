@@ -4,66 +4,17 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Wallet } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
-
-const FINANCE_STORAGE_KEY = "personal-os.finance.transactions";
-
-type TxType = "income" | "expense";
-
-type CurrencyCode = "UAH" | "USD" | "EUR";
-
-type Transaction = {
-  id: string;
-  type: TxType;
-  category: string;
-  amount: number;
-  currency: CurrencyCode;
-  note: string;
-  createdAt: string;
-};
-
-const CURRENCIES: CurrencyCode[] = ["UAH", "USD", "EUR"];
-
-function isTxType(value: unknown): value is TxType {
-  return value === "income" || value === "expense";
-}
-
-function isCurrency(value: unknown): value is CurrencyCode {
-  return (
-    typeof value === "string" &&
-    (CURRENCIES as readonly string[]).includes(value)
-  );
-}
-
-function isTransaction(value: unknown): value is Transaction {
-  if (typeof value !== "object" || value === null) return false;
-  const o = value as Record<string, unknown>;
-  return (
-    typeof o.id === "string" &&
-    isTxType(o.type) &&
-    typeof o.category === "string" &&
-    typeof o.amount === "number" &&
-    Number.isFinite(o.amount) &&
-    isCurrency(o.currency) &&
-    typeof o.note === "string" &&
-    typeof o.createdAt === "string"
-  );
-}
-
-function readTransactions(): Transaction[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(FINANCE_STORAGE_KEY);
-    if (!raw) return [];
-    const data: unknown = JSON.parse(raw);
-    if (!Array.isArray(data)) return [];
-    return data.filter(isTransaction);
-  } catch {
-    return [];
-  }
-}
+import {
+  CURRENCIES,
+  getTransactions,
+  saveTransactions,
+  type CurrencyCode,
+  type Transaction,
+  type TransactionType,
+} from "@/lib/finance";
 
 const emptyForm = {
-  type: "expense" as TxType,
+  type: "expense" as TransactionType,
   category: "",
   amount: "",
   currency: "USD" as CurrencyCode,
@@ -77,21 +28,13 @@ export default function FinancePage() {
   const [form, setForm] = useState(emptyForm);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    setTransactions(readTransactions());
+    setTransactions(getTransactions());
     setStorageReady(true);
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !storageReady) return;
-    try {
-      window.localStorage.setItem(
-        FINANCE_STORAGE_KEY,
-        JSON.stringify(transactions),
-      );
-    } catch {
-      /* ignore */
-    }
+    if (!storageReady) return;
+    saveTransactions(transactions);
   }, [transactions, storageReady]);
 
   const { incomeTotal, expenseTotal, cashflow } = useMemo(() => {
@@ -303,7 +246,7 @@ export default function FinancePage() {
                   onChange={(e) =>
                     setForm((f) => ({
                       ...f,
-                      type: e.target.value as TxType,
+                      type: e.target.value as TransactionType,
                     }))
                   }
                   className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
@@ -368,9 +311,11 @@ export default function FinancePage() {
                   }
                   className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
                 >
-                  <option value="UAH">UAH</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
+                  {CURRENCIES.map((currency) => (
+                    <option key={currency} value={currency}>
+                      {currency}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>

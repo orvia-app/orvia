@@ -3,7 +3,13 @@
 import { useMemo, useState, type FormEvent } from "react";
 
 import { AppShell } from "@/components/AppShell";
-import { getNotes, saveNotes, type Note, type NoteType } from "@/lib/notes";
+import {
+  getNotes,
+  NOTE_TYPES,
+  saveNotes,
+  type Note,
+  type NoteType,
+} from "@/lib/notes";
 
 type FilterValue = "all" | NoteType;
 
@@ -12,8 +18,6 @@ type NoteFormState = {
   content: string;
   type: NoteType;
 };
-
-const NOTE_TYPES: NoteType[] = ["note", "idea", "book", "course", "link"];
 
 const FILTERS: { label: string; value: FilterValue }[] = [
   { label: "All", value: "all" },
