@@ -5,6 +5,7 @@ import { CalendarDays, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 import { AppShell } from "@/components/AppShell";
+import { getDailyBriefing, type DailyBriefing } from "@/lib/briefing";
 import { createQuickCapture } from "@/lib/quick-captures";
 import { getTasks } from "@/lib/tasks";
 import { tasks as mockTasks } from "@/data/mock";
@@ -27,14 +28,23 @@ const AI_SUGGESTIONS = [
   "Review finance and car reminders once per day.",
 ] as const;
 
+const initialBriefing: DailyBriefing = {
+  overdueTasks: [],
+  todayTasks: [],
+  recentNotes: [],
+  recentCaptures: [],
+};
+
 export default function TodayPage() {
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  const [briefing, setBriefing] = useState<DailyBriefing>(initialBriefing);
   const [hydrated, setHydrated] = useState(false);
   const [captureText, setCaptureText] = useState("");
   const [captureSuccess, setCaptureSuccess] = useState(false);
 
   useEffect(() => {
     setTasks(getTasks());
+    setBriefing(getDailyBriefing());
     setHydrated(true);
   }, []);
 
@@ -56,6 +66,7 @@ export default function TodayPage() {
         text,
         createdAt: new Date().toISOString(),
       });
+      setBriefing(getDailyBriefing());
       setCaptureText("");
       setCaptureSuccess(true);
       window.setTimeout(() => setCaptureSuccess(false), 3200);
@@ -163,6 +174,110 @@ export default function TodayPage() {
             </section>
 
             <div className="space-y-8">
+              <section className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950/80">
+                <h2 className="text-lg font-semibold text-zinc-950 dark:text-white">
+                  Daily Briefing
+                </h2>
+                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-500">
+                  A local snapshot of what needs attention.
+                </p>
+
+                <div className="mt-5 space-y-5">
+                  <div>
+                    <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                      Overdue tasks
+                    </h3>
+                    {briefing.overdueTasks.length === 0 ? (
+                      <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-500">
+                        Nothing overdue.
+                      </p>
+                    ) : (
+                      <ul className="mt-2 space-y-2">
+                        {briefing.overdueTasks.slice(0, 3).map((task) => (
+                          <li
+                            key={task.id}
+                            className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300"
+                          >
+                            {task.title}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                      Today tasks
+                    </h3>
+                    {briefing.todayTasks.length === 0 ? (
+                      <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-500">
+                        No tasks due today.
+                      </p>
+                    ) : (
+                      <ul className="mt-2 space-y-2">
+                        {briefing.todayTasks.slice(0, 3).map((task) => (
+                          <li
+                            key={task.id}
+                            className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-800 dark:bg-black/30 dark:text-zinc-200"
+                          >
+                            {task.title}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                      Recent notes
+                    </h3>
+                    {briefing.recentNotes.length === 0 ? (
+                      <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-500">
+                        No saved notes yet.
+                      </p>
+                    ) : (
+                      <ul className="mt-2 space-y-2">
+                        {briefing.recentNotes.slice(0, 3).map((note) => (
+                          <li
+                            key={note.id}
+                            className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-black/30"
+                          >
+                            <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                              {note.title}
+                            </p>
+                            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
+                              {note.type}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                      Recent captures
+                    </h3>
+                    {briefing.recentCaptures.length === 0 ? (
+                      <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-500">
+                        No quick captures yet.
+                      </p>
+                    ) : (
+                      <ul className="mt-2 space-y-2">
+                        {briefing.recentCaptures.slice(0, 3).map((capture) => (
+                          <li
+                            key={capture.id}
+                            className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-800 dark:bg-black/30 dark:text-zinc-200"
+                          >
+                            {capture.text}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              </section>
+
               <section className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950/80">
                 <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-950 dark:text-white">
                   <Sparkles className="h-5 w-5 text-violet-600 dark:text-violet-400" aria-hidden />

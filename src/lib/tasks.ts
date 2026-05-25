@@ -48,6 +48,15 @@ export function getTasks(): Task[] {
   return validTasks.length > 0 ? validTasks : initialTasks;
 }
 
+export function getStoredTasks(): Task[] {
+  const storedTasks = safeReadStorage<unknown[]>(
+    STORAGE_KEYS.tasks,
+    [],
+  );
+
+  return Array.isArray(storedTasks) ? storedTasks.filter(isTask) : [];
+}
+
 export function saveTasks(tasks: Task[]): void {
   safeWriteStorage(STORAGE_KEYS.tasks, tasks);
 }

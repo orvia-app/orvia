@@ -1,4 +1,16 @@
 import { entityToActivityItems } from "@/lib/activity/activity-utils";
+import { getStoredCars } from "@/lib/cars";
+import { getTransactions } from "@/lib/finance";
+import { getStoredNotes } from "@/lib/notes";
+import { getQuickCaptures } from "@/lib/quick-captures";
+import { getStoredTasks } from "@/lib/tasks";
+import {
+  carToEntity,
+  noteToEntity,
+  quickCaptureToEntity,
+  taskToEntity,
+  transactionToEntity,
+} from "@/lib/entities/entity-utils";
 import type {
   ActivityFeedPage,
   ActivityFilter,
@@ -94,4 +106,20 @@ export function createActivityFeed(
   );
 
   return paginateActivityItems(items, options.pagination);
+}
+
+export function getRecentActivityFeed(limit = 5): ActivityFeedPage {
+  const entities: ActivitySourceEntity[] = [
+    ...getStoredTasks().map((task) => taskToEntity(task)),
+    ...getStoredNotes().map((note) => noteToEntity(note)),
+    ...getQuickCaptures().map((capture) => quickCaptureToEntity(capture)),
+    ...getTransactions().map((transaction) =>
+      transactionToEntity(transaction),
+    ),
+    ...getStoredCars().map((car) => carToEntity(car)),
+  ];
+
+  return createActivityFeed(entities, {
+    pagination: { limit },
+  });
 }
