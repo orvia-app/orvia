@@ -7,7 +7,7 @@ export function Skeleton({ className = "", ...props }: SkeletonProps) {
     <div
       aria-hidden
       className={[
-        "animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800",
+        "animate-pulse rounded-lg bg-zinc-200/80 dark:bg-zinc-800/80",
         className,
       ].join(" ")}
       {...props}

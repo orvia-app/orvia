@@ -17,15 +17,15 @@ export function SectionHeader({
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         {eyebrow ? (
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
             {eyebrow}
           </p>
         ) : null}
-        <h2 className="text-lg font-semibold text-zinc-950 dark:text-white">
+        <h2 className="text-lg font-semibold tracking-tight text-zinc-950 dark:text-white">
           {title}
         </h2>
         {subtitle ? (
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-500">
+          <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
             {subtitle}
           </p>
         ) : null}

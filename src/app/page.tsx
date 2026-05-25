@@ -120,6 +120,9 @@ const initialOverview: OverviewStats = {
   carsCount: 0,
 };
 
+const overviewCardClassName =
+  "rounded-2xl border border-zinc-200/80 bg-white px-4 py-4 shadow-sm shadow-zinc-950/[0.03] dark:border-zinc-800/80 dark:bg-zinc-950 dark:shadow-none";
+
 function formatActivityDate(value: string | undefined): string {
   if (!value) {
     return "";
@@ -173,8 +176,8 @@ export default function Home() {
           <Section className="mt-10">
             <SectionHeader title="System overview" />
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-950">
-                <p className="text-xs text-zinc-600 dark:text-zinc-500">Total tasks</p>
+              <div className={overviewCardClassName}>
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">Total tasks</p>
                 <p className="mt-1 text-2xl font-semibold text-zinc-950 dark:text-white">
                   {stats.totalTasks}
                 </p>
@@ -182,8 +185,8 @@ export default function Home() {
                   localStorage or demo seed
                 </p>
               </div>
-              <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-950">
-                <p className="text-xs text-zinc-600 dark:text-zinc-500">Active tasks</p>
+              <div className={overviewCardClassName}>
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">Active tasks</p>
                 <p className="mt-1 text-2xl font-semibold text-violet-700 dark:text-violet-300">
                   {stats.activeTasks}
                 </p>
@@ -191,8 +194,8 @@ export default function Home() {
                   Not marked done
                 </p>
               </div>
-              <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-950">
-                <p className="text-xs text-zinc-600 dark:text-zinc-500">Notes</p>
+              <div className={overviewCardClassName}>
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">Notes</p>
                 <p className="mt-1 text-2xl font-semibold text-zinc-950 dark:text-white">
                   {stats.notesCount}
                 </p>
@@ -200,15 +203,15 @@ export default function Home() {
                   Saved in browser
                 </p>
               </div>
-              <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-950">
-                <p className="text-xs text-zinc-600 dark:text-zinc-500">Finance txns</p>
+              <div className={overviewCardClassName}>
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">Finance txns</p>
                 <p className="mt-1 text-2xl font-semibold text-zinc-950 dark:text-white">
                   {stats.financeCount}
                 </p>
                 <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-600">Transactions</p>
               </div>
-              <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-4 sm:col-span-2 lg:col-span-1 dark:border-zinc-800 dark:bg-zinc-950">
-                <p className="text-xs text-zinc-600 dark:text-zinc-500">Cars</p>
+              <div className={`${overviewCardClassName} sm:col-span-2 lg:col-span-1`}>
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">Cars</p>
                 <p className="mt-1 text-2xl font-semibold text-zinc-950 dark:text-white">
                   {stats.carsCount}
                 </p>
@@ -228,7 +231,7 @@ export default function Home() {
                   {[0, 1, 2].map((item) => (
                     <div
                       key={item}
-                      className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800 dark:bg-black/30"
+                      className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-4 py-3 dark:border-zinc-800/80 dark:bg-zinc-900/40"
                     >
                       <div className="flex items-center gap-2">
                         <Skeleton className="h-5 w-16 rounded-full" />
@@ -252,7 +255,7 @@ export default function Home() {
                     return (
                       <li
                         key={item.id}
-                        className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 transition dark:border-zinc-800 dark:bg-black/30"
+                        className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-4 py-3 transition hover:border-zinc-300 hover:bg-white dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/70"
                       >
                         <div className="flex min-w-0 flex-col gap-2">
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -260,7 +263,7 @@ export default function Home() {
                               {getEntityTypeLabel(item.entity.type)}
                             </Badge>
                             {occurredAt ? (
-                              <span className="text-xs text-zinc-500 dark:text-zinc-600">
+                              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
                                 {occurredAt}
                               </span>
                             ) : null}
@@ -288,9 +291,9 @@ export default function Home() {
                 <Link
                   key={card.title}
                   href={card.href}
-                  className="group rounded-2xl border border-zinc-200 bg-white p-6 transition hover:border-zinc-300 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/80 sm:p-8"
+                  className="group rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm shadow-zinc-950/[0.03] transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800/80 dark:bg-zinc-950 dark:shadow-none dark:hover:border-zinc-700 dark:hover:bg-zinc-900/80 sm:p-8"
                 >
-                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-200 transition group-hover:bg-zinc-300 dark:bg-zinc-800 dark:group-hover:bg-zinc-700">
+                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-100 transition group-hover:border-zinc-300 group-hover:bg-white dark:border-zinc-800 dark:bg-zinc-900 dark:group-hover:border-zinc-700 dark:group-hover:bg-zinc-800">
                     <Icon className="h-6 w-6 text-zinc-800 dark:text-zinc-100" aria-hidden />
                   </div>
                   <h2 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-2xl">

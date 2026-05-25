@@ -85,7 +85,7 @@ export default function TodayPage() {
       <div className="p-6 sm:p-10">
         <div className="mx-auto max-w-6xl">
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-violet-300/40 bg-violet-100 dark:border-violet-500/20 dark:bg-violet-500/10">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-violet-200 bg-violet-50 shadow-sm shadow-violet-950/[0.03] dark:border-violet-500/20 dark:bg-violet-500/10 dark:shadow-none">
               <CalendarDays className="h-6 w-6 text-violet-700 dark:text-violet-300" aria-hidden />
             </div>
             <div>
@@ -122,9 +122,9 @@ export default function TodayPage() {
                     focusPlan.map((task, i) => (
                       <div
                         key={task.id}
-                        className="flex items-start gap-4 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950 sm:p-5"
+                        className="flex items-start gap-4 rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm shadow-zinc-950/[0.03] dark:border-zinc-800/80 dark:bg-zinc-950 dark:shadow-none sm:p-5"
                       >
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-200 text-sm font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-100 text-sm font-semibold text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
                           {i + 1}
                         </span>
                         <div className="min-w-0 flex-1">
@@ -137,10 +137,10 @@ export default function TodayPage() {
                             </p>
                           ) : null}
                           <div className="mt-3 flex flex-wrap gap-2">
-                            <span className="rounded-full bg-zinc-200 px-2.5 py-0.5 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                            <span className="rounded-full border border-zinc-200 bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
                               {task.priority}
                             </span>
-                            <span className="rounded-full bg-zinc-200 px-2.5 py-0.5 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                            <span className="rounded-full border border-zinc-200 bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
                               {task.status}
                             </span>
                           </div>
@@ -166,12 +166,12 @@ export default function TodayPage() {
                     nonDone.map((task) => (
                       <div
                         key={task.id}
-                        className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950/80"
+                        className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200/80 bg-white px-4 py-3 shadow-sm shadow-zinc-950/[0.02] dark:border-zinc-800/80 dark:bg-zinc-950/80 dark:shadow-none"
                       >
                         <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                           {task.title}
                         </span>
-                        <span className="text-xs text-zinc-600 dark:text-zinc-500">
+                        <span className="rounded-full border border-zinc-200 bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
                           {task.priority} · {task.status}
                         </span>
                       </div>
@@ -183,7 +183,7 @@ export default function TodayPage() {
 
             <div className="space-y-8">
               <Section>
-                <Card className="p-5">
+                <Card className="p-5 sm:p-6">
                   <SectionHeader
                     title="Daily Briefing"
                     subtitle="A local snapshot of what needs attention."
@@ -202,7 +202,7 @@ export default function TodayPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="mt-5 space-y-5">
+                    <div className="mt-5 space-y-6">
                       <div>
                         <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
                           Overdue tasks
@@ -218,7 +218,7 @@ export default function TodayPage() {
                             {briefing.overdueTasks.slice(0, 3).map((task) => (
                               <li
                                 key={task.id}
-                                className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300"
+                                className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300"
                               >
                                 {task.title}
                               </li>
@@ -242,7 +242,7 @@ export default function TodayPage() {
                             {briefing.todayTasks.slice(0, 3).map((task) => (
                               <li
                                 key={task.id}
-                                className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-800 dark:bg-black/30 dark:text-zinc-200"
+                                className="rounded-lg border border-zinc-200/80 bg-zinc-50/80 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:text-zinc-200"
                               >
                                 {task.title}
                               </li>
@@ -266,7 +266,7 @@ export default function TodayPage() {
                             {briefing.recentNotes.slice(0, 3).map((note) => (
                               <li
                                 key={note.id}
-                                className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-black/30"
+                                className="rounded-lg border border-zinc-200/80 bg-zinc-50/80 px-3 py-2 dark:border-zinc-800/80 dark:bg-zinc-900/40"
                               >
                                 <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
                                   {note.title}
@@ -297,7 +297,7 @@ export default function TodayPage() {
                               .map((capture) => (
                                 <li
                                   key={capture.id}
-                                  className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-800 dark:bg-black/30 dark:text-zinc-200"
+                                  className="rounded-lg border border-zinc-200/80 bg-zinc-50/80 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:text-zinc-200"
                                 >
                                   {capture.text}
                                 </li>
@@ -311,7 +311,7 @@ export default function TodayPage() {
               </Section>
 
               <Section>
-                <Card className="p-5">
+                <Card className="p-5 sm:p-6">
                   <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-950 dark:text-white">
                     <Sparkles className="h-5 w-5 text-violet-600 dark:text-violet-400" aria-hidden />
                     AI Suggestions
@@ -330,7 +330,7 @@ export default function TodayPage() {
               </Section>
 
               <Section>
-                <Card className="p-5">
+                <Card className="p-5 sm:p-6">
                   <SectionHeader
                     title="Quick Capture"
                     subtitle={
@@ -351,13 +351,13 @@ export default function TodayPage() {
                     onChange={(e) => setCaptureText(e.target.value)}
                     rows={4}
                     placeholder="Quick thought, reminder, or link…"
-                    className="mt-4 w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200 dark:border-zinc-800 dark:bg-black dark:text-white dark:placeholder:text-zinc-600 dark:focus:border-violet-500/35 dark:focus:ring-violet-500/15"
+                    className="mt-4 w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 shadow-sm shadow-zinc-950/[0.02] placeholder:text-zinc-500 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200 dark:border-zinc-800 dark:bg-black dark:text-white dark:shadow-none dark:placeholder:text-zinc-600 dark:focus:border-violet-500/35 dark:focus:ring-violet-500/15"
                   />
                   <button
                     type="button"
                     onClick={sendToInbox}
                     disabled={!captureText.trim()}
-                    className="mt-3 w-full rounded-xl bg-zinc-900 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:pointer-events-none disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
+                    className="mt-3 w-full rounded-xl bg-zinc-950 py-2.5 text-sm font-semibold text-white shadow-sm shadow-zinc-950/10 transition hover:bg-zinc-800 disabled:pointer-events-none disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none dark:hover:bg-white"
                   >
                     Send to Inbox
                   </button>
