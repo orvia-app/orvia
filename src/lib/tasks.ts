@@ -1,5 +1,5 @@
 import { tasks as initialTasks } from "@/data/mock";
-import type { Task } from "@/types";
+import type { Task } from "@/types/index";
 import { safeReadStorage, safeWriteStorage, STORAGE_KEYS } from "@/lib/storage";
 
 export const TASK_STATUSES: readonly Task["status"][] = [

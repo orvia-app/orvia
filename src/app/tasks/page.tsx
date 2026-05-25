@@ -167,8 +167,8 @@ export default function TasksPage() {
 
             {filteredTasks.length === 0 ? (
               <EmptyState
-                title="No tasks found"
-                description="Try changing filters or create a new task."
+                title="No tasks here"
+                description="Create a task or switch filters to review another queue."
               />
             ) : null}
           </div>

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 import { AppShell } from "@/components/AppShell";
+import { EmptyState } from "@/components/ui/EmptyState";
 import {
   getNotes,
   initialNotes,
@@ -174,8 +175,11 @@ export default function NotesPage() {
           </div>
 
           {filteredNotes.length === 0 ? (
-            <div className="mt-8 rounded-2xl border border-dashed border-zinc-300 p-10 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-500">
-              No notes found for this filter.
+            <div className="mt-8">
+              <EmptyState
+                title="No notes here"
+                description="Create a note or switch filters to see saved knowledge."
+              />
             </div>
           ) : null}
         </div>

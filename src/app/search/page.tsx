@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { tasks as initialTasks } from "@/data/mock";
 import { getStoredNotes, type Note } from "@/lib/notes";
 import { createSearchableEntities, searchEntities } from "@/lib/search";
@@ -76,9 +77,10 @@ export default function SearchPage() {
           ))}
 
           {!results.length && query.trim() && (
-            <div className="rounded-3xl border border-dashed border-zinc-300 p-10 text-center text-zinc-500 dark:border-zinc-800">
-              Nothing found.
-            </div>
+            <EmptyState
+              title="No results"
+              description="Try a different keyword or capture something new."
+            />
           )}
         </div>
       </main>

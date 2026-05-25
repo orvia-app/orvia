@@ -5,6 +5,11 @@ import { CalendarDays, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 import { AppShell } from "@/components/AppShell";
+import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { getDailyBriefing, type DailyBriefing } from "@/lib/briefing";
 import { createQuickCapture } from "@/lib/quick-captures";
 import { getTasks } from "@/lib/tasks";
@@ -94,21 +99,25 @@ export default function TodayPage() {
           </div>
 
           <div className="mt-10 grid gap-8 lg:grid-cols-3">
-            <section className="lg:col-span-2 space-y-8">
-              <div>
-                <h2 className="text-lg font-semibold text-zinc-950 dark:text-white">
-                  Focus Plan
-                </h2>
-                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-500">
-                  Top three open items by priority.
-                </p>
-                <div className="mt-4 space-y-3">
+            <div className="space-y-8 lg:col-span-2">
+              <Section>
+                <SectionHeader
+                  title="Focus Plan"
+                  subtitle="Top three open items by priority."
+                />
+                <div className="space-y-3">
                   {focusPlan.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-100/80 px-5 py-10 text-center text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950/50 dark:text-zinc-500">
-                      {hydrated
-                        ? "Nothing urgent in the queue. Add tasks or clear done work."
-                        : "Loading…"}
-                    </div>
+                    hydrated ? (
+                      <EmptyState
+                        title="No focus items"
+                        description="Add tasks or clear done work to shape today's plan."
+                      />
+                    ) : (
+                      <Card className="space-y-3">
+                        <Skeleton className="h-4 w-40" />
+                        <Skeleton className="h-4 w-full max-w-md" />
+                      </Card>
+                    )
                   ) : (
                     focusPlan.map((task, i) => (
                       <div
@@ -140,20 +149,19 @@ export default function TodayPage() {
                     ))
                   )}
                 </div>
-              </div>
+              </Section>
 
-              <div>
-                <h2 className="text-lg font-semibold text-zinc-950 dark:text-white">
-                  Overdue / Active
-                </h2>
-                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-500">
-                  Everything still in motion.
-                </p>
-                <div className="mt-4 space-y-2">
+              <Section>
+                <SectionHeader
+                  title="Overdue / Active"
+                  subtitle="Everything still in motion."
+                />
+                <div className="space-y-2">
                   {nonDone.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-100/80 px-5 py-10 text-center text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950/50 dark:text-zinc-500">
-                      All caught up — no active tasks.
-                    </div>
+                    <EmptyState
+                      title="All caught up"
+                      description="No active tasks are waiting right now."
+                    />
                   ) : (
                     nonDone.map((task) => (
                       <div
@@ -170,169 +178,199 @@ export default function TodayPage() {
                     ))
                   )}
                 </div>
-              </div>
-            </section>
+              </Section>
+            </div>
 
             <div className="space-y-8">
-              <section className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950/80">
-                <h2 className="text-lg font-semibold text-zinc-950 dark:text-white">
-                  Daily Briefing
-                </h2>
-                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-500">
-                  A local snapshot of what needs attention.
-                </p>
+              <Section>
+                <Card className="p-5">
+                  <SectionHeader
+                    title="Daily Briefing"
+                    subtitle="A local snapshot of what needs attention."
+                  />
 
-                <div className="mt-5 space-y-5">
-                  <div>
-                    <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
-                      Overdue tasks
-                    </h3>
-                    {briefing.overdueTasks.length === 0 ? (
-                      <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-500">
-                        Nothing overdue.
-                      </p>
-                    ) : (
-                      <ul className="mt-2 space-y-2">
-                        {briefing.overdueTasks.slice(0, 3).map((task) => (
-                          <li
-                            key={task.id}
-                            className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300"
-                          >
-                            {task.title}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
+                  {!hydrated ? (
+                    <div
+                      className="mt-5 space-y-4"
+                      aria-label="Loading daily briefing"
+                    >
+                      {[0, 1, 2, 3].map((item) => (
+                        <div key={item} className="space-y-2">
+                          <Skeleton className="h-3 w-24" />
+                          <Skeleton className="h-10 w-full" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="mt-5 space-y-5">
+                      <div>
+                        <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                          Overdue tasks
+                        </h3>
+                        {briefing.overdueTasks.length === 0 ? (
+                          <EmptyState
+                            size="sm"
+                            title="Nothing overdue"
+                            description="Your task deadlines are clear."
+                          />
+                        ) : (
+                          <ul className="mt-2 space-y-2">
+                            {briefing.overdueTasks.slice(0, 3).map((task) => (
+                              <li
+                                key={task.id}
+                                className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300"
+                              >
+                                {task.title}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
 
-                  <div>
-                    <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
-                      Today tasks
-                    </h3>
-                    {briefing.todayTasks.length === 0 ? (
-                      <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-500">
-                        No tasks due today.
-                      </p>
-                    ) : (
-                      <ul className="mt-2 space-y-2">
-                        {briefing.todayTasks.slice(0, 3).map((task) => (
-                          <li
-                            key={task.id}
-                            className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-800 dark:bg-black/30 dark:text-zinc-200"
-                          >
-                            {task.title}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
+                      <div>
+                        <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                          Today tasks
+                        </h3>
+                        {briefing.todayTasks.length === 0 ? (
+                          <EmptyState
+                            size="sm"
+                            title="No due dates today"
+                            description="Nothing scheduled for today yet."
+                          />
+                        ) : (
+                          <ul className="mt-2 space-y-2">
+                            {briefing.todayTasks.slice(0, 3).map((task) => (
+                              <li
+                                key={task.id}
+                                className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-800 dark:bg-black/30 dark:text-zinc-200"
+                              >
+                                {task.title}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
 
-                  <div>
-                    <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
-                      Recent notes
-                    </h3>
-                    {briefing.recentNotes.length === 0 ? (
-                      <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-500">
-                        No saved notes yet.
-                      </p>
-                    ) : (
-                      <ul className="mt-2 space-y-2">
-                        {briefing.recentNotes.slice(0, 3).map((note) => (
-                          <li
-                            key={note.id}
-                            className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-black/30"
-                          >
-                            <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                              {note.title}
-                            </p>
-                            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
-                              {note.type}
-                            </p>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
+                      <div>
+                        <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                          Recent notes
+                        </h3>
+                        {briefing.recentNotes.length === 0 ? (
+                          <EmptyState
+                            size="sm"
+                            title="No notes yet"
+                            description="Capture a note to include it here."
+                          />
+                        ) : (
+                          <ul className="mt-2 space-y-2">
+                            {briefing.recentNotes.slice(0, 3).map((note) => (
+                              <li
+                                key={note.id}
+                                className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-black/30"
+                              >
+                                <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                  {note.title}
+                                </p>
+                                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
+                                  {note.type}
+                                </p>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
 
-                  <div>
-                    <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
-                      Recent captures
-                    </h3>
-                    {briefing.recentCaptures.length === 0 ? (
-                      <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-500">
-                        No quick captures yet.
-                      </p>
-                    ) : (
-                      <ul className="mt-2 space-y-2">
-                        {briefing.recentCaptures.slice(0, 3).map((capture) => (
-                          <li
-                            key={capture.id}
-                            className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-800 dark:bg-black/30 dark:text-zinc-200"
-                          >
-                            {capture.text}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </div>
-              </section>
+                      <div>
+                        <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                          Recent captures
+                        </h3>
+                        {briefing.recentCaptures.length === 0 ? (
+                          <EmptyState
+                            size="sm"
+                            title="No captures yet"
+                            description="Send a quick thought to Inbox."
+                          />
+                        ) : (
+                          <ul className="mt-2 space-y-2">
+                            {briefing.recentCaptures
+                              .slice(0, 3)
+                              .map((capture) => (
+                                <li
+                                  key={capture.id}
+                                  className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-800 dark:bg-black/30 dark:text-zinc-200"
+                                >
+                                  {capture.text}
+                                </li>
+                              ))}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              </Section>
 
-              <section className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950/80">
-                <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-950 dark:text-white">
-                  <Sparkles className="h-5 w-5 text-violet-600 dark:text-violet-400" aria-hidden />
-                  AI Suggestions
-                </h2>
-                <ul className="mt-4 space-y-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-                  {AI_SUGGESTIONS.map((line) => (
-                    <li key={line} className="flex gap-2">
-                      <span className="text-violet-600/80 dark:text-violet-500/80">
-                        —
-                      </span>
-                      <span>{line}</span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
+              <Section>
+                <Card className="p-5">
+                  <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-950 dark:text-white">
+                    <Sparkles className="h-5 w-5 text-violet-600 dark:text-violet-400" aria-hidden />
+                    AI Suggestions
+                  </h2>
+                  <ul className="mt-4 space-y-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                    {AI_SUGGESTIONS.map((line) => (
+                      <li key={line} className="flex gap-2">
+                        <span className="text-violet-600/80 dark:text-violet-500/80">
+                          —
+                        </span>
+                        <span>{line}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              </Section>
 
-              <section className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950/80">
-                <h2 className="text-lg font-semibold text-zinc-950 dark:text-white">
-                  Quick Capture
-                </h2>
-                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-500">
-                  Stash a thought; process it later from{" "}
-                  <Link
-                    href="/inbox"
-                    className="text-violet-700 underline-offset-2 hover:underline dark:text-violet-400"
+              <Section>
+                <Card className="p-5">
+                  <SectionHeader
+                    title="Quick Capture"
+                    subtitle={
+                      <>
+                        Stash a thought; process it later from{" "}
+                        <Link
+                          href="/inbox"
+                          className="text-violet-700 underline-offset-2 hover:underline dark:text-violet-400"
+                        >
+                          Inbox
+                        </Link>
+                        .
+                      </>
+                    }
+                  />
+                  <textarea
+                    value={captureText}
+                    onChange={(e) => setCaptureText(e.target.value)}
+                    rows={4}
+                    placeholder="Quick thought, reminder, or link…"
+                    className="mt-4 w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200 dark:border-zinc-800 dark:bg-black dark:text-white dark:placeholder:text-zinc-600 dark:focus:border-violet-500/35 dark:focus:ring-violet-500/15"
+                  />
+                  <button
+                    type="button"
+                    onClick={sendToInbox}
+                    disabled={!captureText.trim()}
+                    className="mt-3 w-full rounded-xl bg-zinc-900 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:pointer-events-none disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
                   >
-                    Inbox
-                  </Link>
-                  .
-                </p>
-                <textarea
-                  value={captureText}
-                  onChange={(e) => setCaptureText(e.target.value)}
-                  rows={4}
-                  placeholder="Quick thought, reminder, or link…"
-                  className="mt-4 w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200 dark:border-zinc-800 dark:bg-black dark:text-white dark:placeholder:text-zinc-600 dark:focus:border-violet-500/35 dark:focus:ring-violet-500/15"
-                />
-                <button
-                  type="button"
-                  onClick={sendToInbox}
-                  disabled={!captureText.trim()}
-                  className="mt-3 w-full rounded-xl bg-zinc-900 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:pointer-events-none disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
-                >
-                  Send to Inbox
-                </button>
-                {captureSuccess ? (
-                  <p
-                    className="mt-3 text-sm font-medium text-emerald-600 dark:text-emerald-400"
-                    role="status"
-                  >
-                    Saved successfully.
-                  </p>
-                ) : null}
-              </section>
+                    Send to Inbox
+                  </button>
+                  {captureSuccess ? (
+                    <p
+                      className="mt-3 text-sm font-medium text-emerald-600 dark:text-emerald-400"
+                      role="status"
+                    >
+                      Saved successfully.
+                    </p>
+                  ) : null}
+                </Card>
+              </Section>
             </div>
           </div>
         </div>
