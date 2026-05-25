@@ -33,6 +33,7 @@ export function CommandPalette({
   }
 
   const activeCommandId = commands[activeIndex]?.id;
+  let currentGroup: string | null = null;
 
   return (
     <div
@@ -82,18 +83,21 @@ export function CommandPalette({
           role="listbox"
         >
           {commands.length > 0 ? (
-            <div>
-              <div className="px-3 pb-1 pt-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
-                Navigate
-              </div>
-              <div className="space-y-1">
-                {commands.map((command, index) => {
-                  const Icon = command.icon;
-                  const active = index === activeIndex;
+            <div className="space-y-2">
+              {commands.map((command, index) => {
+                const Icon = command.icon;
+                const active = index === activeIndex;
+                const showGroup = command.group !== currentGroup;
+                currentGroup = command.group;
 
-                  return (
+                return (
+                  <div key={command.id}>
+                    {showGroup ? (
+                      <div className="px-3 pb-1 pt-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                        {command.group}
+                      </div>
+                    ) : null}
                     <button
-                      key={command.id}
                       id={command.id}
                       type="button"
                       aria-selected={active}
@@ -132,9 +136,9 @@ export function CommandPalette({
                         ) : null}
                       </span>
                     </button>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="px-6 py-12 text-center">

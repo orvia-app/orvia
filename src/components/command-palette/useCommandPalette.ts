@@ -9,7 +9,12 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 
-import type { CommandItem } from "@/lib/commands/types";
+import type { CommandAction, CommandItem } from "@/lib/commands/types";
+
+type UseCommandPaletteOptions = {
+  enabled?: boolean;
+  onAction?: (action: CommandAction) => void;
+};
 
 function commandMatches(command: CommandItem, query: string): boolean {
   const normalizedQuery = query.trim().toLowerCase();
@@ -31,7 +36,11 @@ function commandMatches(command: CommandItem, query: string): boolean {
   return searchableText.includes(normalizedQuery);
 }
 
-export function useCommandPalette(commands: readonly CommandItem[]) {
+export function useCommandPalette(
+  commands: readonly CommandItem[],
+  options: UseCommandPaletteOptions = {},
+) {
+  const { enabled = true, onAction } = options;
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
@@ -72,12 +81,13 @@ export function useCommandPalette(commands: readonly CommandItem[]) {
         case "create-note":
         case "ai-action":
         case "open-entity":
+          onAction?.(command.action);
           break;
       }
 
       closePalette();
     },
-    [closePalette, router],
+    [closePalette, onAction, router],
   );
 
   const handleQueryChange = useCallback((nextQuery: string) => {
@@ -114,6 +124,10 @@ export function useCommandPalette(commands: readonly CommandItem[]) {
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
+      if (!enabled) {
+        return;
+      }
+
       const isPaletteShortcut =
         event.key.toLowerCase() === "k" && (event.metaKey || event.ctrlKey);
 
@@ -172,6 +186,7 @@ export function useCommandPalette(commands: readonly CommandItem[]) {
   }, [
     activeIndex,
     closePalette,
+    enabled,
     filteredCommands,
     open,
     runCommand,

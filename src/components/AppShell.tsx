@@ -21,10 +21,8 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-import { CommandPalette } from "@/components/command-palette/CommandPalette";
-import { useCommandPalette } from "@/components/command-palette/useCommandPalette";
+import { CommandCenter } from "@/components/command-palette/CommandCenter";
 import { useTheme, type Theme } from "@/components/ThemeProvider";
-import { routeCommands } from "@/lib/commands/routes";
 
 type NavItem = {
   label: string;
@@ -93,11 +91,10 @@ function ThemeSwitcher() {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const commandPalette = useCommandPalette(routeCommands);
 
   return (
     <div className="flex min-h-screen bg-zinc-50 text-zinc-950 dark:bg-black dark:text-white">
-      <CommandPalette {...commandPalette} />
+      <CommandCenter />
 
       <aside className="hidden w-72 shrink-0 flex-col border-r border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950 lg:flex">
         <div className="flex items-center gap-3">

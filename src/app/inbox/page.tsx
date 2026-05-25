@@ -4,26 +4,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Inbox, Loader2, Sparkles } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
-import { createNote, type NoteType } from "@/lib/notes";
+import {
+  noteTypeFromInboxType,
+  parseInboxInput,
+  workspaceIdFromLabel,
+  type InboxParseResult,
+} from "@/lib/inbox";
+import { createNote, type Note } from "@/lib/notes";
 import { createTask } from "@/lib/tasks";
-import type { Task, TaskPriority } from "@/types";
-
-type InboxItemType = "Reminder" | "Idea" | "Task" | "Note" | "Inbox item";
-
-type ParseResult = {
-  type: InboxItemType;
-  suggestedTitle: string;
-  priority: TaskPriority;
-  workspace: string;
-  aiSummary: string;
-};
-
-type PersistedNote = {
-  id: string;
-  title: string;
-  content: string;
-  type: NoteType;
-};
+import type { Task } from "@/types";
 
 const exampleLines = [
   "remind me to change Infiniti oil next week",
@@ -32,110 +21,10 @@ const exampleLines = [
   "save course about DevOps",
 ];
 
-function detectItemType(text: string): InboxItemType {
-  const normalizedText = text.toLowerCase();
-
-  if (normalizedText.includes("remind")) {
-    return "Reminder";
-  }
-
-  if (normalizedText.includes("idea")) {
-    return "Idea";
-  }
-
-  if (normalizedText.includes("schedule")) {
-    return "Task";
-  }
-
-  if (normalizedText.includes("save")) {
-    return "Note";
-  }
-
-  return "Inbox item";
-}
-
-function detectWorkspace(text: string): string {
-  const normalizedText = text.toLowerCase();
-
-  if (normalizedText.includes("infiniti")) {
-    return "Cars";
-  }
-
-  if (normalizedText.includes("qa")) {
-    return "Work";
-  }
-
-  if (normalizedText.includes("rehab")) {
-    return "Business";
-  }
-
-  if (normalizedText.includes("devops")) {
-    return "Knowledge";
-  }
-
-  return "Personal";
-}
-
-function buildSuggestedTitle(text: string): string {
-  return text
-    .replace(/^idea:/i, "")
-    .replace(/^remind me to/i, "")
-    .replace(/^schedule/i, "")
-    .replace(/^save/i, "")
-    .trim();
-}
-
-function priorityFromType(type: InboxItemType): TaskPriority {
-  switch (type) {
-    case "Reminder":
-    case "Task":
-      return "high";
-
-    case "Idea":
-    case "Note":
-      return "medium";
-
-    default:
-      return "low";
-  }
-}
-
-function workspaceIdFromLabel(workspace: string): string {
-  switch (workspace) {
-    case "Personal":
-      return "1";
-
-    case "Work":
-      return "2";
-
-    case "Cars":
-      return "3";
-
-    case "Business":
-      return "4";
-
-    case "Knowledge":
-      return "5";
-
-    default:
-      return "1";
-  }
-}
-
-function noteTypeFromInboxType(
-  inboxType: InboxItemType,
-): Extract<NoteType, "idea" | "note"> {
-  if (inboxType === "Idea") {
-    return "idea";
-  }
-
-  return "note";
-}
-
 export default function InboxPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<ParseResult | null>(null);
+  const [result, setResult] = useState<InboxParseResult | null>(null);
   const [itemCreated, setItemCreated] = useState(false);
 
   const timeoutRef = useRef<number | null>(null);
@@ -154,17 +43,7 @@ export default function InboxPage() {
     setResult(null);
     setItemCreated(false);
 
-    const type = detectItemType(trimmedInput);
-    const workspace = detectWorkspace(trimmedInput);
-    const suggestedTitle = buildSuggestedTitle(trimmedInput);
-
-    const parseResult: ParseResult = {
-      type,
-      workspace,
-      suggestedTitle,
-      priority: priorityFromType(type),
-      aiSummary: `${type} for ${workspace}: ${suggestedTitle}`,
-    };
+    const parseResult = parseInboxInput(trimmedInput);
 
     timeoutRef.current = window.setTimeout(() => {
       setResult(parseResult);
@@ -192,7 +71,7 @@ export default function InboxPage() {
 
         createTask(newTask);
       } else {
-        const newNote: PersistedNote = {
+        const newNote: Note = {
           id: Date.now().toString(),
           title: result.suggestedTitle,
           content: result.aiSummary,
