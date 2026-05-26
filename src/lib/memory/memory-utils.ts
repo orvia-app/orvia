@@ -118,6 +118,23 @@ export function getMemoryImportanceLabel(
   }
 }
 
+export function getMemorySourceTypeLabel(
+  sourceType: MemorySourceType,
+): string {
+  switch (sourceType) {
+    case "task":
+      return "Task";
+    case "note":
+      return "Note";
+    case "inbox":
+      return "Inbox";
+    case "activity":
+      return "Activity";
+    case "manual":
+      return "Manual";
+  }
+}
+
 export function entityToMemoryCandidate(
   entity: PersonalEntity,
 ): MemoryCandidate | null {

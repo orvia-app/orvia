@@ -24,9 +24,22 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { getRecentActivityFeed } from "@/lib/activity/activity-feed";
 import type { ActivityItem } from "@/lib/activity/types";
 import { getStoredCars } from "@/lib/cars";
-import { getEntityTypeLabel } from "@/lib/entities/entity-utils";
+import {
+  getEntityTypeLabel,
+  noteToEntity,
+  quickCaptureToEntity,
+  taskToEntity,
+} from "@/lib/entities/entity-utils";
 import { getTransactions } from "@/lib/finance";
+import {
+  activitiesToMemoryCandidates,
+  entitiesToMemoryCandidates,
+  getMemoryImportanceLabel,
+  getMemorySourceTypeLabel,
+} from "@/lib/memory/memory-utils";
+import type { MemoryCandidate, MemoryImportance } from "@/lib/memory/types";
 import { getStoredNotes } from "@/lib/notes";
+import { getQuickCaptures } from "@/lib/quick-captures";
 import { getTasks } from "@/lib/tasks";
 import { tasks as mockTasks } from "@/data/mock";
 
@@ -123,6 +136,13 @@ const initialOverview: OverviewStats = {
 const overviewCardClassName =
   "rounded-2xl border border-zinc-200/80 bg-white px-4 py-4 shadow-sm shadow-zinc-950/[0.03] dark:border-zinc-800/80 dark:bg-zinc-950 dark:shadow-none";
 
+const MEMORY_IMPORTANCE_RANK: Record<MemoryImportance, number> = {
+  critical: 4,
+  high: 3,
+  medium: 2,
+  low: 1,
+};
+
 function formatActivityDate(value: string | undefined): string {
   if (!value) {
     return "";
@@ -133,18 +153,88 @@ function formatActivityDate(value: string | undefined): string {
   return datePart || "";
 }
 
+function getMemoryTime(candidate: MemoryCandidate): number {
+  const value =
+    candidate.metadata.capturedAt ??
+    candidate.metadata.updatedAt ??
+    candidate.metadata.createdAt;
+
+  if (!value) {
+    return 0;
+  }
+
+  const time = new Date(value).getTime();
+
+  return Number.isNaN(time) ? 0 : time;
+}
+
+function compareMemoryCandidates(
+  a: MemoryCandidate,
+  b: MemoryCandidate,
+): number {
+  const importanceDifference =
+    MEMORY_IMPORTANCE_RANK[b.importance] -
+    MEMORY_IMPORTANCE_RANK[a.importance];
+
+  if (importanceDifference !== 0) {
+    return importanceDifference;
+  }
+
+  const timeDifference = getMemoryTime(b) - getMemoryTime(a);
+
+  if (timeDifference !== 0) {
+    return timeDifference;
+  }
+
+  return a.id.localeCompare(b.id);
+}
+
+function getMemoryExcerpt(candidate: MemoryCandidate): string {
+  const content = candidate.content.trim();
+
+  if (content.length <= 140) {
+    return content;
+  }
+
+  return `${content.slice(0, 137).trim()}...`;
+}
+
+function getMemoryPreviewCandidates(
+  activityItems: readonly ActivityItem[],
+): MemoryCandidate[] {
+  const entities = [
+    ...getTasks().map((task) => taskToEntity(task)),
+    ...getStoredNotes().map((note) => noteToEntity(note)),
+    ...getQuickCaptures().map((capture) => quickCaptureToEntity(capture)),
+  ];
+
+  return [
+    ...entitiesToMemoryCandidates(entities),
+    ...activitiesToMemoryCandidates(activityItems),
+  ]
+    .sort(compareMemoryCandidates)
+    .slice(0, 3);
+}
+
 export default function Home() {
   const pathname = usePathname();
   const [stats, setStats] = useState<OverviewStats>(initialOverview);
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
   const [activityLoaded, setActivityLoaded] = useState(false);
+  const [memoryCandidates, setMemoryCandidates] = useState<MemoryCandidate[]>(
+    [],
+  );
+  const [memoryLoaded, setMemoryLoaded] = useState(false);
 
   useEffect(() => {
     function refresh() {
       if (typeof window === "undefined") return;
+      const activityItems = getRecentActivityFeed(5).items;
       setStats(computeOverview());
-      setRecentActivity(getRecentActivityFeed(5).items);
+      setRecentActivity(activityItems);
+      setMemoryCandidates(getMemoryPreviewCandidates(activityItems));
       setActivityLoaded(true);
+      setMemoryLoaded(true);
     }
     refresh();
     window.addEventListener("focus", refresh);
@@ -157,8 +247,10 @@ export default function Home() {
 
   useEffect(() => {
     if (pathname === "/" && typeof window !== "undefined") {
+      const activityItems = getRecentActivityFeed(5).items;
       setStats(computeOverview());
-      setRecentActivity(getRecentActivityFeed(5).items);
+      setRecentActivity(activityItems);
+      setMemoryCandidates(getMemoryPreviewCandidates(activityItems));
     }
   }, [pathname]);
 
@@ -278,6 +370,65 @@ export default function Home() {
                       </li>
                     );
                   })}
+                </ul>
+              )}
+            </Card>
+          </Section>
+
+          <Section className="mt-10">
+            <SectionHeader
+              title="Memory Preview"
+              subtitle="Early foundation for future AI memory and recall."
+            />
+            <Card className="p-4 sm:p-5">
+              {!memoryLoaded ? (
+                <div className="space-y-3" aria-label="Loading memory preview">
+                  {[0, 1, 2].map((item) => (
+                    <div
+                      key={item}
+                      className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-4 py-3 dark:border-zinc-800/80 dark:bg-zinc-900/40"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-5 w-16 rounded-full" />
+                        <Skeleton className="h-5 w-20 rounded-full" />
+                      </div>
+                      <Skeleton className="mt-3 h-4 w-48" />
+                      <Skeleton className="mt-2 h-4 w-full max-w-lg" />
+                    </div>
+                  ))}
+                </div>
+              ) : memoryCandidates.length === 0 ? (
+                <EmptyState
+                  title="No memory candidates yet"
+                  description="Create a task, note, or inbox capture to seed future recall."
+                />
+              ) : (
+                <ul className="space-y-2">
+                  {memoryCandidates.map((candidate) => (
+                    <li
+                      key={candidate.id}
+                      className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-4 py-3 dark:border-zinc-800/80 dark:bg-zinc-900/40"
+                    >
+                      <div className="flex min-w-0 flex-col gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge className="px-2.5 py-0.5">
+                            {getMemorySourceTypeLabel(candidate.sourceType)}
+                          </Badge>
+                          <Badge variant="info" className="px-2.5 py-0.5">
+                            {getMemoryImportanceLabel(candidate.importance)}
+                          </Badge>
+                        </div>
+                        <p className="truncate text-sm font-medium text-zinc-950 dark:text-white">
+                          {candidate.title}
+                        </p>
+                        {candidate.content ? (
+                          <p className="text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                            {getMemoryExcerpt(candidate)}
+                          </p>
+                        ) : null}
+                      </div>
+                    </li>
+                  ))}
                 </ul>
               )}
             </Card>
