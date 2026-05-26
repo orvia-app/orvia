@@ -63,7 +63,7 @@ function ThemeSwitcher() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <div className="mt-auto border-t border-zinc-200/80 pt-5 dark:border-zinc-800/80">
+    <div>
       <p className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
         Theme
       </p>
@@ -98,8 +98,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen bg-zinc-50 text-zinc-950 dark:bg-black dark:text-white">
       <CommandCenter />
 
-      <aside className="hidden w-72 shrink-0 flex-col border-r border-zinc-200/80 bg-white/95 p-6 dark:border-zinc-800/80 dark:bg-zinc-950 lg:flex">
-        <div className="flex items-center gap-3">
+      <aside className="sticky top-0 hidden h-screen w-72 shrink-0 flex-col border-r border-zinc-200/80 bg-white/95 dark:border-zinc-800/80 dark:bg-zinc-950 lg:flex">
+        <div className="flex shrink-0 items-center gap-3 px-6 pt-6">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-100 shadow-sm shadow-zinc-950/[0.03] dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
             <Bot className="h-5 w-5 text-zinc-800 dark:text-zinc-100" aria-hidden />
           </div>
@@ -114,7 +114,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav
-          className="mt-10 flex flex-1 flex-col gap-1.5 overflow-y-auto"
+          className="mt-8 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto px-6 pb-4"
           aria-label="Main"
         >
           {navItems.map(({ label, href, icon: Icon }) => {
@@ -137,7 +137,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <ThemeSwitcher />
+        <div className="shrink-0 border-t border-zinc-200/80 bg-white/95 px-6 pb-6 pt-5 dark:border-zinc-800/80 dark:bg-zinc-950">
+          <ThemeSwitcher />
+        </div>
       </aside>
 
       <div className="flex min-h-screen flex-1 flex-col bg-zinc-50 dark:bg-black">
