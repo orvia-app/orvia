@@ -142,11 +142,11 @@ export default function NotesPage() {
 
   return (
     <AppShell>
-      <main className="p-6 sm:p-10">
+      <main className="px-4 py-6 sm:p-10">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
+              <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
                 Notes
               </h1>
 
@@ -164,7 +164,7 @@ export default function NotesPage() {
             </button>
           </div>
 
-          <div className="mt-8 flex flex-wrap gap-2">
+          <div className="app-scrollbar -mx-4 mt-8 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
             {FILTERS.map(({ label, value }) => {
               const active = typeFilter === value;
 
@@ -263,7 +263,7 @@ export default function NotesPage() {
 
       {modalOpen ? (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-zinc-950/70 p-4 dark:bg-black/70 sm:items-center"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-zinc-950/70 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] dark:bg-black/70 sm:items-center sm:p-4"
           role="presentation"
           onClick={(event) => {
             if (event.target === event.currentTarget) {
@@ -275,7 +275,7 @@ export default function NotesPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="new-note-title"
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
+            className="max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-zinc-800 dark:bg-zinc-950 sm:max-h-[90vh] sm:p-6"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
@@ -371,7 +371,7 @@ export default function NotesPage() {
                 </select>
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={closeModal}

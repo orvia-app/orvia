@@ -11,7 +11,7 @@ export default function AutomationPage() {
     <AppShell>
       <div className="px-4 py-6 sm:p-10">
         <div className="mx-auto max-w-5xl">
-          <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
             Automation
           </h1>
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">

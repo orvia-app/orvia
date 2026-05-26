@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -11,6 +11,7 @@ import {
   FileText,
   House,
   Inbox,
+  Menu,
   MessageSquare,
   Monitor,
   Moon,
@@ -18,6 +19,7 @@ import {
   Search,
   Sun,
   Wallet,
+  X,
   Zap,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -95,6 +97,7 @@ function ThemeSwitcher() {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const navItemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const activeItem = navItems.find((item) => isNavActive(pathname, item.href));
@@ -105,8 +108,40 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     activeElement?.scrollIntoView({ block: "nearest" });
   }, [pathname]);
 
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent): void {
+      if (event.key === "Escape") {
+        setMobileMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileMenuOpen]);
+
   return (
-    <div className="flex min-h-screen bg-zinc-50 text-zinc-950 dark:bg-black dark:text-white">
+    <div className="flex min-h-screen overflow-x-hidden bg-zinc-50 text-zinc-950 dark:bg-black dark:text-white">
       <CommandCenter />
 
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-zinc-200/80 bg-white/95 dark:border-zinc-800/80 dark:bg-zinc-950 lg:flex">
@@ -156,21 +191,104 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <div className="flex min-h-screen flex-1 flex-col bg-zinc-50 dark:bg-black">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col overflow-x-hidden bg-zinc-50 dark:bg-black">
         <header className="sticky top-0 z-30 border-b border-zinc-200/70 bg-white/90 px-4 py-3 backdrop-blur dark:border-zinc-800/70 dark:bg-black/85 lg:hidden">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 text-zinc-900 ring-1 ring-zinc-200/80 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-800">
-              <BrandMark className="h-4.5 w-4.5" />
-            </span>
-            <p className="text-sm font-semibold text-zinc-950 dark:text-white">
-              Archflow
-            </p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-900 ring-1 ring-zinc-200/80 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-800">
+                <BrandMark className="h-4.5 w-4.5" />
+              </span>
+              <p className="truncate text-sm font-semibold text-zinc-950 dark:text-white">
+                Archflow
+              </p>
+            </div>
+            <button
+              type="button"
+              aria-label="Open navigation menu"
+              aria-expanded={mobileMenuOpen}
+              onClick={() => setMobileMenuOpen(true)}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-zinc-700 ring-1 ring-zinc-200/80 hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:bg-zinc-950 dark:text-zinc-300 dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:text-white dark:focus-visible:ring-zinc-600"
+            >
+              <Menu className="h-5 w-5" aria-hidden />
+            </button>
           </div>
         </header>
-        <main className="flex-1">{children}</main>
+
+        {mobileMenuOpen ? (
+          <div
+            className="fixed inset-0 z-50 bg-zinc-950/45 backdrop-blur-sm dark:bg-black/65 lg:hidden"
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) {
+                setMobileMenuOpen(false);
+              }
+            }}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Navigation menu"
+              className="app-scrollbar ml-auto flex h-full w-full max-w-sm flex-col overflow-y-auto bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] shadow-2xl shadow-zinc-950/20 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:shadow-black/40 dark:ring-zinc-800"
+              onMouseDown={(event) => event.stopPropagation()}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-100 text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
+                    <BrandMark className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-zinc-950 dark:text-white">
+                      Archflow
+                    </p>
+                    <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-500">
+                      Capture operating system
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Close"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-zinc-600 ring-1 ring-zinc-200/80 hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:text-zinc-300 dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:text-white dark:focus-visible:ring-zinc-600"
+                >
+                  <X className="h-5 w-5" aria-hidden />
+                </button>
+              </div>
+
+              <nav className="mt-6 grid gap-1" aria-label="Mobile main">
+                {navItems.map(({ label, href, icon: Icon }) => {
+                  const active = isNavActive(pathname, href);
+
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      className={
+                        active
+                          ? "flex min-h-11 items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-100 px-3 text-sm font-medium text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
+                          : "flex min-h-11 items-center gap-3 rounded-xl border border-transparent px-3 text-sm font-medium text-zinc-600 hover:border-zinc-200 hover:bg-zinc-50 hover:text-zinc-950 dark:text-zinc-400 dark:hover:border-zinc-800 dark:hover:bg-zinc-900/70 dark:hover:text-white"
+                      }
+                    >
+                      <Icon className="h-4 w-4 shrink-0" aria-hidden />
+                      <span>{label}</span>
+                    </Link>
+                  );
+                })}
+              </nav>
+
+              <div className="mt-6 border-t border-zinc-200/80 pt-4 dark:border-zinc-800/80">
+                <ThemeSwitcher />
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        <main className="min-w-0 flex-1 pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:pb-0">
+          {children}
+        </main>
         <Link
           href="/inbox"
-          className="fixed bottom-4 right-4 z-40 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-950 text-white shadow-lg shadow-zinc-950/20 transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-black/30 dark:hover:bg-white lg:hidden"
+          className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-40 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-950 text-white shadow-lg shadow-zinc-950/20 transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-black/30 dark:hover:bg-white lg:hidden"
           aria-label="Capture in Inbox"
         >
           <Inbox className="h-5 w-5" aria-hidden />
