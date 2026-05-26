@@ -1,7 +1,6 @@
+import { createLocalEntityRepository } from "@/core/repositories/local-json-repository";
 import {
   hasCompletedLocalDataReset,
-  safeReadStorage,
-  safeWriteStorage,
   STORAGE_KEYS,
 } from "@/lib/storage";
 
@@ -60,15 +59,13 @@ export function isNote(value: unknown): value is Note {
   );
 }
 
-export function getNotes(): Note[] {
-  const storedNotes = safeReadStorage<unknown[]>(
-    STORAGE_KEYS.notes,
-    [],
-  );
+export const noteRepository = createLocalEntityRepository<Note>({
+  key: STORAGE_KEYS.notes,
+  validate: isNote,
+});
 
-  const validNotes = Array.isArray(storedNotes)
-    ? storedNotes.filter(isNote)
-    : [];
+export function getNotes(): Note[] {
+  const validNotes = noteRepository.list();
 
   if (hasCompletedLocalDataReset()) {
     return validNotes;
@@ -78,16 +75,11 @@ export function getNotes(): Note[] {
 }
 
 export function getStoredNotes(): Note[] {
-  const storedNotes = safeReadStorage<unknown[]>(
-    STORAGE_KEYS.notes,
-    [],
-  );
-
-  return Array.isArray(storedNotes) ? storedNotes.filter(isNote) : [];
+  return noteRepository.list();
 }
 
 export function saveNotes(notes: Note[]): void {
-  safeWriteStorage(STORAGE_KEYS.notes, notes);
+  noteRepository.save(notes);
 }
 
 export function createNote(note: Note): Note[] {

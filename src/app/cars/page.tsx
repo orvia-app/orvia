@@ -67,7 +67,7 @@ export default function CarsPage() {
 
   return (
     <AppShell>
-      <div className="p-6 sm:p-10">
+      <div className="px-4 py-6 sm:p-10">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-4">
@@ -75,7 +75,7 @@ export default function CarsPage() {
                 <Car className="h-6 w-6 text-zinc-800 dark:text-zinc-200" aria-hidden />
               </div>
               <div>
-                <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
+                <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
                   Cars
                 </h1>
                 <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">
@@ -160,7 +160,7 @@ export default function CarsPage() {
 
       {modalOpen ? (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-zinc-950/70 p-4 dark:bg-black/70 sm:items-center"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-zinc-950/70 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] dark:bg-black/70 sm:items-center sm:p-4"
           role="presentation"
           onClick={(e) => {
             if (e.target === e.currentTarget) closeModal();
@@ -170,7 +170,7 @@ export default function CarsPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="new-car-title"
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
+            className="max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-zinc-800 dark:bg-zinc-950 sm:max-h-[90vh] sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
@@ -256,7 +256,7 @@ export default function CarsPage() {
                   className="mt-1.5 w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
                 />
               </div>
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={closeModal}

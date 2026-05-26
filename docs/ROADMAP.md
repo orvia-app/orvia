@@ -17,6 +17,10 @@
 - Local-only export/reset data foundation in Settings.
 - Workspace and tag helper foundation for organization, search, and future AI context.
 - Local onboarding v1 for the Archflow capture, organize, and retrieve loop.
+- Central storage key registry and browser-safe storage adapter foundation.
+- Generic local repository contracts for current local-first domains.
+- Core backend-ready entity, relation, search, capture, activity, and memory seams.
+- Sync metadata type foundation without network sync.
 - Initial product, architecture, roadmap, and security docs.
 
 ## Next UX/Product Phase
@@ -63,8 +67,10 @@
 - Support user-created workspaces and backend-owned tag records.
 - Add workspace-level permissions and server-side authorization checks.
 - Migrate repositories from browser-only storage to backend-compatible adapters.
+- Add a second storage adapter target, likely IndexedDB or server-backed sync, behind the existing repository contracts.
 - Evaluate Supabase/PostgreSQL with row-level security or equivalent authorization.
 - Design offline/local-first sync and conflict handling.
+- Use core entity sync metadata for versioning, soft delete, device provenance, and conflict resolution.
 - Add export/delete account data workflows.
 - Ensure backups, sync queues, derived memory, and embeddings respect deletion requests.
 - Add auditable deletion records for backend account/data deletion flows.

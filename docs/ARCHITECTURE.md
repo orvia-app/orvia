@@ -18,6 +18,7 @@ No backend, authentication, cloud sync, vector database, production AI calls, or
 - `src/components/ThemeProvider.tsx`: theme state and document class management.
 - `src/components/ui/*`: reusable UI primitives such as cards, buttons, badges, sections, empty states, and skeletons.
 - `src/components/command-palette/*`: command palette, action dialog, and command hooks.
+- `src/core/*`: backend-ready core contracts for storage adapters, repositories, normalized entities, relations, search, capture, activity events, and memory retrieval seams.
 - `src/lib/*`: repositories, domain helpers, command registries, entity/search/activity/briefing/memory foundations.
 - `src/data/mock.ts`: seed data for MVP defaults.
 - `src/types/index.ts`: shared core domain types.
@@ -28,13 +29,20 @@ All TypeScript modules must use `.ts` or `.tsx` extensions. Extensionless TypeSc
 
 Domain data access goes through typed repository helpers. Pages and components should not parse JSON or access `localStorage` directly.
 
-Current repositories include:
+Current public domain helpers include:
 - `src/lib/tasks.ts`
 - `src/lib/notes.ts`
 - `src/lib/finance.ts`
 - `src/lib/cars.ts`
 - `src/lib/quick-captures.ts`
-- `src/lib/storage.ts` as the low-level safe storage adapter
+
+Core storage and repository contracts live in:
+- `src/core/storage/keys.ts`: single registry for all Archflow browser storage keys.
+- `src/core/storage/storage-adapter.ts`: typed adapter interface plus safe JSON helpers.
+- `src/core/storage/local-storage-adapter.ts`: browser-safe localStorage implementation.
+- `src/core/repositories/*`: generic list/entity repository contracts and local JSON repository implementation.
+
+`src/lib/storage.ts` remains a compatibility bridge so older imports keep working, but it delegates to the core adapter. Domain helpers keep their existing APIs and now delegate to reusable local repositories.
 
 This boundary is the migration point for future API routes, server actions, Supabase, PostgreSQL, or an offline sync engine. Storage schemas should remain typed, validated, and export-friendly.
 
@@ -79,6 +87,16 @@ Entities include stable typed IDs, source IDs, title/subtitle helpers, metadata,
 
 The entity layer is the shared substrate for search, activity, memory, future relations, and backend synchronization.
 
+`src/core/entities/*` adds the backend-ready normalized entity foundation. It defines:
+- `BaseEntity`
+- `EntityRelation`
+- `EntityMetadata`
+- `SyncMetadata`
+- deterministic relation scoring
+- adapters from current domain models into core entities
+
+Current domain models are not force-migrated. Mappers keep UI types stable while preparing future sync, soft delete, versioning, and source-aware AI retrieval.
+
 ## Workspace And Tags Foundation
 
 `src/lib/workspaces/*` defines stable workspace keys for personal, work, cars, business, and knowledge. The helpers map current legacy workspace IDs such as `1` and `2`, plus local domain aliases such as `finance`, into canonical workspace keys and labels.
@@ -91,7 +109,13 @@ Future backend work should treat workspaces and tags as first-class organization
 
 ## Search Architecture
 
-Search is deterministic and local today. `src/lib/search.ts` maps domain data into normalized searchable entities and filters them by text.
+Search is deterministic and local today. `src/lib/search.ts` maps tasks and notes into searchable entities for legacy/simple usage. Universal search is bridged through `src/lib/universal-search.ts`, which delegates to `src/core/search/*`.
+
+The core search layer separates:
+- text normalization
+- result types
+- local retrieval
+- result ranking/mapping
 
 Future search should extend the normalized model rather than rebuilding per-page mapping logic. Planned additions include:
 - finance, cars, inbox captures, and memory results
@@ -105,6 +129,8 @@ Future search should extend the normalized model rather than rebuilding per-page
 `src/lib/activity/*` defines typed activity events for task, note, inbox, finance, and car changes.
 
 Activity items include stable IDs, timestamps, entity references, metadata, optional actor/workspace fields, and future sync fields. Feed helpers convert entities into activity items, merge and sort events deterministically, filter by type, and support pagination.
+
+`src/core/activity/*` adds an event-sourcing-lite shape for future sync/audit work. Existing timeline behavior still uses the current local activity feed, while core event adapters can map activity items into backend-ready events with source and sync metadata.
 
 This foundation can later power a visible timeline, audit history, AI memory context, daily/weekly recaps, analytics, and sync conflict review.
 
@@ -132,6 +158,30 @@ The Today page uses this foundation for a local Daily Briefing preview. Future A
 
 The Dashboard Memory Preview renders read-only candidates from existing entities/activity. There is no memory persistence, no embedding generation, no AI provider call, and no backend memory service yet.
 
+`src/core/memory/*` exposes memory candidate generation, ranking, relation signals, retrieval, and indexing through a core namespace. Current behavior delegates to deterministic local helpers; future AI retrieval can replace or extend this layer without pushing provider logic into UI components.
+
+## Capture Pipeline Foundation
+
+Inbox capture remains deterministic and local. `src/lib/inbox.ts` owns the current parser and preview helpers.
+
+`src/core/capture/*` introduces a pipeline shape:
+
+capture input → normalize → classify → enrich → suggest → preview → persist
+
+The current deterministic parser is bridged into that pipeline. Future AI classification should replace the classifier stage server-side while preserving preview, user control, and repository persistence.
+
+## Sync-Ready Metadata
+
+Core entities include sync metadata fields for future backend work:
+- version
+- sync status
+- source
+- last synced timestamp
+- device ID
+- optional deleted timestamp
+
+These fields are type foundations only. There is no network sync, offline queue, conflict resolver, auth, Supabase, or backend persistence yet.
+
 ## SSR And Hydration Safety
 
 Patterns to preserve:
@@ -158,6 +208,12 @@ The likely SaaS path should support:
 - auditability for AI actions and sensitive operations
 
 Repositories should become the compatibility layer between current local-first MVP storage and future backend/sync infrastructure.
+
+The intended migration path is:
+
+UI → hooks/services → public domain helpers → repository contracts → storage adapter
+
+The initial adapter is localStorage. Future adapters can target IndexedDB, server actions, Supabase/PostgreSQL, or a sync engine while preserving current helper APIs during migration.
 
 ## Security Principles
 

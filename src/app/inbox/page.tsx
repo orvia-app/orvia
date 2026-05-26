@@ -120,7 +120,7 @@ export default function InboxPage() {
                 Universal capture
               </div>
 
-              <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
+              <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
                 Archflow Inbox
               </h1>
 

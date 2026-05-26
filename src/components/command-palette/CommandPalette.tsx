@@ -56,7 +56,7 @@ export function CommandPalette({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-zinc-950/45 px-3 py-16 backdrop-blur-sm dark:bg-black/65 sm:px-4 sm:py-24"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-zinc-950/45 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-[calc(3rem+env(safe-area-inset-top))] backdrop-blur-sm dark:bg-black/65 sm:items-start sm:px-4 sm:py-24"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
@@ -67,7 +67,7 @@ export function CommandPalette({
       <div
         aria-labelledby="command-palette-title"
         aria-modal="true"
-        className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl shadow-zinc-950/15 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:shadow-black/40 dark:ring-zinc-800"
+        className="flex max-h-[calc(100dvh-4rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl shadow-zinc-950/15 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:shadow-black/40 dark:ring-zinc-800 sm:max-h-[min(42rem,82vh)]"
         role="dialog"
       >
         <div className="ring-1 ring-inset ring-zinc-200/60 dark:ring-zinc-800/70">
@@ -120,7 +120,7 @@ export function CommandPalette({
 
         <div
           id="command-palette-results"
-          className="app-scrollbar max-h-[min(34rem,64vh)] scroll-py-3 overflow-y-auto p-2"
+          className="app-scrollbar min-h-0 flex-1 scroll-py-3 overflow-y-auto p-2"
           role="listbox"
         >
           {commands.length > 0 ? (
@@ -157,10 +157,10 @@ export function CommandPalette({
                           aria-selected={active}
                           className={
                             active
-                          ? "flex w-full cursor-pointer items-center gap-3 rounded-xl bg-zinc-950 px-3 py-2.5 text-left text-white shadow-sm shadow-zinc-950/10 dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none"
-                          : primary
-                            ? "flex w-full cursor-pointer items-center gap-3 rounded-xl bg-zinc-100/70 px-3 py-2.5 text-left text-zinc-800 ring-1 ring-zinc-200/60 transition hover:bg-white hover:text-zinc-950 hover:ring-zinc-300 dark:bg-zinc-900/45 dark:text-zinc-200 dark:ring-zinc-800/70 dark:hover:bg-zinc-900 dark:hover:text-white dark:hover:ring-zinc-700"
-                            : "flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left text-zinc-700 transition hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white"
+                              ? "flex w-full cursor-pointer items-center gap-3 rounded-xl bg-zinc-950 px-3 py-2.5 text-left text-white dark:bg-zinc-100 dark:text-zinc-950"
+                              : primary
+                                ? "flex w-full cursor-pointer items-center gap-3 rounded-xl bg-zinc-100/70 px-3 py-2.5 text-left text-zinc-800 ring-1 ring-zinc-200/60 hover:bg-white hover:text-zinc-950 hover:ring-zinc-300 dark:bg-zinc-900/45 dark:text-zinc-200 dark:ring-zinc-800/70 dark:hover:bg-zinc-900 dark:hover:text-white dark:hover:ring-zinc-700"
+                                : "flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white"
                           }
                           onClick={() => onCommandSelect(command)}
                           onMouseEnter={() => onActiveIndexChange(index)}

@@ -1,9 +1,8 @@
 import { tasks as initialTasks } from "@/data/mock";
+import { createLocalEntityRepository } from "@/core/repositories/local-json-repository";
 import type { Task } from "@/types/index";
 import {
   hasCompletedLocalDataReset,
-  safeReadStorage,
-  safeWriteStorage,
   STORAGE_KEYS,
 } from "@/lib/storage";
 
@@ -40,15 +39,13 @@ export function isTask(value: unknown): value is Task {
   );
 }
 
-export function getTasks(): Task[] {
-  const storedTasks = safeReadStorage<unknown[]>(
-    STORAGE_KEYS.tasks,
-    [],
-  );
+export const taskRepository = createLocalEntityRepository<Task>({
+  key: STORAGE_KEYS.tasks,
+  validate: isTask,
+});
 
-  const validTasks = Array.isArray(storedTasks)
-    ? storedTasks.filter(isTask)
-    : [];
+export function getTasks(): Task[] {
+  const validTasks = taskRepository.list();
 
   if (hasCompletedLocalDataReset()) {
     return validTasks;
@@ -58,16 +55,11 @@ export function getTasks(): Task[] {
 }
 
 export function getStoredTasks(): Task[] {
-  const storedTasks = safeReadStorage<unknown[]>(
-    STORAGE_KEYS.tasks,
-    [],
-  );
-
-  return Array.isArray(storedTasks) ? storedTasks.filter(isTask) : [];
+  return taskRepository.list();
 }
 
 export function saveTasks(tasks: Task[]): void {
-  safeWriteStorage(STORAGE_KEYS.tasks, tasks);
+  taskRepository.save(tasks);
 }
 
 export function createTask(task: Task): Task[] {

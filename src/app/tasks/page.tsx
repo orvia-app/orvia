@@ -214,11 +214,11 @@ function TasksContent() {
 
   return (
     <AppShell>
-      <div className="p-6 sm:p-10">
+      <div className="px-4 py-6 sm:p-10">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
+              <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
                 Tasks
               </h1>
 
@@ -232,7 +232,7 @@ function TasksContent() {
             </Button>
           </div>
 
-          <div className="mt-8 flex flex-wrap gap-2">
+          <div className="app-scrollbar -mx-4 mt-8 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
             {filters.map(({ label, value }) => {
               const active = statusFilter === value;
 
@@ -345,7 +345,7 @@ function TasksContent() {
 
       {modalOpen ? (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-zinc-950/70 p-4 dark:bg-black/70 sm:items-center"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-zinc-950/70 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] dark:bg-black/70 sm:items-center sm:p-4"
           role="presentation"
           onClick={(event) => {
             if (event.target === event.currentTarget) {
@@ -357,7 +357,7 @@ function TasksContent() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="new-task-title"
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto shadow-xl"
+            className="max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto shadow-xl sm:max-h-[90vh]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
@@ -507,7 +507,7 @@ function TasksContent() {
                 </select>
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
                 <Button variant="secondary" onClick={closeModal}>
                   Cancel
                 </Button>

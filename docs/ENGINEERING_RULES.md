@@ -66,10 +66,13 @@ rm -rf .next
 ## Storage And Data Safety
 
 - No direct `localStorage` access in pages or components.
-- Browser storage access must go through `src/lib/storage.ts` and domain repositories.
+- Browser storage access must go through `src/core/storage/*`, the `src/lib/storage.ts` compatibility bridge, and domain repositories.
+- All storage keys must live in `src/core/storage/keys.ts`; do not add inline `personal-os.*` key strings in app logic.
+- New persisted domains should expose typed repository/helper functions instead of putting serialization in UI.
 - Validate parsed storage before use.
 - Keep repository APIs typed and future-backend-friendly.
 - Do not clear unrelated browser storage.
+- Existing localStorage key names should not be renamed without an explicit migration plan.
 
 ## Security Rules
 

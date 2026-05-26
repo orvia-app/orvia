@@ -143,7 +143,7 @@ export default function AiChatPage() {
               <Brain className="h-5 w-5" aria-hidden />
             </div>
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
+              <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
                 Assistant
               </h1>
               <p className="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">

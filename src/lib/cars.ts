@@ -1,7 +1,6 @@
+import { createLocalEntityRepository } from "@/core/repositories/local-json-repository";
 import {
   hasCompletedLocalDataReset,
-  safeReadStorage,
-  safeWriteStorage,
   STORAGE_KEYS,
 } from "@/lib/storage";
 
@@ -47,10 +46,13 @@ export function isCarRecord(value: unknown): value is CarRecord {
   );
 }
 
-export function getStoredCars(): CarRecord[] {
-  const storedCars = safeReadStorage<unknown[]>(STORAGE_KEYS.cars, []);
+export const carRepository = createLocalEntityRepository<CarRecord>({
+  key: STORAGE_KEYS.cars,
+  validate: isCarRecord,
+});
 
-  return Array.isArray(storedCars) ? storedCars.filter(isCarRecord) : [];
+export function getStoredCars(): CarRecord[] {
+  return carRepository.list();
 }
 
 export function getCars(): CarRecord[] {
@@ -64,7 +66,7 @@ export function getCars(): CarRecord[] {
 }
 
 export function saveCars(cars: readonly CarRecord[]): void {
-  safeWriteStorage(STORAGE_KEYS.cars, cars);
+  carRepository.save(cars);
 }
 
 export function ensureCarsSeeded(): CarRecord[] {
