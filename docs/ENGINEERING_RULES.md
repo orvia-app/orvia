@@ -22,6 +22,14 @@ Before finishing any code change:
 
 Use `npm run typecheck` for a faster TypeScript-only pass when diagnosing errors. Use `npm run check` when a full local gate is needed.
 
+## Git And Deployment Safety
+
+- Keep `main` deployable.
+- Run the required local checks before pushing meaningful changes.
+- Do not merge or hand off code with conflict markers, broken builds, or known parser errors.
+- Future team workflow should use pull requests, protected main, required checks, code review, and Vercel preview deployments before production.
+- Production environment variables should be managed in the deployment platform and limited to trusted maintainers.
+
 ## Next.js And Turbopack Notes
 
 - This project uses a modern Next.js version; read relevant local docs before relying on old framework assumptions.
@@ -67,9 +75,16 @@ rm -rf .next
 
 - No frontend secrets.
 - No API keys in client code.
+- `.env` files must remain untracked; commit only `.env.example` placeholders.
+- Treat every `NEXT_PUBLIC_*` variable as public browser-visible data.
+- Server-only secrets must stay in server-side runtime code and deployment environment settings.
 - No direct AI provider calls from UI.
 - No API calls from UI unless explicitly approved for the task.
 - Future AI and privileged integrations must go through server-side gateways.
+- Do not log secrets, tokens, full AI prompts, payment data, or unnecessary personal content.
+- Verify webhook signatures server-side before trusting provider events.
+- Backend records must eventually enforce user ownership and workspace authorization server-side.
+- Admin/debug tooling must not bypass user isolation without explicit, logged, reviewed controls.
 
 ## AI Rules
 
@@ -78,6 +93,9 @@ rm -rf .next
 - Future AI calls must go through backend/API routes only.
 - AI features must be privacy-aware.
 - Do not overclaim current AI capability in UI or docs.
+- AI suggestions are assistive, not authoritative.
+- Destructive AI actions and high-impact recommendations require explicit user confirmation.
+- UI should distinguish AI suggestions from AI-executed actions when real AI actions exist.
 
 ## SSR And Hydration Safety
 

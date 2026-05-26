@@ -57,22 +57,35 @@
 - Choose backend architecture and environment strategy.
 - Introduce authentication and secure sessions.
 - Add user/workspace ownership to persisted data.
+- Add `user_id` ownership to every user-owned record.
 - Support user-created workspaces and backend-owned tag records.
+- Add workspace-level permissions and server-side authorization checks.
 - Migrate repositories from browser-only storage to backend-compatible adapters.
 - Evaluate Supabase/PostgreSQL with row-level security or equivalent authorization.
 - Design offline/local-first sync and conflict handling.
 - Add export/delete account data workflows.
+- Ensure backups, sync queues, derived memory, and embeddings respect deletion requests.
+- Add auditable deletion records for backend account/data deletion flows.
 - Replace local-only export/reset with authenticated cloud export/delete workflows.
 - Define migration/versioning strategy for stored data.
 
 ## Security Hardening Phase
 
-- Create security checklist for releases.
-- Audit `.gitignore`, repository contents, and generated artifacts.
-- Define secrets management policy.
-- Define environment variable strategy for local, preview, and production.
-- Create threat model for MVP SaaS scope.
-- Create data classification policy.
+- Keep security checklist current for releases.
+- Re-audit `.gitignore`, repository contents, and generated artifacts before public launch.
+- Keep main deployable and add protected-branch workflow before teammates join.
+- Add required checks before merge:
+  - build
+  - typecheck
+  - diff/format hygiene
+  - security checks where applicable
+- Use Vercel preview deployments for PR validation.
+- Expand secrets management policy after backend provider choice.
+- Validate environment variable strategy for local, preview, and production.
+- Expand threat model for MVP SaaS scope.
+- Expand data classification policy into implementation requirements.
+- Define data retention windows for product data, backups, logs, AI prompts, embeddings, and derived memory.
+- Define AI safety review rules for high-impact and destructive actions.
 - Create dependency audit workflow.
 - Create incident response basics:
   - triage owner

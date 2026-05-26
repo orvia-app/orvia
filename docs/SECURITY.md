@@ -15,11 +15,73 @@ This document defines security direction and engineering constraints. It is not 
 - Avoid hidden analytics or unapproved external data transfer.
 - Keep future export/delete requirements in mind for every user data type.
 
+## Threat Model Basics
+
+Current MVP risks:
+- accidental secret commits
+- unsafe browser storage assumptions
+- dependency or build-chain compromise
+- XSS exposing local browser data
+- future AI prompts sending too much personal context
+- future payment or auth code trusting client state
+
+Future backend risks:
+- broken object-level authorization
+- weak session handling
+- service-role key exposure
+- missing Supabase RLS policies
+- unsafe webhook handling
+- overbroad logs containing personal data
+- AI memory retaining data after source deletion
+
+Security reviews should focus on data ownership, authorization boundaries, secrets handling, logs, and deletion/export behavior before launch.
+
+## GitHub And Vercel Production Safety
+
+Current repository hygiene:
+- keep the main branch deployable
+- run `npm run build` and `git diff --check` before pushing meaningful changes
+- do not leave merge conflict markers, broken builds, or placeholder secrets in committed files
+
+Future team workflow:
+- require pull requests before merging to main
+- protect the main branch
+- require build, typecheck, lint/security checks where applicable, and review before merge
+- use Vercel preview deployments for PR validation
+- keep production deployments tied to reviewed main-branch changes
+- restrict production environment variable access to trusted maintainers only
+
+## Data Classification
+
+Current and future data should be classified before sync or AI processing:
+- Public: marketing copy, public app metadata, non-sensitive docs.
+- Internal: source code, roadmap, architecture notes, operational metadata.
+- User personal: tasks, notes, inbox captures, cars, finance entries, memory candidates, timeline activity.
+- Sensitive: authentication/session data, integration tokens, billing references, high-risk notes, AI prompts/responses containing personal context.
+- Secrets: API keys, service-role keys, webhook secrets, private credentials.
+
+Secrets must never enter the frontend. Sensitive and user personal data need explicit export/delete handling and minimal retention.
+
 ## Local Export And Reset
 
 The MVP includes local-only data export and reset controls in Settings. Export produces a JSON snapshot from existing local repositories. Reset clears only known Personal OS browser storage keys and does not clear unrelated browser storage.
 
 This is not cloud account deletion. Future backend sync will need authenticated export/delete workflows that remove server-side data, synced replicas, AI-derived memory, integration data where applicable, and billing/account references according to retention policy.
+
+## Data Retention And Deletion Strategy
+
+Current local-only behavior:
+- user data lives in browser storage through repository helpers
+- export is a local JSON download only
+- reset clears known Personal OS browser storage keys only
+- reset does not clear unrelated browser storage, remote accounts, backups, or synced replicas because those do not exist yet
+
+Future cloud behavior:
+- every user-owned record should be included in authenticated export/delete account flows
+- backups, sync queues, derived memories, embeddings, and integration data must respect deletion requests according to documented retention windows
+- deletion requests should be auditable in the backend phase without exposing unnecessary personal content
+- soft-delete, restore, and permanent-delete semantics must be explicit before production sync
+- billing and legal retention requirements must be separated from product data deletion
 
 ## No Frontend Secrets
 
@@ -32,6 +94,8 @@ Frontend code must never contain:
 - private webhooks
 
 Public configuration must be clearly safe for browser exposure. Secrets belong in server-side runtime configuration only.
+
+See `docs/ENVIRONMENT.md` for environment variable strategy. `NEXT_PUBLIC_*` variables are bundled into browser JavaScript and must be treated as public.
 
 ## No Direct AI Provider Calls From Client
 
@@ -69,6 +133,46 @@ Server-side AI should:
 - require confirmation for destructive or external actions
 - avoid retaining prompts/responses beyond the defined logging policy
 
+## AI Data Handling Policy
+
+Before real AI calls exist:
+- define which entity fields may be sent to providers
+- minimize context to the specific user-approved task
+- keep source references for generated memory and answers
+- avoid sending secrets, credentials, payment data, or unnecessary finance details
+- provide deletion/regeneration behavior for AI-derived memory
+- document retention assumptions for prompts, responses, embeddings, and logs
+
+No AI provider call should be made directly from client components.
+
+## AI Safety And Product Boundaries
+
+AI features must be assistive, transparent, and user-controlled.
+
+Current behavior:
+- AI Chat is mock-only until a server-side AI route exists
+- Memory Preview is deterministic and local; it is not real AI memory
+
+Future behavior:
+- AI suggestions are not authoritative decisions
+- medical, legal, financial, or similarly high-impact recommendations must not be treated as final decisions without user confirmation
+- destructive AI actions must require explicit confirmation
+- users should be able to distinguish AI suggestions from AI-executed actions
+- AI-generated content should keep source references where possible
+- privacy-sensitive AI features must explain what context is used and avoid hidden data transfer
+
+## Logging Policy
+
+Future logs should be useful for debugging and abuse prevention without becoming a shadow data store.
+
+Rules:
+- do not log secrets, auth tokens, webhook signatures, card data, or full AI prompts by default
+- redact personal content when practical
+- keep request IDs and operational metadata separate from user content
+- define retention periods before production
+- restrict access to production logs
+- treat logs as in-scope for incident response and data deletion policy where applicable
+
 ## Future Auth And Session Architecture
 
 Future auth should support:
@@ -81,6 +185,17 @@ Future auth should support:
 - separation between user data and operational metadata
 
 Client-side route visibility is not a security boundary. Backend authorization must enforce access.
+
+## Future Access Control Plan
+
+When backend storage exists:
+- every user-owned record should include `user_id` or an equivalent ownership reference
+- workspace-scoped records should include workspace ownership and membership context
+- workspace-level permissions should be enforced server-side
+- Supabase RLS or equivalent authorization policies should protect every user-owned table
+- sensitive actions should produce an audit trail with actor, target, timestamp, and outcome
+- admin/debug tooling must not bypass user isolation casually
+- privileged support access should be explicit, logged, scoped, and time-limited
 
 ## Future Supabase/RLS Direction
 
@@ -100,9 +215,11 @@ Payment processing should use Stripe or an equivalent PCI-compliant provider thr
 Rules:
 - the app must not store card data
 - the frontend must not receive Stripe secret keys
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` may be public, but secret and webhook keys must remain server-only
 - store only required customer, subscription, price, and billing status references
 - webhook handlers must verify signatures server-side
 - billing state must not be trusted from client input alone
+- payment logs must avoid card data and unnecessary personal data
 
 ## GDPR And Privacy Readiness
 
