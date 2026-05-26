@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, Sparkles } from "lucide-react";
+import { CalendarDays, Compass } from "lucide-react";
 import Link from "next/link";
 
 import { AppShell } from "@/components/AppShell";
@@ -26,7 +26,7 @@ function sortByPriorityDesc(a: Task, b: Task): number {
   return PRIORITY_RANK[b.priority] - PRIORITY_RANK[a.priority];
 }
 
-const AI_SUGGESTIONS = [
+const LOCAL_GUIDANCE = [
   "Start with the highest-priority work item.",
   "Clear small admin tasks after deep work.",
   "Review finance and car reminders once per day.",
@@ -81,7 +81,7 @@ export default function TodayPage() {
 
   return (
     <AppShell>
-      <div className="p-6 sm:p-10">
+      <div className="px-4 py-6 sm:p-10">
         <div className="mx-auto max-w-6xl">
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-violet-200 bg-violet-50 shadow-sm shadow-violet-950/[0.03] dark:border-violet-500/20 dark:bg-violet-500/10 dark:shadow-none">
@@ -97,8 +97,8 @@ export default function TodayPage() {
             </div>
           </div>
 
-          <div className="mt-10 grid gap-8 lg:grid-cols-3">
-            <div className="space-y-8 lg:col-span-2">
+          <div className="mt-8 grid gap-7 lg:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.9fr)]">
+            <div className="space-y-7">
               <Section>
                 <SectionHeader
                   title="Focus Plan"
@@ -121,9 +121,9 @@ export default function TodayPage() {
                     focusPlan.map((task, i) => (
                       <div
                         key={task.id}
-                        className="flex items-start gap-4 rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm shadow-zinc-950/[0.03] dark:border-zinc-800/80 dark:bg-zinc-950 dark:shadow-none sm:p-5"
+                        className="flex items-start gap-4 rounded-2xl bg-white p-4 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:shadow-none dark:ring-zinc-800/70 sm:p-5"
                       >
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-100 text-sm font-semibold text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-sm font-semibold text-zinc-700 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-300 dark:ring-zinc-800">
                           {i + 1}
                         </span>
                         <div className="min-w-0 flex-1">
@@ -136,10 +136,10 @@ export default function TodayPage() {
                             </p>
                           ) : null}
                           <div className="mt-3 flex flex-wrap gap-2">
-                            <span className="rounded-full border border-zinc-200 bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
+                            <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-300 dark:ring-zinc-800">
                               {task.priority}
                             </span>
-                            <span className="rounded-full border border-zinc-200 bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
+                            <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-300 dark:ring-zinc-800">
                               {task.status}
                             </span>
                           </div>
@@ -165,12 +165,12 @@ export default function TodayPage() {
                     nonDone.map((task) => (
                       <div
                         key={task.id}
-                        className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200/80 bg-white px-4 py-3 shadow-sm shadow-zinc-950/[0.02] dark:border-zinc-800/80 dark:bg-zinc-950/80 dark:shadow-none"
+                        className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 shadow-sm shadow-zinc-950/[0.02] ring-1 ring-zinc-200/60 dark:bg-zinc-950/80 dark:shadow-none dark:ring-zinc-800/70"
                       >
                         <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                           {task.title}
                         </span>
-                        <span className="rounded-full border border-zinc-200 bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+                        <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800">
                           {task.priority} · {task.status}
                         </span>
                       </div>
@@ -180,7 +180,7 @@ export default function TodayPage() {
               </Section>
             </div>
 
-            <div className="space-y-8">
+            <div className="space-y-7">
               <Section>
                 <Card className="p-5 sm:p-6">
                   <SectionHeader
@@ -201,9 +201,9 @@ export default function TodayPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="mt-5 space-y-6">
+                    <div className="mt-5 space-y-5">
                       <div>
-                        <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                        <h3 className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
                           Overdue tasks
                         </h3>
                         {briefing.overdueTasks.length === 0 ? (
@@ -217,7 +217,7 @@ export default function TodayPage() {
                             {briefing.overdueTasks.slice(0, 3).map((task) => (
                               <li
                                 key={task.id}
-                                className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300"
+                                className="rounded-lg bg-rose-50 px-3 py-2 text-sm font-medium text-rose-800 ring-1 ring-rose-200/70 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/20"
                               >
                                 {task.title}
                               </li>
@@ -227,7 +227,7 @@ export default function TodayPage() {
                       </div>
 
                       <div>
-                        <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                        <h3 className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
                           Today tasks
                         </h3>
                         {briefing.todayTasks.length === 0 ? (
@@ -241,7 +241,7 @@ export default function TodayPage() {
                             {briefing.todayTasks.slice(0, 3).map((task) => (
                               <li
                                 key={task.id}
-                                className="rounded-lg border border-zinc-200/80 bg-zinc-50/80 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:text-zinc-200"
+                                className="rounded-lg bg-zinc-100/70 px-3 py-2 text-sm text-zinc-800 dark:bg-zinc-900/45 dark:text-zinc-200"
                               >
                                 {task.title}
                               </li>
@@ -251,7 +251,7 @@ export default function TodayPage() {
                       </div>
 
                       <div>
-                        <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                        <h3 className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
                           Recent notes
                         </h3>
                         {briefing.recentNotes.length === 0 ? (
@@ -265,7 +265,7 @@ export default function TodayPage() {
                             {briefing.recentNotes.slice(0, 3).map((note) => (
                               <li
                                 key={note.id}
-                                className="rounded-lg border border-zinc-200/80 bg-zinc-50/80 px-3 py-2 dark:border-zinc-800/80 dark:bg-zinc-900/40"
+                                className="rounded-lg bg-zinc-100/70 px-3 py-2 dark:bg-zinc-900/45"
                               >
                                 <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
                                   {note.title}
@@ -280,7 +280,7 @@ export default function TodayPage() {
                       </div>
 
                       <div>
-                        <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                        <h3 className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
                           Recent captures
                         </h3>
                         {briefing.recentCaptures.length === 0 ? (
@@ -296,7 +296,7 @@ export default function TodayPage() {
                               .map((capture) => (
                                 <li
                                   key={capture.id}
-                                  className="rounded-lg border border-zinc-200/80 bg-zinc-50/80 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:text-zinc-200"
+                                  className="rounded-lg bg-zinc-100/70 px-3 py-2 text-sm text-zinc-800 dark:bg-zinc-900/45 dark:text-zinc-200"
                                 >
                                   {capture.text}
                                 </li>
@@ -310,15 +310,15 @@ export default function TodayPage() {
               </Section>
 
               <Section>
-                <Card className="p-5 sm:p-6">
+                <Card variant="secondary" className="p-5 sm:p-6">
                   <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-950 dark:text-white">
-                    <Sparkles className="h-5 w-5 text-violet-600 dark:text-violet-400" aria-hidden />
-                    AI Suggestions
+                    <Compass className="h-5 w-5 text-zinc-700 dark:text-zinc-300" aria-hidden />
+                    Local guidance
                   </h2>
                   <ul className="mt-4 space-y-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-                    {AI_SUGGESTIONS.map((line) => (
+                    {LOCAL_GUIDANCE.map((line) => (
                       <li key={line} className="flex gap-2">
-                        <span className="text-violet-600/80 dark:text-violet-500/80">
+                        <span className="text-zinc-400 dark:text-zinc-600">
                           —
                         </span>
                         <span>{line}</span>
@@ -350,7 +350,7 @@ export default function TodayPage() {
                     onChange={(e) => setCaptureText(e.target.value)}
                     rows={4}
                     placeholder="Quick thought, reminder, or link…"
-                    className="mt-4 w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 shadow-sm shadow-zinc-950/[0.02] placeholder:text-zinc-500 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200 dark:border-zinc-800 dark:bg-black dark:text-white dark:shadow-none dark:placeholder:text-zinc-600 dark:focus:border-violet-500/35 dark:focus:ring-violet-500/15"
+                    className="mt-4 w-full resize-y rounded-xl bg-white px-3 py-2.5 text-sm text-zinc-950 shadow-sm shadow-zinc-950/[0.02] outline-none ring-1 ring-zinc-200/80 placeholder:text-zinc-500 focus:ring-2 focus:ring-zinc-300 dark:bg-black dark:text-white dark:shadow-none dark:ring-zinc-800 dark:placeholder:text-zinc-600 dark:focus:ring-zinc-700"
                   />
                   <button
                     type="button"

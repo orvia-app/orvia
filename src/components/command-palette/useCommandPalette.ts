@@ -14,6 +14,7 @@ import {
   recordCommandExecution,
 } from "@/lib/commands/history";
 import type { CommandAction, CommandItem } from "@/lib/commands/types";
+import { getLocalActiveContext } from "@/lib/memory/context";
 
 type UseCommandPaletteOptions = {
   enabled?: boolean;
@@ -87,6 +88,38 @@ function sortCommands(commands: readonly CommandItem[]): CommandItem[] {
   });
 }
 
+function getContextBoostedCommandIds(): ReadonlySet<string> {
+  const activeContext = getLocalActiveContext(6);
+  const commandIds = new Set<string>();
+
+  activeContext.forEach((context) => {
+    if (context.entity.type === "task") {
+      commandIds.add("route-tasks");
+      commandIds.add("action-create-task");
+    }
+
+    if (context.entity.type === "note") {
+      commandIds.add("route-notes");
+      commandIds.add("action-create-note");
+    }
+  });
+
+  if (activeContext.length > 0) {
+    commandIds.add("route-search");
+    commandIds.add("route-timeline");
+  }
+
+  return commandIds;
+}
+
+function areSetsEqual<T>(a: ReadonlySet<T>, b: ReadonlySet<T>): boolean {
+  if (a.size !== b.size) {
+    return false;
+  }
+
+  return Array.from(a).every((value) => b.has(value));
+}
+
 function createCommandSections(input: {
   commands: readonly CommandItem[];
   query: string;
@@ -95,8 +128,10 @@ function createCommandSections(input: {
   const recentCommands = input.recentCommands.filter((command) =>
     commandMatches(command, input.query),
   );
+  const recentCommandIds = new Set(recentCommands.map((command) => command.id));
   const groupedCommands = sortCommands(input.commands).filter((command) =>
-    commandMatches(command, input.query),
+    commandMatches(command, input.query) &&
+    (input.query.trim() ? true : !recentCommandIds.has(command.id)),
   );
   const sections: CommandPaletteSection[] = [];
 
@@ -138,15 +173,34 @@ export function useCommandPalette(
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const [recentCommands, setRecentCommands] = useState<CommandItem[]>([]);
+  const [contextBoostedCommandIds, setContextBoostedCommandIds] = useState<
+    ReadonlySet<string>
+  >(new Set());
+
+  const contextualCommands = useMemo(
+    () =>
+      commands.map((command) =>
+        contextBoostedCommandIds.has(command.id)
+          ? {
+              ...command,
+              metadata: {
+                ...command.metadata,
+                contextualScore: (command.metadata?.contextualScore ?? 0) + 20,
+              },
+            }
+          : command,
+      ),
+    [commands, contextBoostedCommandIds],
+  );
 
   const commandSections = useMemo(
     () =>
       createCommandSections({
-        commands,
+        commands: contextualCommands,
         query,
         recentCommands,
       }),
-    [commands, query, recentCommands],
+    [contextualCommands, query, recentCommands],
   );
 
   const filteredCommands = useMemo(
@@ -176,7 +230,7 @@ export function useCommandPalette(
   const runCommand = useCallback(
     (command: CommandItem) => {
       recordCommandExecution(command.id);
-      setRecentCommands(getRecentCommands(commands));
+      setRecentCommands(getRecentCommands(contextualCommands));
 
       switch (command.action.type) {
         case "navigate":
@@ -192,7 +246,7 @@ export function useCommandPalette(
 
       closePalette();
     },
-    [closePalette, commands, onAction, router],
+    [closePalette, contextualCommands, onAction, router],
   );
 
   const handleQueryChange = useCallback((nextQuery: string) => {
@@ -214,14 +268,19 @@ export function useCommandPalette(
   useEffect(() => {
     if (!open) return;
 
-    setRecentCommands(getRecentCommands(commands));
+    setRecentCommands(getRecentCommands(contextualCommands));
+    setContextBoostedCommandIds((currentIds) => {
+      const nextIds = getContextBoostedCommandIds();
+
+      return areSetsEqual(currentIds, nextIds) ? currentIds : nextIds;
+    });
 
     const frame = window.requestAnimationFrame(() => {
       inputRef.current?.focus();
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [commands, open]);
+  }, [contextualCommands, open]);
 
   useEffect(() => {
     if (activeIndex <= filteredCommands.length - 1) return;

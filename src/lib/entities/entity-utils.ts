@@ -103,8 +103,13 @@ export function taskToEntity(task: Task): TaskEntity {
     metadata: {
       createdAt: task.createdAt,
       workspaceId: workspaceKey,
+      workspaceLabel,
       source: "local",
       url: getTaskUrl(task),
+      tags: [task.priority, task.status, workspaceKey],
+      memoryTags: [task.priority, task.status, workspaceKey],
+      status: task.status,
+      priority: task.priority,
       searchableText: compactText([
         task.title,
         task.description,
@@ -133,6 +138,7 @@ export function noteToEntity(note: Note): NoteEntity {
     data: note,
     metadata: {
       workspaceId: workspaceKey,
+      workspaceLabel,
       source: "local",
       url: "/notes",
       searchableText: compactText([
@@ -143,6 +149,7 @@ export function noteToEntity(note: Note): NoteEntity {
         workspaceLabel,
         tagsToSearchText(memoryTags),
       ]),
+      tags: memoryTags,
       memoryTags,
     },
   };
@@ -169,8 +176,10 @@ export function transactionToEntity(
     metadata: {
       createdAt: transaction.createdAt,
       workspaceId: workspaceKey,
+      workspaceLabel,
       source: "local",
       url: "/finance",
+      tags: [transaction.type, transaction.category, workspaceKey],
       searchableText: compactText([
         transaction.category,
         transaction.type,
@@ -197,8 +206,10 @@ export function carToEntity(car: CarRecord): CarEntity {
     data: car,
     metadata: {
       workspaceId: workspaceKey,
+      workspaceLabel,
       source: "local",
       url: "/cars",
+      tags: ["car", workspaceKey],
       searchableText: compactText([
         car.name,
         car.owner,
@@ -225,8 +236,11 @@ export function quickCaptureToEntity(capture: QuickCapture): InboxItemEntity {
     metadata: {
       createdAt: capture.createdAt,
       workspaceId: workspaceKey,
+      workspaceLabel,
       source: "local",
       url: "/inbox",
+      tags: ["capture", workspaceKey],
+      memoryTags: ["capture", workspaceKey],
       searchableText: compactText([
         capture.text,
         capture.createdAt,

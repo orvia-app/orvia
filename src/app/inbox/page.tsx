@@ -112,11 +112,11 @@ export default function InboxPage() {
 
   return (
     <AppShell>
-      <main className="p-6 sm:p-10">
+      <main className="px-4 py-6 sm:p-10">
         <div className="mx-auto max-w-5xl">
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <div className="mb-3 inline-flex rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-600 shadow-sm shadow-zinc-950/[0.03] dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400 dark:shadow-none">
+              <div className="mb-3 inline-flex rounded-full bg-white px-3 py-1 text-xs font-medium text-zinc-600 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:text-zinc-400 dark:shadow-none dark:ring-zinc-800">
                 Universal capture
               </div>
 
@@ -135,9 +135,9 @@ export default function InboxPage() {
           </div>
 
           <Card className="p-0">
-            <div className="border-b border-zinc-200/80 p-5 dark:border-zinc-800/80 sm:p-6">
+            <div className="p-5 sm:p-6">
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-100 text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-300 dark:ring-zinc-800">
                   <Inbox className="h-5 w-5" aria-hidden />
                 </span>
                 <div>
@@ -152,13 +152,13 @@ export default function InboxPage() {
               </div>
             </div>
 
-            <div className="p-5 sm:p-6">
+            <div className="px-5 pb-5 sm:px-6 sm:pb-6">
               <textarea
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 placeholder="Remind me to call John tomorrow"
                 rows={7}
-                className="w-full resize-y rounded-2xl border border-zinc-300 bg-zinc-50 p-4 text-base leading-7 text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 dark:border-zinc-800 dark:bg-black dark:text-white dark:placeholder:text-zinc-600 dark:focus:border-zinc-600 dark:focus:ring-zinc-800"
+                className="w-full resize-y rounded-2xl bg-zinc-50 p-4 text-base leading-7 text-zinc-950 outline-none ring-1 ring-zinc-200/80 transition placeholder:text-zinc-400 focus:bg-white focus:ring-2 focus:ring-zinc-300 dark:bg-black/70 dark:text-white dark:ring-zinc-800 dark:placeholder:text-zinc-600 dark:focus:ring-zinc-700"
               />
 
               <div className="mt-4 flex flex-wrap gap-2">
@@ -167,7 +167,7 @@ export default function InboxPage() {
                     key={line}
                     type="button"
                     onClick={() => setInput(line)}
-                    className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-white"
+                    className="rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-600 ring-1 ring-zinc-200/70 transition hover:bg-white hover:text-zinc-950 hover:ring-zinc-300 dark:bg-zinc-900/45 dark:text-zinc-400 dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:text-white dark:hover:ring-zinc-700"
                   >
                     {line}
                   </button>
@@ -225,8 +225,8 @@ export default function InboxPage() {
               </div>
 
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
-                  <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                <div className="rounded-xl bg-zinc-100/60 p-4 dark:bg-zinc-900/40">
+                  <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
                     Title
                   </p>
                   <p className="mt-2 text-sm font-medium text-zinc-950 dark:text-white">
@@ -234,8 +234,8 @@ export default function InboxPage() {
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
-                  <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                <div className="rounded-xl bg-zinc-100/60 p-4 dark:bg-zinc-900/40">
+                  <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
                     Detected type
                   </p>
                   <p className="mt-2 text-sm font-medium text-zinc-950 dark:text-white">
@@ -243,8 +243,8 @@ export default function InboxPage() {
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
-                  <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                <div className="rounded-xl bg-zinc-100/60 p-4 dark:bg-zinc-900/40">
+                  <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
                     Suggested workspace
                   </p>
                   <p className="mt-2 text-sm font-medium text-zinc-950 dark:text-white">
@@ -252,8 +252,8 @@ export default function InboxPage() {
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
-                  <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                <div className="rounded-xl bg-zinc-100/60 p-4 dark:bg-zinc-900/40">
+                  <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
                     Suggested tags
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
@@ -264,8 +264,8 @@ export default function InboxPage() {
                 </div>
               </div>
 
-              <div className="mt-4 rounded-xl border border-zinc-200/80 bg-white p-4 dark:border-zinc-800/80 dark:bg-black">
-                <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+              <div className="mt-4 rounded-xl bg-zinc-100/60 p-4 dark:bg-zinc-900/40">
+                <div className="flex items-center gap-2 text-xs font-medium text-zinc-500 dark:text-zinc-500">
                   <Tags className="h-3.5 w-3.5" aria-hidden />
                   Summary
                 </div>

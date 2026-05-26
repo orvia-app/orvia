@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { X } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
+import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
   getNotes,
@@ -12,6 +13,12 @@ import {
   type Note,
   type NoteType,
 } from "@/lib/notes";
+import {
+  getEntityContext,
+  getLocalContextEntities,
+  getRelatedContextSubtitle,
+  type EntityContext,
+} from "@/lib/memory/context";
 
 type FilterValue = "all" | NoteType;
 
@@ -20,6 +27,8 @@ type NoteFormState = {
   content: string;
   type: NoteType;
 };
+
+type NoteContextById = Record<string, EntityContext>;
 
 const FILTERS: { label: string; value: FilterValue }[] = [
   { label: "All", value: "all" },
@@ -57,12 +66,26 @@ function getTypeBadgeLabel(type: NoteType): string {
 
 export default function NotesPage() {
   const [notes, setNotes] = useState<Note[]>([]);
+  const [noteContextById, setNoteContextById] = useState<NoteContextById>({});
   const [typeFilter, setTypeFilter] = useState<FilterValue>("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<NoteFormState>(EMPTY_FORM);
 
   useEffect(() => {
-    setNotes(getNotes());
+    const nextNotes = getNotes();
+    const entities = getLocalContextEntities();
+
+    setNotes(nextNotes);
+    setNoteContextById(
+      Object.fromEntries(
+        entities
+          .filter((entity) => entity.type === "note")
+          .map((entity) => [
+            entity.sourceId,
+            getEntityContext(entity, entities),
+          ]),
+      ),
+    );
   }, []);
 
   const filteredNotes = useMemo(() => {
@@ -103,6 +126,17 @@ export default function NotesPage() {
 
     setNotes(nextNotes);
     saveNotes(nextNotes);
+    const entities = getLocalContextEntities();
+    setNoteContextById(
+      Object.fromEntries(
+        entities
+          .filter((entity) => entity.type === "note")
+          .map((entity) => [
+            entity.sourceId,
+            getEntityContext(entity, entities),
+          ]),
+      ),
+    );
     closeModal();
   }
 
@@ -124,7 +158,7 @@ export default function NotesPage() {
             <button
               type="button"
               onClick={openModal}
-              className="shrink-0 rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              className="shrink-0 rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-zinc-50 hover:ring-zinc-300 dark:bg-zinc-950 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:ring-zinc-700"
             >
               + New Note
             </button>
@@ -142,7 +176,7 @@ export default function NotesPage() {
                   className={
                     active
                       ? "rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-950"
-                      : "rounded-xl bg-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-300 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                      : "rounded-xl bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-200 hover:text-zinc-950 dark:bg-zinc-900/60 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                   }
                 >
                   {label}
@@ -152,26 +186,68 @@ export default function NotesPage() {
           </div>
 
           <div className="mt-8 grid gap-4 md:grid-cols-2">
-            {filteredNotes.map((note) => (
-              <article
-                key={note.id}
-                className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950 sm:p-6"
-              >
+            {filteredNotes.map((note) => {
+              const context = noteContextById[note.id];
+
+              return (
+                <article
+                  key={note.id}
+                  className="rounded-2xl bg-white p-5 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 transition hover:bg-zinc-50/70 hover:ring-zinc-300 dark:bg-zinc-950 dark:shadow-none dark:ring-zinc-800/70 dark:hover:bg-zinc-900/70 dark:hover:ring-zinc-700 sm:p-6"
+                >
                 <div className="flex items-start justify-between gap-4">
                   <h2 className="text-lg font-semibold text-zinc-950 dark:text-white sm:text-xl">
                     {note.title}
                   </h2>
 
-                  <span className="shrink-0 rounded-full bg-zinc-200 px-3 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                  <Badge className="shrink-0">
                     {getTypeBadgeLabel(note.type)}
-                  </span>
+                  </Badge>
                 </div>
+                {context ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {context.labels.slice(0, 2).map((label) => (
+                      <span
+                        key={label}
+                        className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600 ring-1 ring-zinc-200/80 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800"
+                      >
+                        {label}
+                      </span>
+                    ))}
+                    {context.relatedCount > 0 ? (
+                      <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-500 dark:bg-zinc-900/70 dark:text-zinc-400">
+                        Connected context
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
 
                 <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-zinc-600 dark:text-zinc-400 sm:text-base">
                   {note.content}
                 </p>
-              </article>
-            ))}
+                {context && context.relatedItems.length > 0 ? (
+                  <div className="mt-4 rounded-xl bg-zinc-100/60 px-3 py-2.5 ring-1 ring-inset ring-zinc-200/60 dark:bg-zinc-900/35 dark:ring-zinc-800/70">
+                    <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
+                      Connected to
+                    </p>
+                    <div className="mt-2 space-y-1.5">
+                      {context.relatedItems.slice(0, 2).map((item) => (
+                        <p
+                          key={item.entity.id}
+                          className="truncate text-sm text-zinc-700 dark:text-zinc-300"
+                        >
+                          {item.entity.title}
+                          <span className="text-zinc-400 dark:text-zinc-600">
+                            {" "}
+                            · {getRelatedContextSubtitle(item)}
+                          </span>
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                </article>
+              );
+            })}
           </div>
 
           {filteredNotes.length === 0 ? (

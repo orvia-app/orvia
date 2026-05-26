@@ -56,7 +56,7 @@ export function CommandPalette({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-zinc-950/55 px-4 py-20 backdrop-blur-sm dark:bg-black/70 sm:py-24"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-zinc-950/45 px-3 py-16 backdrop-blur-sm dark:bg-black/65 sm:px-4 sm:py-24"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
@@ -67,10 +67,10 @@ export function CommandPalette({
       <div
         aria-labelledby="command-palette-title"
         aria-modal="true"
-        className="w-full max-w-2xl overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl shadow-zinc-950/15 dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-black/40"
+        className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl shadow-zinc-950/15 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:shadow-black/40 dark:ring-zinc-800"
         role="dialog"
       >
-        <div className="border-b border-zinc-200 dark:border-zinc-800">
+        <div className="ring-1 ring-inset ring-zinc-200/60 dark:ring-zinc-800/70">
           <div className="flex items-center justify-between gap-3 px-4 pt-3">
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
@@ -108,7 +108,7 @@ export function CommandPalette({
               aria-autocomplete="list"
               aria-controls="command-palette-results"
               aria-label="Search commands"
-              className="h-11 min-w-0 flex-1 bg-transparent text-base text-zinc-950 outline-none placeholder:text-zinc-500 dark:text-white dark:placeholder:text-zinc-600"
+              className="h-10 min-w-0 flex-1 bg-transparent text-[15px] text-zinc-950 outline-none placeholder:text-zinc-500 dark:text-white dark:placeholder:text-zinc-600"
               onChange={(event) => onQueryChange(event.target.value)}
               placeholder="Search commands..."
               role="combobox"
@@ -124,7 +124,7 @@ export function CommandPalette({
           role="listbox"
         >
           {commands.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {commandSections.map((section) => (
                 <div key={section.id}>
                   <div className="flex items-center justify-between px-3 pb-1 pt-1">
@@ -157,10 +157,10 @@ export function CommandPalette({
                           aria-selected={active}
                           className={
                             active
-                              ? "flex w-full cursor-pointer items-center gap-3 rounded-xl bg-zinc-950 px-3 py-3 text-left text-white shadow-sm shadow-zinc-950/10 dark:bg-zinc-800 dark:shadow-none"
-                              : primary
-                                ? "flex w-full cursor-pointer items-center gap-3 rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-3 py-3 text-left text-zinc-800 transition hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-zinc-900/45 dark:text-zinc-200 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-white"
-                                : "flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left text-zinc-700 transition hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white"
+                          ? "flex w-full cursor-pointer items-center gap-3 rounded-xl bg-zinc-950 px-3 py-2.5 text-left text-white shadow-sm shadow-zinc-950/10 dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none"
+                          : primary
+                            ? "flex w-full cursor-pointer items-center gap-3 rounded-xl bg-zinc-100/70 px-3 py-2.5 text-left text-zinc-800 ring-1 ring-zinc-200/60 transition hover:bg-white hover:text-zinc-950 hover:ring-zinc-300 dark:bg-zinc-900/45 dark:text-zinc-200 dark:ring-zinc-800/70 dark:hover:bg-zinc-900 dark:hover:text-white dark:hover:ring-zinc-700"
+                            : "flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left text-zinc-700 transition hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white"
                           }
                           onClick={() => onCommandSelect(command)}
                           onMouseEnter={() => onActiveIndexChange(index)}
@@ -169,7 +169,7 @@ export function CommandPalette({
                           <span
                             className={
                               active
-                                ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white"
+                                ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white dark:bg-zinc-950/10 dark:text-zinc-950"
                                 : primary
                                   ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-zinc-800 shadow-sm shadow-zinc-950/[0.03] dark:bg-zinc-950 dark:text-zinc-200 dark:shadow-none"
                                   : "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400"
@@ -185,7 +185,7 @@ export function CommandPalette({
                               <span
                                 className={
                                   active
-                                    ? "mt-0.5 block truncate text-xs text-zinc-300"
+                                    ? "mt-0.5 block truncate text-xs text-zinc-300 dark:text-zinc-600"
                                     : "mt-0.5 block truncate text-xs text-zinc-500 dark:text-zinc-500"
                                 }
                               >

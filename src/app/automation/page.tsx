@@ -3,13 +3,13 @@ import { AppShell } from "@/components/AppShell";
 const automations = [
   { title: "Telegram Bot", description: "Bridge updates and commands." },
   { title: "Scheduled Workflows", description: "Run routines on a cadence." },
-  { title: "AI Reminders", description: "Context-aware nudges." },
+  { title: "Context Reminders", description: "Local signals for future nudges." },
 ];
 
 export default function AutomationPage() {
   return (
     <AppShell>
-      <div className="p-6 sm:p-10">
+      <div className="px-4 py-6 sm:p-10">
         <div className="mx-auto max-w-5xl">
           <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
             Automation
@@ -22,7 +22,7 @@ export default function AutomationPage() {
             {automations.map((item) => (
               <div
                 key={item.title}
-                className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950"
+                className="flex flex-col rounded-2xl bg-white p-6 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:shadow-none dark:ring-zinc-800/70"
               >
                 <h2 className="text-lg font-semibold text-zinc-950 dark:text-white">
                   {item.title}

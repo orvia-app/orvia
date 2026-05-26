@@ -17,11 +17,17 @@ export type EntityMetadata = {
   createdAt?: string;
   updatedAt?: string;
   workspaceId?: string;
+  workspaceLabel?: string;
   source: "local";
   url?: string;
   searchableText: string;
   relationIds?: readonly EntityId[];
   memoryTags?: readonly string[];
+  tags?: readonly string[];
+  relatedCount?: number;
+  contextualScore?: number;
+  status?: string;
+  priority?: string;
 };
 
 export type BaseEntity<TType extends EntityType, TData> = {

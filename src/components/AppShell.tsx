@@ -157,9 +157,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex min-h-screen flex-1 flex-col bg-zinc-50 dark:bg-black">
-        <header className="border-b border-zinc-200/80 bg-white px-6 py-4 dark:border-zinc-800/80 dark:bg-black lg:hidden">
+        <header className="sticky top-0 z-30 border-b border-zinc-200/70 bg-white/90 px-4 py-3 backdrop-blur dark:border-zinc-800/70 dark:bg-black/85 lg:hidden">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-100 text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 text-zinc-900 ring-1 ring-zinc-200/80 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-800">
               <BrandMark className="h-4.5 w-4.5" />
             </span>
             <p className="text-sm font-semibold text-zinc-950 dark:text-white">
@@ -168,6 +168,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         <main className="flex-1">{children}</main>
+        <Link
+          href="/inbox"
+          className="fixed bottom-4 right-4 z-40 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-950 text-white shadow-lg shadow-zinc-950/20 transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-black/30 dark:hover:bg-white lg:hidden"
+          aria-label="Capture in Inbox"
+        >
+          <Inbox className="h-5 w-5" aria-hidden />
+        </Link>
       </div>
     </div>
   );

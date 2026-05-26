@@ -31,16 +31,32 @@ function groupResults(
 
 function SearchResultCard({ result }: { result: UniversalSearchResult }) {
   const content = (
-    <Card className="p-4 transition hover:border-zinc-300 hover:bg-zinc-50 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/70 sm:p-5">
+    <Card
+      variant={result.type === "activity" ? "secondary" : "primary"}
+      className="p-4 transition hover:bg-zinc-50 hover:ring-1 hover:ring-zinc-300 dark:hover:bg-zinc-900/70 dark:hover:ring-zinc-700 sm:p-5"
+    >
       <div className="flex min-w-0 flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <Badge>{result.badgeLabel}</Badge>
           <span className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
             {result.groupLabel}
           </span>
+          {result.contextLabels?.slice(0, 2).map((label) => (
+            <span
+              key={label}
+              className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 ring-1 ring-zinc-200/80 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800"
+            >
+              {label}
+            </span>
+          ))}
+          {result.relatedCount ? (
+            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
+              Connected context
+            </span>
+          ) : null}
         </div>
         <div className="min-w-0">
-          <h3 className="truncate text-base font-semibold text-zinc-950 dark:text-white">
+          <h3 className="truncate text-[15px] font-semibold text-zinc-950 dark:text-white">
             {result.title}
           </h3>
           {result.subtitle ? (
@@ -89,15 +105,15 @@ export default function SearchPage() {
 
   return (
     <AppShell>
-      <main className="p-6 sm:p-10">
+      <main className="px-4 py-6 sm:p-10">
         <div className="mx-auto max-w-5xl">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
               Search
             </h1>
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">
-              Search tasks, notes, finance, cars, activity, and memory
-              candidates.
+              Search tasks, notes, finance, cars, activity, and connected
+              context.
             </p>
           </div>
 
@@ -109,8 +125,8 @@ export default function SearchPage() {
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search anything..."
-              className="w-full rounded-2xl border border-zinc-200 bg-white py-3.5 pl-12 pr-4 text-sm text-zinc-950 outline-none transition placeholder:text-zinc-500 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-200 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-800"
+              placeholder="Search tasks, notes, timeline, context..."
+              className="w-full rounded-2xl bg-white py-4 pl-12 pr-4 text-base text-zinc-950 shadow-sm shadow-zinc-950/[0.03] outline-none ring-1 ring-zinc-200/80 transition placeholder:text-zinc-500 focus:ring-2 focus:ring-zinc-300 dark:bg-zinc-950 dark:text-white dark:shadow-none dark:ring-zinc-800 dark:focus:ring-zinc-700"
             />
           </div>
 
@@ -122,7 +138,7 @@ export default function SearchPage() {
             ) : !hasQuery ? (
               <EmptyState
                 title="Search your workspace"
-                description="Enter a keyword to search entities, activity, and memory candidates."
+                description="Start typing to find local entities, activity, and connected context."
               />
             ) : !hasResults ? (
               <EmptyState
@@ -130,7 +146,7 @@ export default function SearchPage() {
                 description="Try another keyword or capture something new."
               />
             ) : (
-              <div className="space-y-8">
+              <div className="space-y-7">
                 {UNIVERSAL_SEARCH_GROUPS.map((group) => {
                   const groupItems = groupedResults[group.key];
 
@@ -146,7 +162,7 @@ export default function SearchPage() {
                           groupItems.length === 1 ? "" : "s"
                         }`}
                       />
-                      <div className="space-y-3">
+                      <div className="space-y-2.5">
                         {groupItems.map((result) => (
                           <SearchResultCard key={result.id} result={result} />
                         ))}

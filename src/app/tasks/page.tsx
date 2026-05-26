@@ -12,6 +12,7 @@ import { X } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/Badge";
+import type { BadgeVariant } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -21,6 +22,12 @@ import {
   TASK_PRIORITIES,
   TASK_STATUSES,
 } from "@/lib/tasks";
+import {
+  getEntityContext,
+  getLocalContextEntities,
+  getRelatedContextSubtitle,
+  type EntityContext,
+} from "@/lib/memory/context";
 import {
   getLegacyWorkspaceId,
   getWorkspaceLabel,
@@ -46,6 +53,8 @@ type TaskPageContext = {
 
 type TaskSearchParams = Pick<URLSearchParams, "get">;
 
+type TaskContextById = Record<string, EntityContext>;
+
 const filters: { label: string; value: FilterValue }[] = [
   { label: "All", value: "all" },
   { label: "Todo", value: "todo" },
@@ -67,6 +76,18 @@ function statusLabel(status: TaskStatus): string {
   }
 
   return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function priorityVariant(priority: TaskPriority): BadgeVariant {
+  if (priority === "critical") return "danger";
+  if (priority === "high") return "warning";
+  return "default";
+}
+
+function statusVariant(status: TaskStatus): BadgeVariant {
+  if (status === "done") return "success";
+  if (status === "in-progress") return "info";
+  return "default";
 }
 
 function isFilterValue(value: string | null): value is FilterValue {
@@ -92,6 +113,7 @@ function TasksContent() {
     [searchParams],
   );
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [taskContextById, setTaskContextById] = useState<TaskContextById>({});
   const [statusFilter, setStatusFilter] = useState<FilterValue>(
     initialPageContext.statusFilter,
   );
@@ -102,7 +124,19 @@ function TasksContent() {
   const [form, setForm] = useState<TaskFormState>(emptyForm);
 
   useEffect(() => {
-    setTasks(getTasks());
+    const nextTasks = getTasks();
+    const entities = getLocalContextEntities();
+    const nextContextById = Object.fromEntries(
+      entities
+        .filter((entity) => entity.type === "task")
+        .map((entity) => [
+          entity.sourceId,
+          getEntityContext(entity, entities),
+        ]),
+    );
+
+    setTasks(nextTasks);
+    setTaskContextById(nextContextById);
   }, []);
 
   useEffect(() => {
@@ -164,6 +198,17 @@ function TasksContent() {
 
     setTasks(nextTasks);
     saveTasks(nextTasks);
+    const entities = getLocalContextEntities();
+    setTaskContextById(
+      Object.fromEntries(
+        entities
+          .filter((entity) => entity.type === "task")
+          .map((entity) => [
+            entity.sourceId,
+            getEntityContext(entity, entities),
+          ]),
+      ),
+    );
     closeModal();
   }
 
@@ -178,7 +223,7 @@ function TasksContent() {
               </h1>
 
               <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">
-                AI-powered task management
+                Prioritized work with connected local context.
               </p>
             </div>
 
@@ -210,6 +255,7 @@ function TasksContent() {
           <div className="mt-8 space-y-4">
             {filteredTasks.map((task) => {
               const selected = task.id === selectedTaskId;
+              const context = taskContextById[task.id];
 
               return (
                 <Card
@@ -217,12 +263,18 @@ function TasksContent() {
                   id={`task-${task.id}`}
                   className={
                     selected
-                      ? "scroll-mt-24 border-zinc-400 ring-2 ring-zinc-300 dark:border-zinc-600 dark:ring-zinc-700"
+                      ? "scroll-mt-24 ring-2 ring-zinc-300 dark:ring-zinc-700"
                       : ""
                   }
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
+                      {task.status === "in-progress" ? (
+                        <div className="mb-2 flex items-center gap-2 text-xs font-medium text-blue-700 dark:text-blue-300">
+                          <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                          Active now
+                        </div>
+                      ) : null}
                       <h2 className="text-lg font-semibold text-zinc-950 dark:text-white sm:text-xl">
                         {task.title}
                       </h2>
@@ -234,12 +286,46 @@ function TasksContent() {
                       ) : null}
 
                       <div className="mt-4 flex flex-wrap gap-2">
-                        <Badge>{task.priority}</Badge>
+                        <Badge variant={priorityVariant(task.priority)}>
+                          {task.priority}
+                        </Badge>
                         <Badge>{getWorkspaceLabel(task.workspaceId)}</Badge>
+                        {context?.labels.slice(0, 2).map((label) => (
+                          <span
+                            key={label}
+                            className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600 ring-1 ring-zinc-200/60 dark:bg-zinc-900/70 dark:text-zinc-400 dark:ring-zinc-800/70"
+                          >
+                            {label}
+                          </span>
+                        ))}
                       </div>
+                      {context && context.relatedItems.length > 0 ? (
+                        <div className="mt-4 rounded-xl bg-zinc-100/60 px-3 py-2.5 ring-1 ring-inset ring-zinc-200/60 dark:bg-zinc-900/35 dark:ring-zinc-800/70">
+                          <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
+                            Connected to
+                          </p>
+                          <div className="mt-2 space-y-1.5">
+                            {context.relatedItems.slice(0, 2).map((item) => (
+                              <p
+                                key={item.entity.id}
+                                className="truncate text-sm text-zinc-700 dark:text-zinc-300"
+                              >
+                                {item.entity.title}
+                                <span className="text-zinc-400 dark:text-zinc-600">
+                                  {" "}
+                                  · {getRelatedContextSubtitle(item)}
+                                </span>
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
 
-                    <Badge className="shrink-0 px-3 py-1.5 sm:text-sm">
+                    <Badge
+                      variant={statusVariant(task.status)}
+                      className="shrink-0 px-3 py-1.5 sm:text-sm"
+                    >
                       {statusLabel(task.status)}
                     </Badge>
                   </div>

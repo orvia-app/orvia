@@ -42,6 +42,11 @@ import {
   getTopRankedMemoryCandidates,
   type RankedMemoryCandidate,
 } from "@/lib/memory/memory-ranking";
+import {
+  getEntityContextUrl,
+  getLocalActiveContext,
+  type EntityContext,
+} from "@/lib/memory/context";
 import type { MemoryCandidate } from "@/lib/memory/types";
 import { getStoredNotes } from "@/lib/notes";
 import { completeOnboarding, hasCompletedOnboarding } from "@/lib/onboarding";
@@ -88,25 +93,25 @@ const cards = [
   },
   {
     title: "Inbox",
-    description: "Capture and let AI route thoughts into your system",
+    description: "Capture anything and review local structure",
     icon: Inbox,
     href: "/inbox",
   },
   {
     title: "Tasks",
-    description: "Smart task management and prioritization",
+    description: "Plan, prioritize, and keep work moving",
     icon: CheckSquare,
     href: "/tasks",
   },
   {
     title: "Notes",
-    description: "AI memory and knowledge storage",
+    description: "Knowledge, ideas, and context worth keeping",
     icon: FileText,
     href: "/notes",
   },
   {
     title: "AI Chat",
-    description: "Second brain assistant interface",
+    description: "Local preview of the future assistant layer",
     icon: Brain,
     href: "/ai-chat",
   },
@@ -139,7 +144,7 @@ const initialOverview: OverviewStats = {
 };
 
 const overviewCardClassName =
-  "rounded-2xl border border-zinc-200/80 bg-white px-4 py-4 shadow-sm shadow-zinc-950/[0.03] dark:border-zinc-800/80 dark:bg-zinc-950 dark:shadow-none";
+  "rounded-2xl bg-white px-4 py-4 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:shadow-none dark:ring-zinc-800/70";
 
 function formatActivityDate(value: string | undefined): string {
   if (!value) {
@@ -188,6 +193,7 @@ export default function Home() {
   const [memoryCandidates, setMemoryCandidates] = useState<
     RankedMemoryCandidate[]
   >([]);
+  const [activeContext, setActiveContext] = useState<EntityContext[]>([]);
   const [memoryLoaded, setMemoryLoaded] = useState(false);
   const [onboardingLoaded, setOnboardingLoaded] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -199,6 +205,7 @@ export default function Home() {
       setStats(computeOverview());
       setRecentActivity(activityItems);
       setMemoryCandidates(getMemoryPreviewCandidates(activityItems));
+      setActiveContext(getLocalActiveContext(4));
       setActivityLoaded(true);
       setMemoryLoaded(true);
       setShowOnboarding(!hasCompletedOnboarding());
@@ -219,6 +226,7 @@ export default function Home() {
       setStats(computeOverview());
       setRecentActivity(activityItems);
       setMemoryCandidates(getMemoryPreviewCandidates(activityItems));
+      setActiveContext(getLocalActiveContext(4));
     }
   }, [pathname]);
 
@@ -229,7 +237,7 @@ export default function Home() {
 
   return (
     <AppShell>
-      <div className="p-6 sm:p-10">
+      <div className="px-4 py-6 sm:p-10">
         <div className="mx-auto max-w-5xl">
           <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
             Dashboard
@@ -331,7 +339,7 @@ export default function Home() {
                   {stats.totalTasks}
                 </p>
                 <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-600">
-                  localStorage or demo seed
+                  Local workspace data
                 </p>
               </div>
               <div className={overviewCardClassName}>
@@ -434,8 +442,68 @@ export default function Home() {
 
           <Section className="mt-10">
             <SectionHeader
+              title="Active Context"
+              subtitle="Deterministic local signals that are currently connected."
+            />
+            <Card className="p-4 sm:p-5">
+              {!memoryLoaded ? (
+                <div className="space-y-3" aria-label="Loading active context">
+                  {[0, 1, 2].map((item) => (
+                    <div
+                      key={item}
+                      className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-4 py-3 dark:border-zinc-800/80 dark:bg-zinc-900/40"
+                    >
+                      <Skeleton className="h-4 w-36" />
+                      <Skeleton className="mt-2 h-4 w-full max-w-lg" />
+                    </div>
+                  ))}
+                </div>
+              ) : activeContext.length === 0 ? (
+                <EmptyState
+                  title="No active context yet"
+                  description="Create tasks and notes to build connected local context."
+                />
+              ) : (
+                <ul className="grid gap-2 md:grid-cols-2">
+                  {activeContext.map((context) => (
+                    <li key={context.entity.id}>
+                      <Link
+                        href={getEntityContextUrl(context)}
+                        className="block cursor-pointer rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-4 py-3 transition hover:border-zinc-300 hover:bg-white dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/70"
+                      >
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge className="px-2.5 py-0.5">
+                            {getEntityTypeLabel(context.entity.type)}
+                          </Badge>
+                          {context.labels.slice(0, 2).map((label) => (
+                            <span
+                              key={label}
+                              className="rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-zinc-500 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800"
+                            >
+                              {label}
+                            </span>
+                          ))}
+                        </div>
+                        <p className="mt-2 truncate text-sm font-medium text-zinc-950 dark:text-white">
+                          {context.entity.title}
+                        </p>
+                        <p className="mt-1 text-xs font-medium text-zinc-500 dark:text-zinc-500">
+                          {context.relatedCount > 0
+                            ? "Connected context"
+                            : "Local context"}
+                        </p>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </Section>
+
+          <Section className="mt-10">
+            <SectionHeader
               title="Memory Preview"
-              subtitle="Early foundation for future AI memory and recall."
+              subtitle="Source-linked context prepared for future recall."
             />
             <Card className="p-4 sm:p-5">
               {!memoryLoaded ? (
@@ -504,7 +572,7 @@ export default function Home() {
             </Card>
           </Section>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {cards.map((card) => {
               const Icon = card.icon;
 
@@ -512,9 +580,9 @@ export default function Home() {
                 <Link
                   key={card.title}
                   href={card.href}
-                  className="group rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm shadow-zinc-950/[0.03] transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800/80 dark:bg-zinc-950 dark:shadow-none dark:hover:border-zinc-700 dark:hover:bg-zinc-900/80 sm:p-8"
+                  className="group rounded-2xl bg-white p-5 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 transition hover:bg-zinc-50 hover:ring-zinc-300 dark:bg-zinc-950 dark:shadow-none dark:ring-zinc-800/70 dark:hover:bg-zinc-900/80 dark:hover:ring-zinc-700 sm:p-6"
                 >
-                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-100 transition group-hover:border-zinc-300 group-hover:bg-white dark:border-zinc-800 dark:bg-zinc-900 dark:group-hover:border-zinc-700 dark:group-hover:bg-zinc-800">
+                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-100 ring-1 ring-zinc-200/70 transition group-hover:bg-white group-hover:ring-zinc-300 dark:bg-zinc-900 dark:ring-zinc-800 dark:group-hover:bg-zinc-800 dark:group-hover:ring-zinc-700">
                     <Icon className="h-6 w-6 text-zinc-800 dark:text-zinc-100" aria-hidden />
                   </div>
                   <h2 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-2xl">

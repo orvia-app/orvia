@@ -30,6 +30,11 @@ import {
   getMemorySourceTypeLabel,
 } from "@/lib/memory/memory-utils";
 import { rankMemoryCandidates } from "@/lib/memory/memory-ranking";
+import {
+  getContextLabelSearchText,
+  getEntityContext,
+  type ContextLabel,
+} from "@/lib/memory/context";
 import type { MemoryCandidate } from "@/lib/memory/types";
 import { getNotes } from "@/lib/notes";
 import { getQuickCaptures } from "@/lib/quick-captures";
@@ -54,6 +59,9 @@ export type UniversalSearchResult = {
   excerpt: string;
   href?: string;
   searchableText: string;
+  contextLabels?: readonly ContextLabel[];
+  relatedCount?: number;
+  contextualScore?: number;
 };
 
 export const UNIVERSAL_SEARCH_GROUPS: readonly UniversalSearchGroup[] = [
@@ -86,12 +94,14 @@ function truncateText(value: string, maxLength = 180): string {
 
 function entityToUniversalSearchResult(
   entity: PersonalEntity,
+  entities: readonly PersonalEntity[],
 ): UniversalSearchResult {
   const searchableEntity = toSearchableEntity(entity);
   const subtitle = getEntitySubtitle(entity);
   const workspaceLabel = entity.metadata.workspaceId
     ? getWorkspaceLabel(entity.metadata.workspaceId)
     : undefined;
+  const context = getEntityContext(entity, entities);
 
   return {
     id: `entity:${entity.id}`,
@@ -102,12 +112,17 @@ function entityToUniversalSearchResult(
     subtitle,
     excerpt: truncateText(subtitle || entity.metadata.searchableText),
     href: getEntityUrl(entity),
+    contextLabels: context.labels,
+    relatedCount: context.relatedCount,
+    contextualScore: context.contextualScore,
     searchableText: normalizeSearchText(
       compactText([
         searchableEntity.searchableText,
         searchableEntity.typeLabel,
         workspaceLabel,
         tagsToSearchText(entity.metadata.memoryTags),
+        tagsToSearchText(entity.metadata.tags),
+        getContextLabelSearchText(context.labels),
       ]),
     ),
   };
@@ -130,6 +145,7 @@ function activityToUniversalSearchResult(
     subtitle,
     excerpt: truncateText(subtitle),
     href: activity.entity.url,
+    relatedCount: activity.metadata.relationIds?.length ?? 0,
     searchableText: normalizeSearchText(
       compactText([
         activity.title,
@@ -158,6 +174,7 @@ function getMemoryHref(memory: MemoryCandidate): string | undefined {
 
 function memoryToUniversalSearchResult(
   memory: MemoryCandidate,
+  labels: readonly ContextLabel[] = [],
 ): UniversalSearchResult {
   const workspaceLabel = memory.metadata.workspaceId
     ? getWorkspaceLabel(memory.metadata.workspaceId)
@@ -172,6 +189,7 @@ function memoryToUniversalSearchResult(
     subtitle: getMemoryImportanceLabel(memory.importance),
     excerpt: truncateText(memory.content),
     href: getMemoryHref(memory),
+    contextLabels: labels,
     searchableText: normalizeSearchText(
       compactText([
         memory.title,
@@ -181,6 +199,7 @@ function memoryToUniversalSearchResult(
         workspaceLabel,
         tagsToSearchText(memory.metadata.tags),
         memory.candidateReason,
+        getContextLabelSearchText(labels),
       ]),
     ),
   };
@@ -192,11 +211,24 @@ export function createUniversalSearchResults(input: {
   memories: readonly MemoryCandidate[];
 }): UniversalSearchResult[] {
   return [
-    ...input.entities.map((entity) => entityToUniversalSearchResult(entity)),
+    ...input.entities.map((entity) =>
+      entityToUniversalSearchResult(entity, input.entities),
+    ),
     ...input.activities.map((activity) =>
       activityToUniversalSearchResult(activity),
     ),
-    ...input.memories.map((memory) => memoryToUniversalSearchResult(memory)),
+    ...rankMemoryCandidates(input.memories, { entities: input.entities }).map(
+      (rankedMemory) =>
+        memoryToUniversalSearchResult(
+          rankedMemory.candidate,
+          rankedMemory.reasons.map((reason) => {
+            if (reason === "Recently active") return "Recently updated";
+            if (reason === "Mentioned multiple times") return "Repeated topic";
+            if (reason === "Pending task") return "Pending";
+            return "Active";
+          }),
+        ),
+    ),
   ];
 }
 

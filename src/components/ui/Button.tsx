@@ -11,7 +11,7 @@ const variantClassNames: Record<ButtonVariant, string> = {
   primary:
     "bg-zinc-950 text-white shadow-sm shadow-zinc-950/10 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none dark:hover:bg-white",
   secondary:
-    "border border-zinc-200 bg-white text-zinc-800 shadow-sm shadow-zinc-950/[0.03] hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200 dark:shadow-none dark:hover:border-zinc-700 dark:hover:bg-zinc-900",
+    "bg-white text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 hover:bg-zinc-50 hover:ring-zinc-300 dark:bg-zinc-950 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:ring-zinc-700",
   ghost:
     "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white",
   danger:

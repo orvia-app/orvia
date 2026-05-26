@@ -11,7 +11,7 @@ export function Section({
 }: SectionProps) {
   return (
     <section
-      className={["space-y-3.5 sm:space-y-4", className].join(" ")}
+      className={["space-y-3 sm:space-y-4", className].join(" ")}
       {...props}
     >
       {children}
