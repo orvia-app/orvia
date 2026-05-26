@@ -13,7 +13,6 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { getDailyBriefing, type DailyBriefing } from "@/lib/briefing";
 import { createQuickCapture } from "@/lib/quick-captures";
 import { getTasks } from "@/lib/tasks";
-import { tasks as mockTasks } from "@/data/mock";
 import type { Task, TaskPriority } from "@/types";
 
 const PRIORITY_RANK: Record<TaskPriority, number> = {
@@ -41,7 +40,7 @@ const initialBriefing: DailyBriefing = {
 };
 
 export default function TodayPage() {
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [briefing, setBriefing] = useState<DailyBriefing>(initialBriefing);
   const [hydrated, setHydrated] = useState(false);
   const [captureText, setCaptureText] = useState("");

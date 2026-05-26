@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { tasks as initialTasks } from "@/data/mock";
 import { getStoredNotes, type Note } from "@/lib/notes";
 import { createSearchableEntities, searchEntities } from "@/lib/search";
 import { getTasks } from "@/lib/tasks";
@@ -12,7 +11,7 @@ import type { Task } from "@/types";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
 
   useEffect(() => {

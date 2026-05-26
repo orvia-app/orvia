@@ -14,6 +14,7 @@
 - Daily Briefing aggregation foundation and Today preview.
 - AI memory model, candidate helpers, and Dashboard Memory Preview.
 - Dashboard Recent Activity preview.
+- Local-only export/reset data foundation in Settings.
 - Initial product, architecture, roadmap, and security docs.
 
 ## Next UX/Product Phase
@@ -28,7 +29,11 @@
 - Add entity detail/open flows where appropriate.
 - Build first timeline/activity UI beyond Dashboard preview.
 - Improve Today workflow around planning, capture, and briefing.
-- Add import/export foundation for local user data.
+- Expand local data management:
+  - import validation
+  - clearer export schema docs
+  - selective reset controls
+  - user-facing data inventory
 - Rewrite README into a fuller product/developer overview later.
 - Run naming and branding pass before public launch materials.
 
@@ -52,6 +57,7 @@
 - Evaluate Supabase/PostgreSQL with row-level security or equivalent authorization.
 - Design offline/local-first sync and conflict handling.
 - Add export/delete account data workflows.
+- Replace local-only export/reset with authenticated cloud export/delete workflows.
 - Define migration/versioning strategy for stored data.
 
 ## Security Hardening Phase

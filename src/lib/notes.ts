@@ -1,4 +1,9 @@
-import { safeReadStorage, safeWriteStorage, STORAGE_KEYS } from "@/lib/storage";
+import {
+  hasCompletedLocalDataReset,
+  safeReadStorage,
+  safeWriteStorage,
+  STORAGE_KEYS,
+} from "@/lib/storage";
 
 export type NoteType = "note" | "idea" | "book" | "course" | "link";
 
@@ -64,6 +69,10 @@ export function getNotes(): Note[] {
   const validNotes = Array.isArray(storedNotes)
     ? storedNotes.filter(isNote)
     : [];
+
+  if (hasCompletedLocalDataReset()) {
+    return validNotes;
+  }
 
   return validNotes.length > 0 ? validNotes : initialNotes;
 }

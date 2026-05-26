@@ -5,6 +5,7 @@ export const STORAGE_KEYS = {
   cars: "personal-os.cars",
   quickCaptures: "personal-os.quick-captures",
   theme: "personal-os.theme",
+  localResetCompleted: "personal-os.local-reset-completed",
 } as const;
 
 export function isBrowser(): boolean {
@@ -48,4 +49,27 @@ export function safeWriteStorage<T>(
   } catch {
     // ignore storage write errors
   }
+}
+
+export function safeRemoveStorage(key: string): void {
+  if (!isBrowser()) {
+    return;
+  }
+
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // ignore storage removal errors
+  }
+}
+
+export function hasCompletedLocalDataReset(): boolean {
+  return safeReadStorage<unknown>(
+    STORAGE_KEYS.localResetCompleted,
+    false,
+  ) === true;
+}
+
+export function markLocalDataResetCompleted(): void {
+  safeWriteStorage(STORAGE_KEYS.localResetCompleted, true);
 }

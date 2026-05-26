@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/Badge";
@@ -50,10 +50,14 @@ function statusLabel(status: TaskStatus): string {
 }
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>(() => getTasks());
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [statusFilter, setStatusFilter] = useState<FilterValue>("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<TaskFormState>(emptyForm);
+
+  useEffect(() => {
+    setTasks(getTasks());
+  }, []);
 
   const filteredTasks = useMemo(() => {
     if (statusFilter === "all") {

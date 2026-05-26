@@ -6,7 +6,6 @@ import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
   getNotes,
-  initialNotes,
   NOTE_TYPES,
   saveNotes,
   type Note,
@@ -56,7 +55,7 @@ function getTypeBadgeLabel(type: NoteType): string {
 }
 
 export default function NotesPage() {
-  const [notes, setNotes] = useState<Note[]>(initialNotes);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [typeFilter, setTypeFilter] = useState<FilterValue>("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<NoteFormState>(EMPTY_FORM);

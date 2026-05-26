@@ -41,7 +41,6 @@ import type { MemoryCandidate, MemoryImportance } from "@/lib/memory/types";
 import { getStoredNotes } from "@/lib/notes";
 import { getQuickCaptures } from "@/lib/quick-captures";
 import { getTasks } from "@/lib/tasks";
-import { tasks as mockTasks } from "@/data/mock";
 
 type OverviewStats = {
   totalTasks: number;
@@ -54,8 +53,8 @@ type OverviewStats = {
 function computeOverview(): OverviewStats {
   if (typeof window === "undefined") {
     return {
-      totalTasks: mockTasks.length,
-      activeTasks: mockTasks.filter((t) => t.status !== "done").length,
+      totalTasks: 0,
+      activeTasks: 0,
       notesCount: 0,
       financeCount: 0,
       carsCount: 0,
@@ -126,8 +125,8 @@ const cards = [
 ];
 
 const initialOverview: OverviewStats = {
-  totalTasks: mockTasks.length,
-  activeTasks: mockTasks.filter((t) => t.status !== "done").length,
+  totalTasks: 0,
+  activeTasks: 0,
   notesCount: 0,
   financeCount: 0,
   carsCount: 0,

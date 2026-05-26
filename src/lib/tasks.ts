@@ -1,6 +1,11 @@
 import { tasks as initialTasks } from "@/data/mock";
 import type { Task } from "@/types/index";
-import { safeReadStorage, safeWriteStorage, STORAGE_KEYS } from "@/lib/storage";
+import {
+  hasCompletedLocalDataReset,
+  safeReadStorage,
+  safeWriteStorage,
+  STORAGE_KEYS,
+} from "@/lib/storage";
 
 export const TASK_STATUSES: readonly Task["status"][] = [
   "todo",
@@ -44,6 +49,10 @@ export function getTasks(): Task[] {
   const validTasks = Array.isArray(storedTasks)
     ? storedTasks.filter(isTask)
     : [];
+
+  if (hasCompletedLocalDataReset()) {
+    return validTasks;
+  }
 
   return validTasks.length > 0 ? validTasks : initialTasks;
 }

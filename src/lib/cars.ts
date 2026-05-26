@@ -1,4 +1,9 @@
-import { safeReadStorage, safeWriteStorage, STORAGE_KEYS } from "@/lib/storage";
+import {
+  hasCompletedLocalDataReset,
+  safeReadStorage,
+  safeWriteStorage,
+  STORAGE_KEYS,
+} from "@/lib/storage";
 
 export type CarRecord = {
   id: string;
@@ -51,6 +56,10 @@ export function getStoredCars(): CarRecord[] {
 export function getCars(): CarRecord[] {
   const storedCars = getStoredCars();
 
+  if (hasCompletedLocalDataReset()) {
+    return storedCars;
+  }
+
   return storedCars.length > 0 ? storedCars : [...DEFAULT_CARS];
 }
 
@@ -63,6 +72,10 @@ export function ensureCarsSeeded(): CarRecord[] {
 
   if (storedCars.length > 0) {
     return storedCars;
+  }
+
+  if (hasCompletedLocalDataReset()) {
+    return [];
   }
 
   const defaultCars = [...DEFAULT_CARS];

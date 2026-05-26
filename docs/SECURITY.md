@@ -15,6 +15,12 @@ This document defines security direction and engineering constraints. It is not 
 - Avoid hidden analytics or unapproved external data transfer.
 - Keep future export/delete requirements in mind for every user data type.
 
+## Local Export And Reset
+
+The MVP includes local-only data export and reset controls in Settings. Export produces a JSON snapshot from existing local repositories. Reset clears only known Personal OS browser storage keys and does not clear unrelated browser storage.
+
+This is not cloud account deletion. Future backend sync will need authenticated export/delete workflows that remove server-side data, synced replicas, AI-derived memory, integration data where applicable, and billing/account references according to retention policy.
+
 ## No Frontend Secrets
 
 Frontend code must never contain:

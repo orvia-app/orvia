@@ -5,7 +5,6 @@ import { Car } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import {
-  DEFAULT_CARS,
   ensureCarsSeeded,
   saveCars,
   type CarRecord,
@@ -27,7 +26,7 @@ const emptyForm = {
 };
 
 export default function CarsPage() {
-  const [cars, setCars] = useState<CarRecord[]>(() => [...DEFAULT_CARS]);
+  const [cars, setCars] = useState<CarRecord[]>([]);
   const [storageReady, setStorageReady] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
