@@ -2,6 +2,7 @@ import {
   CalendarDays,
   Car,
   CheckSquare,
+  CircleDot,
   FileText,
   House,
   Inbox,
@@ -50,6 +51,15 @@ export const routeCommands: readonly CommandItem[] = [
     group: "Navigate",
     icon: Search,
     action: { type: "navigate", href: "/search" },
+  },
+  {
+    id: "route-timeline",
+    title: "Go to Timeline",
+    subtitle: "/timeline",
+    keywords: ["activity", "history", "events"],
+    group: "Navigate",
+    icon: CircleDot,
+    action: { type: "navigate", href: "/timeline" },
   },
   {
     id: "route-tasks",

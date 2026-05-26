@@ -7,6 +7,7 @@ import {
   CalendarDays,
   Car,
   CheckSquare,
+  CircleDot,
   FileText,
   House,
   Inbox,
@@ -32,8 +33,9 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/", icon: House },
-  { label: "Search", href: "/search", icon: Search},
+  { label: "Search", href: "/search", icon: Search },
   { label: "Today", href: "/today", icon: CalendarDays },
+  { label: "Timeline", href: "/timeline", icon: CircleDot },
   { label: "Inbox", href: "/inbox", icon: Inbox },
   { label: "Tasks", href: "/tasks", icon: CheckSquare },
   { label: "Notes", href: "/notes", icon: FileText },

@@ -13,6 +13,7 @@ import {
 } from "@/lib/entities/entity-utils";
 import type {
   ActivityFeedPage,
+  ActivityEventType,
   ActivityFilter,
   ActivityItem,
   ActivityPagination,
@@ -108,8 +109,8 @@ export function createActivityFeed(
   return paginateActivityItems(items, options.pagination);
 }
 
-export function getRecentActivityFeed(limit = 5): ActivityFeedPage {
-  const entities: ActivitySourceEntity[] = [
+export function getLocalActivitySourceEntities(): ActivitySourceEntity[] {
+  return [
     ...getStoredTasks().map((task) => taskToEntity(task)),
     ...getStoredNotes().map((note) => noteToEntity(note)),
     ...getQuickCaptures().map((capture) => quickCaptureToEntity(capture)),
@@ -118,8 +119,27 @@ export function getRecentActivityFeed(limit = 5): ActivityFeedPage {
     ),
     ...getStoredCars().map((car) => carToEntity(car)),
   ];
+}
 
-  return createActivityFeed(entities, {
+export function getRecentActivityFeed(limit = 5): ActivityFeedPage {
+  return createActivityFeed(getLocalActivitySourceEntities(), {
+    pagination: { limit },
+  });
+}
+
+const TIMELINE_EVENT_TYPES: readonly ActivityEventType[] = [
+  "task_created",
+  "note_created",
+  "finance_transaction_created",
+  "car_added",
+  "inbox_item_created",
+] as const;
+
+export function getTimelineActivityFeed(limit = 50): ActivityFeedPage {
+  return createActivityFeed(getLocalActivitySourceEntities(), {
+    filter: {
+      eventTypes: TIMELINE_EVENT_TYPES,
+    },
     pagination: { limit },
   });
 }
