@@ -16,11 +16,22 @@ export type CommandAction =
     };
 
 export type CommandGroup =
-  | "Navigate"
-  | "Create"
+  | "Recent"
+  | "Capture"
+  | "Actions"
   | "AI"
   | "Search"
+  | "Navigation"
   | "Entities";
+
+export type CommandPriority = "primary" | "normal" | "secondary";
+
+export type CommandMetadata = {
+  priority?: CommandPriority;
+  contextualScore?: number;
+  recentLabel?: string;
+  category?: CommandGroup;
+};
 
 export type CommandItem = {
   id: string;
@@ -30,4 +41,5 @@ export type CommandItem = {
   group: CommandGroup;
   icon: LucideIcon;
   action: CommandAction;
+  metadata?: CommandMetadata;
 };

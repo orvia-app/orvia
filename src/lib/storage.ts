@@ -7,6 +7,7 @@ export const STORAGE_KEYS = {
   theme: "personal-os.theme",
   localResetCompleted: "personal-os.local-reset-completed",
   onboardingCompleted: "personal-os.onboarding.completed",
+  commandHistory: "personal-os.command-history",
 } as const;
 
 export function isBrowser(): boolean {

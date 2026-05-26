@@ -9,12 +9,32 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 
+import {
+  getRecentCommands,
+  recordCommandExecution,
+} from "@/lib/commands/history";
 import type { CommandAction, CommandItem } from "@/lib/commands/types";
 
 type UseCommandPaletteOptions = {
   enabled?: boolean;
   onAction?: (action: CommandAction) => void;
 };
+
+export type CommandPaletteSection = {
+  id: string;
+  label: string;
+  commands: readonly CommandItem[];
+};
+
+const COMMAND_GROUP_ORDER = [
+  "Recent",
+  "Capture",
+  "Actions",
+  "Search",
+  "Navigation",
+  "AI",
+  "Entities",
+] as const;
 
 function commandMatches(command: CommandItem, query: string): boolean {
   const normalizedQuery = query.trim().toLowerCase();
@@ -27,6 +47,8 @@ function commandMatches(command: CommandItem, query: string): boolean {
     command.title,
     command.subtitle,
     command.group,
+    command.metadata?.category,
+    command.metadata?.recentLabel,
     ...(command.keywords ?? []),
   ]
     .filter(Boolean)
@@ -34,6 +56,75 @@ function commandMatches(command: CommandItem, query: string): boolean {
     .toLowerCase();
 
   return searchableText.includes(normalizedQuery);
+}
+
+function getCommandRank(command: CommandItem): number {
+  const priorityScore = {
+    primary: 300,
+    normal: 100,
+    secondary: 0,
+  }[command.metadata?.priority ?? "normal"];
+
+  return priorityScore + (command.metadata?.contextualScore ?? 0);
+}
+
+function sortCommands(commands: readonly CommandItem[]): CommandItem[] {
+  return [...commands].sort((a, b) => {
+    const groupDifference =
+      COMMAND_GROUP_ORDER.indexOf(a.group) - COMMAND_GROUP_ORDER.indexOf(b.group);
+
+    if (groupDifference !== 0) {
+      return groupDifference;
+    }
+
+    const rankDifference = getCommandRank(b) - getCommandRank(a);
+
+    if (rankDifference !== 0) {
+      return rankDifference;
+    }
+
+    return a.title.localeCompare(b.title);
+  });
+}
+
+function createCommandSections(input: {
+  commands: readonly CommandItem[];
+  query: string;
+  recentCommands: readonly CommandItem[];
+}): CommandPaletteSection[] {
+  const recentCommands = input.recentCommands.filter((command) =>
+    commandMatches(command, input.query),
+  );
+  const groupedCommands = sortCommands(input.commands).filter((command) =>
+    commandMatches(command, input.query),
+  );
+  const sections: CommandPaletteSection[] = [];
+
+  if (recentCommands.length > 0) {
+    sections.push({
+      id: "recent",
+      label: "Recent",
+      commands: recentCommands,
+    });
+  }
+
+  COMMAND_GROUP_ORDER.filter((group) => group !== "Recent").forEach((group) => {
+    const groupCommands = groupedCommands.filter(
+      (command) => command.group === group,
+    );
+
+    if (groupCommands.length === 0) {
+      return;
+    }
+
+    sections.push({
+      id: group.toLowerCase(),
+      label: group,
+      commands: groupCommands,
+    });
+  });
+
+  return sections;
 }
 
 export function useCommandPalette(
@@ -46,10 +137,21 @@ export function useCommandPalette(
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
+  const [recentCommands, setRecentCommands] = useState<CommandItem[]>([]);
+
+  const commandSections = useMemo(
+    () =>
+      createCommandSections({
+        commands,
+        query,
+        recentCommands,
+      }),
+    [commands, query, recentCommands],
+  );
 
   const filteredCommands = useMemo(
-    () => commands.filter((command) => commandMatches(command, query)),
-    [commands, query],
+    () => commandSections.flatMap((section) => section.commands),
+    [commandSections],
   );
 
   const closePalette = useCallback(() => {
@@ -73,6 +175,9 @@ export function useCommandPalette(
 
   const runCommand = useCallback(
     (command: CommandItem) => {
+      recordCommandExecution(command.id);
+      setRecentCommands(getRecentCommands(commands));
+
       switch (command.action.type) {
         case "navigate":
           router.push(command.action.href);
@@ -87,7 +192,7 @@ export function useCommandPalette(
 
       closePalette();
     },
-    [closePalette, onAction, router],
+    [closePalette, commands, onAction, router],
   );
 
   const handleQueryChange = useCallback((nextQuery: string) => {
@@ -109,12 +214,14 @@ export function useCommandPalette(
   useEffect(() => {
     if (!open) return;
 
+    setRecentCommands(getRecentCommands(commands));
+
     const frame = window.requestAnimationFrame(() => {
       inputRef.current?.focus();
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [open]);
+  }, [commands, open]);
 
   useEffect(() => {
     if (activeIndex <= filteredCommands.length - 1) return;
@@ -196,6 +303,7 @@ export function useCommandPalette(
   return {
     activeIndex,
     commands: filteredCommands,
+    commandSections,
     inputRef,
     onActiveIndexChange: setActiveIndex,
     onCommandSelect: runCommand,

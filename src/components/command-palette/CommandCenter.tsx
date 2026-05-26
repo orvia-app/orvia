@@ -15,7 +15,18 @@ export function CommandCenter() {
 
   return (
     <>
-      <CommandPalette {...commandPalette} />
+      <CommandPalette
+        activeIndex={commandPalette.activeIndex}
+        commandSections={commandPalette.commandSections}
+        commands={commandPalette.commands}
+        inputRef={commandPalette.inputRef}
+        onActiveIndexChange={commandPalette.onActiveIndexChange}
+        onCommandSelect={commandPalette.onCommandSelect}
+        onOpenChange={commandPalette.onOpenChange}
+        onQueryChange={commandPalette.onQueryChange}
+        open={commandPalette.open}
+        query={commandPalette.query}
+      />
       <CommandActionDialog
         action={commandActions.activeAction}
         firstFieldRef={commandActions.firstFieldRef}
