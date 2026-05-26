@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import {
+  Suspense,
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+} from "react";
+import { useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
@@ -32,6 +39,13 @@ type TaskFormState = {
   workspace: WorkspaceChoice;
 };
 
+type TaskPageContext = {
+  statusFilter: FilterValue;
+  selectedTaskId: string | null;
+};
+
+type TaskSearchParams = Pick<URLSearchParams, "get">;
+
 const filters: { label: string; value: FilterValue }[] = [
   { label: "All", value: "all" },
   { label: "Todo", value: "todo" },
@@ -55,15 +69,58 @@ function statusLabel(status: TaskStatus): string {
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
-export default function TasksPage() {
+function isFilterValue(value: string | null): value is FilterValue {
+  return filters.some((filter) => filter.value === value);
+}
+
+function getTaskPageContextFromSearchParams(
+  params: TaskSearchParams,
+): TaskPageContext {
+  const filter = params.get("filter");
+  const taskId = params.get("taskId");
+
+  return {
+    statusFilter: isFilterValue(filter) ? filter : "all",
+    selectedTaskId: taskId && taskId.trim() ? taskId : null,
+  };
+}
+
+function TasksContent() {
+  const searchParams = useSearchParams();
+  const initialPageContext = useMemo(
+    () => getTaskPageContextFromSearchParams(searchParams),
+    [searchParams],
+  );
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [statusFilter, setStatusFilter] = useState<FilterValue>("all");
+  const [statusFilter, setStatusFilter] = useState<FilterValue>(
+    initialPageContext.statusFilter,
+  );
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(
+    initialPageContext.selectedTaskId,
+  );
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<TaskFormState>(emptyForm);
 
   useEffect(() => {
     setTasks(getTasks());
   }, []);
+
+  useEffect(() => {
+    setStatusFilter(initialPageContext.statusFilter);
+    setSelectedTaskId(initialPageContext.selectedTaskId);
+  }, [initialPageContext]);
+
+  useEffect(() => {
+    if (!selectedTaskId || tasks.length === 0) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      document
+        .getElementById(`task-${selectedTaskId}`)
+        ?.scrollIntoView({ block: "center" });
+    });
+  }, [selectedTaskId, tasks]);
 
   const filteredTasks = useMemo(() => {
     if (statusFilter === "all") {
@@ -138,7 +195,10 @@ export default function TasksPage() {
                 <Button
                   key={value}
                   variant={active ? "primary" : "secondary"}
-                  onClick={() => setStatusFilter(value)}
+                  onClick={() => {
+                    setStatusFilter(value);
+                    setSelectedTaskId(null);
+                  }}
                   className="px-4 py-2"
                 >
                   {label}
@@ -148,32 +208,44 @@ export default function TasksPage() {
           </div>
 
           <div className="mt-8 space-y-4">
-            {filteredTasks.map((task) => (
-              <Card key={task.id}>
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <h2 className="text-lg font-semibold text-zinc-950 dark:text-white sm:text-xl">
-                      {task.title}
-                    </h2>
+            {filteredTasks.map((task) => {
+              const selected = task.id === selectedTaskId;
 
-                    {task.description ? (
-                      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400 sm:text-base">
-                        {task.description}
-                      </p>
-                    ) : null}
+              return (
+                <Card
+                  key={task.id}
+                  id={`task-${task.id}`}
+                  className={
+                    selected
+                      ? "scroll-mt-24 border-zinc-400 ring-2 ring-zinc-300 dark:border-zinc-600 dark:ring-zinc-700"
+                      : ""
+                  }
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-zinc-950 dark:text-white sm:text-xl">
+                        {task.title}
+                      </h2>
 
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <Badge>{task.priority}</Badge>
-                      <Badge>{getWorkspaceLabel(task.workspaceId)}</Badge>
+                      {task.description ? (
+                        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400 sm:text-base">
+                          {task.description}
+                        </p>
+                      ) : null}
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <Badge>{task.priority}</Badge>
+                        <Badge>{getWorkspaceLabel(task.workspaceId)}</Badge>
+                      </div>
                     </div>
-                  </div>
 
-                  <Badge className="shrink-0 px-3 py-1.5 sm:text-sm">
-                    {statusLabel(task.status)}
-                  </Badge>
-                </div>
-              </Card>
-            ))}
+                    <Badge className="shrink-0 px-3 py-1.5 sm:text-sm">
+                      {statusLabel(task.status)}
+                    </Badge>
+                  </div>
+                </Card>
+              );
+            })}
 
             {filteredTasks.length === 0 ? (
               <EmptyState
@@ -361,5 +433,13 @@ export default function TasksPage() {
         </div>
       ) : null}
     </AppShell>
+  );
+}
+
+export default function TasksPage() {
+  return (
+    <Suspense fallback={null}>
+      <TasksContent />
+    </Suspense>
   );
 }

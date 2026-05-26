@@ -29,6 +29,7 @@ import {
   getMemoryImportanceLabel,
   getMemorySourceTypeLabel,
 } from "@/lib/memory/memory-utils";
+import { rankMemoryCandidates } from "@/lib/memory/memory-ranking";
 import type { MemoryCandidate } from "@/lib/memory/types";
 import { getNotes } from "@/lib/notes";
 import { getQuickCaptures } from "@/lib/quick-captures";
@@ -210,10 +211,16 @@ export function getLocalUniversalSearchResults(): UniversalSearchResult[] {
     ...getQuickCaptures().map((capture) => quickCaptureToEntity(capture)),
   ];
   const activities = activitiesFromEntities(getLocalActivitySourceEntities());
-  const memories = [
-    ...entitiesToMemoryCandidates(entities),
-    ...activitiesToMemoryCandidates(activities),
-  ];
+  const memories = rankMemoryCandidates(
+    [
+      ...entitiesToMemoryCandidates(entities),
+      ...activitiesToMemoryCandidates(activities),
+    ],
+    {
+      entities,
+      activities,
+    },
+  ).map((rankedMemory) => rankedMemory.candidate);
 
   return createUniversalSearchResults({
     entities,

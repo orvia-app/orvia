@@ -32,6 +32,15 @@ function compactText(parts: readonly (string | number | undefined)[]): string {
     .join(" ");
 }
 
+function getTaskUrl(task: Task): string {
+  const params = new URLSearchParams({
+    filter: task.status,
+    taskId: task.id,
+  });
+
+  return `/tasks?${params.toString()}`;
+}
+
 export function getEntityTypeLabel(type: EntityType): string {
   switch (type) {
     case "task":
@@ -95,7 +104,7 @@ export function taskToEntity(task: Task): TaskEntity {
       createdAt: task.createdAt,
       workspaceId: workspaceKey,
       source: "local",
-      url: "/tasks",
+      url: getTaskUrl(task),
       searchableText: compactText([
         task.title,
         task.description,

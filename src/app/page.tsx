@@ -38,7 +38,11 @@ import {
   getMemoryImportanceLabel,
   getMemorySourceTypeLabel,
 } from "@/lib/memory/memory-utils";
-import type { MemoryCandidate, MemoryImportance } from "@/lib/memory/types";
+import {
+  getTopRankedMemoryCandidates,
+  type RankedMemoryCandidate,
+} from "@/lib/memory/memory-ranking";
+import type { MemoryCandidate } from "@/lib/memory/types";
 import { getStoredNotes } from "@/lib/notes";
 import { completeOnboarding, hasCompletedOnboarding } from "@/lib/onboarding";
 import { getQuickCaptures } from "@/lib/quick-captures";
@@ -137,13 +141,6 @@ const initialOverview: OverviewStats = {
 const overviewCardClassName =
   "rounded-2xl border border-zinc-200/80 bg-white px-4 py-4 shadow-sm shadow-zinc-950/[0.03] dark:border-zinc-800/80 dark:bg-zinc-950 dark:shadow-none";
 
-const MEMORY_IMPORTANCE_RANK: Record<MemoryImportance, number> = {
-  critical: 4,
-  high: 3,
-  medium: 2,
-  low: 1,
-};
-
 function formatActivityDate(value: string | undefined): string {
   if (!value) {
     return "";
@@ -152,42 +149,6 @@ function formatActivityDate(value: string | undefined): string {
   const datePart = value.split("T")[0];
 
   return datePart || "";
-}
-
-function getMemoryTime(candidate: MemoryCandidate): number {
-  const value =
-    candidate.metadata.capturedAt ??
-    candidate.metadata.updatedAt ??
-    candidate.metadata.createdAt;
-
-  if (!value) {
-    return 0;
-  }
-
-  const time = new Date(value).getTime();
-
-  return Number.isNaN(time) ? 0 : time;
-}
-
-function compareMemoryCandidates(
-  a: MemoryCandidate,
-  b: MemoryCandidate,
-): number {
-  const importanceDifference =
-    MEMORY_IMPORTANCE_RANK[b.importance] -
-    MEMORY_IMPORTANCE_RANK[a.importance];
-
-  if (importanceDifference !== 0) {
-    return importanceDifference;
-  }
-
-  const timeDifference = getMemoryTime(b) - getMemoryTime(a);
-
-  if (timeDifference !== 0) {
-    return timeDifference;
-  }
-
-  return a.id.localeCompare(b.id);
 }
 
 function getMemoryExcerpt(candidate: MemoryCandidate): string {
@@ -202,19 +163,21 @@ function getMemoryExcerpt(candidate: MemoryCandidate): string {
 
 function getMemoryPreviewCandidates(
   activityItems: readonly ActivityItem[],
-): MemoryCandidate[] {
+): RankedMemoryCandidate[] {
   const entities = [
     ...getTasks().map((task) => taskToEntity(task)),
     ...getStoredNotes().map((note) => noteToEntity(note)),
     ...getQuickCaptures().map((capture) => quickCaptureToEntity(capture)),
   ];
-
-  return [
+  const candidates = [
     ...entitiesToMemoryCandidates(entities),
     ...activitiesToMemoryCandidates(activityItems),
-  ]
-    .sort(compareMemoryCandidates)
-    .slice(0, 3);
+  ];
+
+  return getTopRankedMemoryCandidates(candidates, 3, {
+    entities,
+    activities: activityItems,
+  });
 }
 
 export default function Home() {
@@ -222,9 +185,9 @@ export default function Home() {
   const [stats, setStats] = useState<OverviewStats>(initialOverview);
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
   const [activityLoaded, setActivityLoaded] = useState(false);
-  const [memoryCandidates, setMemoryCandidates] = useState<MemoryCandidate[]>(
-    [],
-  );
+  const [memoryCandidates, setMemoryCandidates] = useState<
+    RankedMemoryCandidate[]
+  >([]);
   const [memoryLoaded, setMemoryLoaded] = useState(false);
   const [onboardingLoaded, setOnboardingLoaded] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -498,31 +461,44 @@ export default function Home() {
                 />
               ) : (
                 <ul className="space-y-2">
-                  {memoryCandidates.map((candidate) => (
-                    <li
-                      key={candidate.id}
-                      className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-4 py-3 dark:border-zinc-800/80 dark:bg-zinc-900/40"
-                    >
-                      <div className="flex min-w-0 flex-col gap-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge className="px-2.5 py-0.5">
-                            {getMemorySourceTypeLabel(candidate.sourceType)}
-                          </Badge>
-                          <Badge variant="info" className="px-2.5 py-0.5">
-                            {getMemoryImportanceLabel(candidate.importance)}
-                          </Badge>
-                        </div>
-                        <p className="truncate text-sm font-medium text-zinc-950 dark:text-white">
-                          {candidate.title}
-                        </p>
-                        {candidate.content ? (
-                          <p className="text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                            {getMemoryExcerpt(candidate)}
+                  {memoryCandidates.map((rankedCandidate) => {
+                    const candidate = rankedCandidate.candidate;
+                    const reasons = rankedCandidate.reasons.slice(0, 2);
+
+                    return (
+                      <li
+                        key={candidate.id}
+                        className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-4 py-3 dark:border-zinc-800/80 dark:bg-zinc-900/40"
+                      >
+                        <div className="flex min-w-0 flex-col gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge className="px-2.5 py-0.5">
+                              {getMemorySourceTypeLabel(candidate.sourceType)}
+                            </Badge>
+                            <Badge variant="info" className="px-2.5 py-0.5">
+                              {getMemoryImportanceLabel(candidate.importance)}
+                            </Badge>
+                            {reasons.map((reason) => (
+                              <span
+                                key={reason}
+                                className="rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-zinc-500 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800"
+                              >
+                                {reason}
+                              </span>
+                            ))}
+                          </div>
+                          <p className="truncate text-sm font-medium text-zinc-950 dark:text-white">
+                            {candidate.title}
                           </p>
-                        ) : null}
-                      </div>
-                    </li>
-                  ))}
+                          {candidate.content ? (
+                            <p className="text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                              {getMemoryExcerpt(candidate)}
+                            </p>
+                          ) : null}
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </Card>
