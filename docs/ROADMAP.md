@@ -1,109 +1,110 @@
 # Personal OS Roadmap
 
-## Current MVP
+## Current Foundation Completed
 
-- App shell with core navigation.
-- Dashboard overview.
-- Today view with focus planning.
-- Inbox capture with deterministic parsing.
-- Task creation and local persistence.
-- Note creation and local persistence.
-- Finance transaction tracking.
-- Car tracking.
-- Global text search over normalized entities.
-- Command palette for navigation and lightweight create actions.
-- Theme support.
-- Local-first repository layer.
-- Entity model foundation.
-- Daily briefing aggregation helpers.
+- App shell with responsive navigation and theme support.
+- Shared UI primitives and improved visual language.
+- Local-first repository layer for current MVP domains.
+- Command palette with route commands and action commands.
+- Command action modal for Create Task and Create Note.
+- Inbox deterministic parsing helpers.
+- Universal entity model foundation.
+- Deterministic search foundation over normalized entities.
+- Activity/timeline event foundation.
+- Daily Briefing aggregation foundation and Today preview.
+- AI memory model, candidate helpers, and Dashboard Memory Preview.
+- Dashboard Recent Activity preview.
+- Initial product, architecture, roadmap, and security docs.
 
-## Next Milestones
+## Next UX/Product Phase
 
-- Improve command palette actions:
-  - quick add task with priority/workspace
-  - quick add note with type selection
-  - open entity actions
-  - command results from search
-- Build Daily Briefing UI using deterministic briefing helpers.
-- Expand universal search:
-  - include finance, cars, and inbox captures
-  - add result navigation
-  - add highlighting and ranking
-- Introduce timeline/activity feed primitives.
-- Add structured workspaces and entity relations.
-- Improve mobile capture flows.
-- Add import/export foundation for user data portability.
-- Replace mock AI language with clearly bounded deterministic or server-backed behavior.
+- Improve command actions:
+  - task priority/workspace selection
+  - note type selection
+  - quick capture command
+  - open entity commands
+  - search results inside command palette
+- Expand universal search to finance, cars, inbox captures, activity, and memory candidates.
+- Add entity detail/open flows where appropriate.
+- Build first timeline/activity UI beyond Dashboard preview.
+- Improve Today workflow around planning, capture, and briefing.
+- Add import/export foundation for local user data.
+- Rewrite README into a fuller product/developer overview later.
+- Run naming and branding pass before public launch materials.
 
-## Future SaaS Milestones
+## AI Layer Phase
 
-- Authentication and user accounts.
-- Cloud persistence and sync.
-- Offline/local-first sync model.
-- Secure backend API layer.
-- AI memory service.
-- Semantic search and embeddings.
-- Calendar, email, messenger, and file integrations.
-- Notification and reminder system.
-- Mobile app or mobile-first capture companion.
-- Billing, subscriptions, and plan limits.
-- GDPR-grade export/delete workflows.
-- Admin and observability foundation.
+- Define AI data handling policy before real provider calls.
+- Add server-side AI gateway only after backend boundaries exist.
+- Introduce deterministic prompts and typed response contracts.
+- Add AI memory generation from source-linked entities.
+- Add semantic search with server-generated embeddings.
+- Add source citations/references for memory and AI answers.
+- Add user controls for memory deletion, regeneration, and exclusion.
+- Add logging policy for AI requests that avoids storing unnecessary personal data.
 
-## AI Memory
+## Backend/Auth/Sync Phase
 
-AI memory should be built on explicit entity data, metadata, relations, and user-approved retrieval. It should avoid opaque hidden memory in early versions.
+- Choose backend architecture and environment strategy.
+- Introduce authentication and secure sessions.
+- Add user/workspace ownership to persisted data.
+- Migrate repositories from browser-only storage to backend-compatible adapters.
+- Evaluate Supabase/PostgreSQL with row-level security or equivalent authorization.
+- Design offline/local-first sync and conflict handling.
+- Add export/delete account data workflows.
+- Define migration/versioning strategy for stored data.
 
-Initial direction:
-- use normalized entities as memory candidates
-- store source references
-- distinguish user-authored data from generated summaries
-- support deletion and regeneration
-- run AI processing server-side only
+## Security Hardening Phase
 
-## Semantic Search
+- Create security checklist for releases.
+- Audit `.gitignore`, repository contents, and generated artifacts.
+- Define secrets management policy.
+- Define environment variable strategy for local, preview, and production.
+- Create threat model for MVP SaaS scope.
+- Create data classification policy.
+- Create dependency audit workflow.
+- Create incident response basics:
+  - triage owner
+  - severity levels
+  - user notification criteria
+  - credential rotation procedure
+  - post-incident review
+- Add privacy review for AI memory, integrations, and sync.
 
-Semantic search should extend the current normalized search model rather than replace it.
+## Mobile Capture Phase
 
-Future direction:
-- text search remains available and debuggable
-- embeddings are generated server-side
-- vector results map back to typed entities
-- permissions and ownership are enforced before retrieval
+- Improve mobile responsive capture flows.
+- Add share-sheet-friendly capture direction.
+- Explore PWA or native companion after core data model stabilizes.
+- Support fast capture for notes, tasks, inbox, links, and voice-derived text.
+- Keep mobile sync/auth assumptions aligned with backend phase.
 
-## Daily Briefing
+## Monetization And Payment Phase
 
-The first briefing should be deterministic:
-- overdue tasks
-- today tasks
-- recent notes
-- recent captures
+- Define paid plan packaging only after auth and data ownership are stable.
+- Add Stripe through server-side integration only.
+- Do not store card data in the app.
+- Store only required billing references and subscription state.
+- Define Stripe/payment data policy.
+- Add plan limits for sync, AI memory, integrations, or storage only when technically enforceable.
 
-AI summarization can be added later as a server-side enhancement over this structured input.
+## Integrations Phase
 
-## Timeline and Activity Feed
+- Define permission scopes and token storage requirements.
+- Add calendar/email/messenger/file integrations behind authenticated backend endpoints.
+- Avoid storing integration tokens in browser storage.
+- Add integration-specific export/delete behavior.
+- Log integration actions in activity timeline where useful.
 
-The activity feed should be entity-backed and append-only where possible. It can later power audit history, AI context, recency ranking, and user-facing memory inspection.
+## Documentation Backlog
 
-## Integrations
-
-Future integrations may include:
-- calendar
-- email
-- Telegram or messenger capture
-- files and documents
-- finance imports
-- vehicle maintenance reminders
-
-Integrations should be permission-scoped and avoid storing unnecessary tokens in the browser.
-
-## Monetization Direction
-
-Potential commercial tiers:
-- local-only/free MVP
-- synced personal plan
-- AI memory plan
-- integrations plan
-- future family/team plan
-
-Billing should not be introduced until auth, data ownership, and backend boundaries are stable.
+- Fuller README rewrite.
+- Architecture diagrams after backend choice.
+- Security checklist.
+- Threat model.
+- Data classification policy.
+- AI data handling policy.
+- Logging policy.
+- Stripe/payment data policy.
+- Environment and secrets management guide.
+- Public privacy/security posture before launch.
