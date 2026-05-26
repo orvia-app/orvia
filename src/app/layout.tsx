@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Personal OS",
-  description: "AI-powered operating system",
+  title: "Archflow",
+  description: "Local-first capture and memory operating system",
 };
 
 const themeInitScript = `

@@ -112,7 +112,7 @@ function TimelineItem({ item }: { item: ActivityItem }) {
           </div>
           <Link
             href={item.entity.url}
-            className="text-sm font-medium text-zinc-700 underline-offset-4 hover:underline dark:text-zinc-300"
+            className="cursor-pointer text-sm font-medium text-zinc-700 underline-offset-4 hover:underline dark:text-zinc-300"
           >
             Open {item.entity.title}
           </Link>

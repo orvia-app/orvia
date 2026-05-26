@@ -9,7 +9,7 @@ export const PERSONAL_OS_EXPORT_VERSION = 1;
 export type ExportedTheme = "dark" | "light" | "system";
 
 export type PersonalOsExportMetadata = {
-  appName: "Personal OS";
+  appName: "Archflow";
   appVersion: string;
   exportVersion: typeof PERSONAL_OS_EXPORT_VERSION;
   exportedAt: string;

@@ -1,6 +1,6 @@
-# Personal OS
+# Archflow
 
-Personal OS is a local-first, AI-native productivity and life operating system MVP. It is currently a frontend-only Next.js app with typed local repositories, command actions, entity/search foundations, activity/briefing foundations, and early AI memory architecture.
+Archflow is a local-first, AI-native productivity and life operating system MVP. It is currently a frontend-only Next.js app with typed local repositories, command actions, entity/search foundations, activity/briefing foundations, and early AI memory architecture.
 
 This project is not production SaaS-ready yet. There is no backend, authentication, sync, payment integration, or real AI provider integration.
 

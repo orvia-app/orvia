@@ -21,7 +21,7 @@ type ChatMessage = {
 };
 
 const INITIAL_ASSISTANT =
-  "Hi, I'm your Personal OS assistant. I can help plan your day, sort tasks, summarize notes, and spot what you might forget.";
+  "Hi, I'm your Archflow assistant. I can help plan your day, sort tasks, summarize notes, and spot what you might forget.";
 
 const THINKING_MS = 800;
 
@@ -50,10 +50,10 @@ function fakeAssistantReply(userText: string): string {
     return "Vehicle maintenance check: note mileage, next oil or service interval, tire pressure seasonally, and brake feel on every long drive. Set reminders for registration and insurance renewals so nothing slips when life gets busy.";
   }
   if (t.includes("learn") || t.includes("course") || t.includes("devops")) {
-    return "Learning progress: anchor on one outcome per week (for example, a working container build or a CI pipeline diagram). Spend 70% of time building, 30% reading—ship a tiny artifact each session so your Personal OS can track real momentum, not just hours logged.";
+    return "Learning progress: anchor on one outcome per week (for example, a working container build or a CI pipeline diagram). Spend 70% of time building, 30% reading—ship a tiny artifact each session so Archflow can track real momentum, not just hours logged.";
   }
 
-  return "I'm here to help you steer Personal OS: capture what matters, trim noise, and turn scattered inputs into a calm plan. Tell me what you're trying to finish this week, and we can break it into the next three concrete moves.";
+  return "I'm here to help you steer Archflow: capture what matters, trim noise, and turn scattered inputs into a calm plan. Tell me what you're trying to finish this week, and we can break it into the next three concrete moves.";
 }
 
 export default function AiChatPage() {
@@ -145,7 +145,7 @@ export default function AiChatPage() {
             AI Chat
           </h1>
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">
-            Ask your personal operating system anything.
+            Ask your Archflow workspace anything.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-2">
@@ -155,7 +155,7 @@ export default function AiChatPage() {
                 type="button"
                 disabled={busy}
                 onClick={() => handleChip(label)}
-                className="rounded-full border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:border-violet-400 hover:bg-violet-50 hover:text-zinc-950 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-800 dark:bg-zinc-950/80 dark:text-zinc-300 dark:hover:border-violet-500/30 dark:hover:bg-zinc-900 dark:hover:text-white sm:text-sm"
+                className="cursor-pointer rounded-full border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:border-violet-400 hover:bg-violet-50 hover:text-zinc-950 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-800 dark:bg-zinc-950/80 dark:text-zinc-300 dark:hover:border-violet-500/30 dark:hover:bg-zinc-900 dark:hover:text-white sm:text-sm"
               >
                 {label}
               </button>
@@ -165,7 +165,7 @@ export default function AiChatPage() {
           <div className="mt-6 flex min-h-0 flex-1 flex-col rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800/90 dark:bg-zinc-950/90 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.04)] dark:backdrop-blur-sm">
             <div
               ref={scrollRef}
-              className="min-h-[280px] flex-1 space-y-4 overflow-y-auto p-4 sm:min-h-[320px] sm:p-6"
+              className="app-scrollbar min-h-[280px] flex-1 space-y-4 overflow-y-auto p-4 sm:min-h-[320px] sm:p-6"
             >
               {messages.map((m) => (
                 <div
@@ -214,7 +214,7 @@ export default function AiChatPage() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Ask Personal OS anything…"
+                  placeholder="Ask Archflow anything..."
                   disabled={busy}
                   className="min-h-[2.75rem] flex-1 resize-y rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200 disabled:opacity-50 dark:border-zinc-800 dark:bg-black/60 dark:text-white dark:focus:border-violet-500/35 dark:focus:ring-violet-500/15 sm:text-[15px]"
                   autoComplete="off"
@@ -222,7 +222,7 @@ export default function AiChatPage() {
                 <button
                   type="submit"
                   disabled={busy || !input.trim()}
-                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:pointer-events-none disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white sm:min-w-[5.5rem]"
+                  className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:pointer-events-none disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white sm:min-w-[5.5rem]"
                 >
                   <Send className="h-4 w-4 sm:hidden" aria-hidden />
                   <span>Send</span>

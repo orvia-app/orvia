@@ -10,7 +10,7 @@ import {
   type PersonalOsExport,
 } from "@/lib/data-export/types";
 
-const APP_NAME = "Personal OS";
+const APP_NAME = "Archflow";
 const APP_VERSION_PLACEHOLDER = "0.1.0-local";
 
 function readStoredTheme(): ExportedTheme | null {
@@ -53,5 +53,5 @@ export function getPersonalOsExportFileName(
 ): string {
   const date = dataExport.metadata.exportedAt.split("T")[0] || "export";
 
-  return `personal-os-export-${date}.json`;
+  return `archflow-export-${date}.json`;
 }

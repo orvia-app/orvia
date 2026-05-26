@@ -1,8 +1,8 @@
-# Personal OS — Agent Instructions
+# Archflow — Agent Instructions
 
 ## Product Vision
 
-Personal OS is a future commercial AI productivity/life operating system for US/EU markets.
+Archflow is a future commercial AI productivity/life operating system for US/EU markets.
 
 Treat this project as a real SaaS product, not a demo or toy app.
 

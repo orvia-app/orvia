@@ -12,7 +12,7 @@ export function Card({
   return (
     <div
       className={[
-        "rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm shadow-zinc-950/[0.03] dark:border-zinc-800/80 dark:bg-zinc-950 dark:shadow-none sm:p-6",
+        "rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm shadow-zinc-950/[0.03] dark:border-zinc-800/80 dark:bg-zinc-950 dark:shadow-none sm:p-5",
         className,
       ].join(" ")}
       {...props}

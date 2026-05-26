@@ -63,7 +63,7 @@ function SearchResultCard({ result }: { result: UniversalSearchResult }) {
   }
 
   return (
-    <Link href={result.href} className="block">
+    <Link href={result.href} className="block cursor-pointer">
       {content}
     </Link>
   );

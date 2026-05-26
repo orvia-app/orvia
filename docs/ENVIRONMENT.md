@@ -1,8 +1,8 @@
-# Personal OS Environment Strategy
+# Archflow Environment Strategy
 
 ## Current State
 
-Personal OS currently has no backend, production AI provider, authentication provider, payment provider, or server-side secret usage.
+Archflow currently has no backend, production AI provider, authentication provider, payment provider, or server-side secret usage.
 
 Environment documentation exists now so future backend, AI, auth, sync, and payments work can start with safe defaults.
 

@@ -1,4 +1,4 @@
-# Personal OS Architecture
+# Archflow Architecture
 
 ## Current Stack
 

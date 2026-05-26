@@ -79,7 +79,7 @@ export function CommandPalette({
             type="button"
             aria-label="Close"
             onClick={() => onOpenChange(false)}
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white dark:focus-visible:ring-zinc-600"
+            className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white dark:focus-visible:ring-zinc-600"
           >
             <X className="h-4 w-4 shrink-0" aria-hidden strokeWidth={2.25} />
           </button>
@@ -87,7 +87,7 @@ export function CommandPalette({
 
         <div
           id="command-palette-results"
-          className="max-h-[min(28rem,60vh)] overflow-y-auto p-2"
+          className="app-scrollbar max-h-[min(28rem,60vh)] overflow-y-auto p-2"
           role="listbox"
         >
           {commands.length > 0 ? (
@@ -111,8 +111,8 @@ export function CommandPalette({
                       aria-selected={active}
                       className={
                         active
-                          ? "flex w-full items-center gap-3 rounded-xl bg-zinc-900 px-3 py-3 text-left text-white dark:bg-zinc-800"
-                          : "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-zinc-700 transition hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white"
+                          ? "flex w-full cursor-pointer items-center gap-3 rounded-xl bg-zinc-900 px-3 py-3 text-left text-white dark:bg-zinc-800"
+                          : "flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-left text-zinc-700 transition hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white"
                       }
                       onClick={() => onCommandSelect(command)}
                       onMouseEnter={() => onActiveIndexChange(index)}
