@@ -6,6 +6,7 @@ export const STORAGE_KEYS = {
   quickCaptures: "personal-os.quick-captures",
   theme: "personal-os.theme",
   localResetCompleted: "personal-os.local-reset-completed",
+  onboardingCompleted: "personal-os.onboarding.completed",
 } as const;
 
 export function isBrowser(): boolean {

@@ -14,6 +14,7 @@ import {
   serializePersonalOsExport,
 } from "@/lib/data-export/export-data";
 import { resetLocalPersonalOsData } from "@/lib/data-export/reset-data";
+import { resetOnboarding } from "@/lib/onboarding";
 
 const sections = [
   { title: "Profile", description: "Name, avatar, and preferences." },
@@ -81,6 +82,19 @@ export default function SettingsPage() {
 
     resetLocalPersonalOsData();
     window.location.reload();
+  }
+
+  function resetOnboardingState() {
+    const confirmed = window.confirm(
+      "Show the onboarding panel on the Dashboard again?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    resetOnboarding();
+    window.location.href = "/";
   }
 
   return (
@@ -183,6 +197,22 @@ export default function SettingsPage() {
                     Reset local data
                   </Button>
                 </div>
+              </div>
+
+              <div className="mt-3 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+                <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
+                  Reset onboarding
+                </h3>
+                <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                  Show the Dashboard onboarding panel again for this browser.
+                </p>
+                <Button
+                  className="mt-4 w-full sm:w-auto"
+                  onClick={resetOnboardingState}
+                  variant="secondary"
+                >
+                  Reset onboarding
+                </Button>
               </div>
             </Card>
           </Section>

@@ -16,6 +16,7 @@ import {
 
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
@@ -39,6 +40,7 @@ import {
 } from "@/lib/memory/memory-utils";
 import type { MemoryCandidate, MemoryImportance } from "@/lib/memory/types";
 import { getStoredNotes } from "@/lib/notes";
+import { completeOnboarding, hasCompletedOnboarding } from "@/lib/onboarding";
 import { getQuickCaptures } from "@/lib/quick-captures";
 import { getTasks } from "@/lib/tasks";
 
@@ -224,6 +226,8 @@ export default function Home() {
     [],
   );
   const [memoryLoaded, setMemoryLoaded] = useState(false);
+  const [onboardingLoaded, setOnboardingLoaded] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     function refresh() {
@@ -234,6 +238,8 @@ export default function Home() {
       setMemoryCandidates(getMemoryPreviewCandidates(activityItems));
       setActivityLoaded(true);
       setMemoryLoaded(true);
+      setShowOnboarding(!hasCompletedOnboarding());
+      setOnboardingLoaded(true);
     }
     refresh();
     window.addEventListener("focus", refresh);
@@ -253,6 +259,11 @@ export default function Home() {
     }
   }, [pathname]);
 
+  function dismissOnboarding(): void {
+    completeOnboarding();
+    setShowOnboarding(false);
+  }
+
   return (
     <AppShell>
       <div className="p-6 sm:p-10">
@@ -263,6 +274,90 @@ export default function Home() {
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">
             Jump into your workspace modules.
           </p>
+
+          {onboardingLoaded && showOnboarding ? (
+            <Card className="mt-8 overflow-hidden p-0">
+              <div className="border-b border-zinc-200/80 p-5 dark:border-zinc-800/80 sm:p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <Badge>Start here</Badge>
+                    <h2 className="mt-3 text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                      Drop anything into Archflow.
+                    </h2>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                      It helps organize captures into tasks, notes, memory, and
+                      timeline so you can find and act on them later.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={dismissOnboarding}
+                    className="self-start"
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid gap-0 divide-y divide-zinc-200/80 dark:divide-zinc-800/80 md:grid-cols-3 md:divide-x md:divide-y-0">
+                {[
+                  {
+                    step: "1",
+                    title: "Capture anything in Inbox",
+                    description:
+                      "Start with a thought, reminder, idea, car note, or research lead.",
+                  },
+                  {
+                    step: "2",
+                    title: "Turn it into a task or note",
+                    description:
+                      "Review the local preview and choose what gets created.",
+                  },
+                  {
+                    step: "3",
+                    title: "Find it later",
+                    description:
+                      "Search, Timeline, and Memory Preview keep the context visible.",
+                  },
+                ].map((item) => (
+                  <div key={item.step} className="p-5 sm:p-6">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-100 text-sm font-semibold text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
+                      {item.step}
+                    </span>
+                    <h3 className="mt-4 text-sm font-semibold text-zinc-950 dark:text-white">
+                      {item.title}
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                      {item.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-col gap-3 border-t border-zinc-200/80 bg-zinc-50/80 p-5 dark:border-zinc-800/80 dark:bg-zinc-900/40 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  Local-first onboarding. No account, backend, or AI call is
+                  required.
+                </p>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={dismissOnboarding}
+                  >
+                    Dismiss
+                  </Button>
+                  <Link
+                    href="/inbox"
+                    className="inline-flex items-center justify-center rounded-xl bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-zinc-950/10 transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none dark:hover:bg-white dark:focus-visible:ring-zinc-600 dark:focus-visible:ring-offset-black"
+                  >
+                    Go to Inbox
+                  </Link>
+                </div>
+              </div>
+            </Card>
+          ) : null}
 
           <Section className="mt-10">
             <SectionHeader title="System overview" />

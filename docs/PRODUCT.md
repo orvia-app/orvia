@@ -58,6 +58,7 @@ The MVP stores data locally in the browser through repository helpers. This supp
 ## Current Product Areas
 
 - Dashboard with system overview, recent activity, and Memory Preview.
+- Dashboard onboarding v1 for the core capture, organize, and retrieve loop.
 - Today with focus planning, Daily Briefing preview, AI suggestion placeholder, and quick capture.
 - Inbox capture with deterministic parsing helpers.
 - Tasks and Notes with local persistence.
@@ -84,6 +85,12 @@ The MVP stores data locally in the browser through repository helpers. This supp
 - Command palette as an action surface, not only navigation.
 - AI memory designed around explicit sources, user control, deletion, and privacy.
 - Timeline and briefing foundations that can become AI context without opaque data handling.
+
+## Onboarding Direction
+
+Current onboarding is local-only and lightweight. It introduces the core loop: drop anything into Archflow, turn it into tasks or notes, and retrieve context later through Search, Timeline, and Memory Preview.
+
+Future onboarding should include a sample capture, guided setup, workspace preferences, and optional privacy-first sync choices after backend/auth exist.
 
 ## AI, Local, And Privacy Philosophy
 

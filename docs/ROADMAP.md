@@ -16,6 +16,7 @@
 - Dashboard Recent Activity preview.
 - Local-only export/reset data foundation in Settings.
 - Workspace and tag helper foundation for organization, search, and future AI context.
+- Local onboarding v1 for the Archflow capture, organize, and retrieve loop.
 - Initial product, architecture, roadmap, and security docs.
 
 ## Next UX/Product Phase
@@ -32,6 +33,7 @@
 - Improve Today workflow around planning, capture, and briefing.
 - Add workspace filters across search, timeline, tasks, notes, and memory previews.
 - Add tag capture/display in focused workflows where it improves retrieval.
+- Improve onboarding with a sample capture, guided setup, and first-run checklist.
 - Expand local data management:
   - import validation
   - clearer export schema docs
