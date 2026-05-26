@@ -22,6 +22,8 @@ No backend, authentication, cloud sync, vector database, production AI calls, or
 - `src/data/mock.ts`: seed data for MVP defaults.
 - `src/types/index.ts`: shared core domain types.
 
+All TypeScript modules must use `.ts` or `.tsx` extensions. Extensionless TypeScript files are not allowed because they can confuse TypeScript, Next.js, and Turbopack resolution.
+
 ## Repository And Storage Boundary
 
 Domain data access goes through typed repository helpers. Pages and components should not parse JSON or access `localStorage` directly.
@@ -35,6 +37,8 @@ Current repositories include:
 - `src/lib/storage.ts` as the low-level safe storage adapter
 
 This boundary is the migration point for future API routes, server actions, Supabase, PostgreSQL, or an offline sync engine. Storage schemas should remain typed, validated, and export-friendly.
+
+Do not leave stale extensionless duplicates such as `src/lib/storage` beside `src/lib/storage.ts`. After moving or renaming repository files, verify the final file list with `rg --files`.
 
 ## Command System
 
@@ -127,6 +131,8 @@ Patterns to preserve:
 - date rendering should avoid locale/time-dependent SSR output unless stabilized
 - storage parsing belongs in repositories, not pages
 - AI/backend access must not be introduced into client components
+
+Before finishing code changes, run `git diff --check` and `npm run build`. If Next/Turbopack reports odd parser or module cache errors after renames, clear `.next` with `rm -rf .next` and rebuild.
 
 ## Future Backend/Auth/Sync Direction
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Wallet } from "lucide-react";
+import { Wallet, X } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import {
@@ -226,10 +226,11 @@ export default function FinancePage() {
               </h2>
               <button
                 type="button"
+                aria-label="Close"
                 onClick={closeModal}
-                className="rounded-lg px-2 py-1 text-sm text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white dark:focus-visible:ring-zinc-600"
               >
-                Close
+                <X className="h-4 w-4 shrink-0" aria-hidden strokeWidth={2.25} />
               </button>
             </div>
             <form className="mt-6 space-y-4" onSubmit={handleSubmit}>

@@ -1,6 +1,7 @@
 "use client";
 
 import type { FormEvent, RefObject } from "react";
+import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import type { CommandAction } from "@/lib/commands/types";
@@ -73,8 +74,14 @@ export function CommandActionDialog({
               {description}
             </p>
           </div>
-          <Button variant="ghost" onClick={onClose} className="px-2 py-1">
-            Close
+          <Button
+            aria-label="Close"
+            className="h-8 w-8 p-0 text-zinc-700 hover:text-zinc-950 dark:text-zinc-200 dark:hover:text-white"
+            onClick={onClose}
+            type="button"
+            variant="ghost"
+          >
+            <X className="h-4 w-4 shrink-0" aria-hidden strokeWidth={2.25} />
           </Button>
         </div>
 

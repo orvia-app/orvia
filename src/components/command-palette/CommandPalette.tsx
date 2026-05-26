@@ -1,7 +1,7 @@
 "use client";
 
 import type { RefObject } from "react";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 
 import type { CommandItem } from "@/lib/commands/types";
 
@@ -75,6 +75,14 @@ export function CommandPalette({
           <kbd className="hidden rounded-md border border-zinc-200 bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-500 sm:inline-flex">
             Esc
           </kbd>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={() => onOpenChange(false)}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white dark:focus-visible:ring-zinc-600"
+          >
+            <X className="h-4 w-4 shrink-0" aria-hidden strokeWidth={2.25} />
+          </button>
         </div>
 
         <div

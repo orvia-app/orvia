@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { X } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/Badge";
@@ -204,8 +205,14 @@ export default function TasksPage() {
                 New task
               </h2>
 
-              <Button variant="ghost" onClick={closeModal} className="px-2 py-1">
-                Close
+              <Button
+                aria-label="Close"
+                className="h-8 w-8 p-0 text-zinc-700 hover:text-zinc-950 dark:text-zinc-200 dark:hover:text-white"
+                onClick={closeModal}
+                type="button"
+                variant="ghost"
+              >
+                <X className="h-4 w-4 shrink-0" aria-hidden strokeWidth={2.25} />
               </Button>
             </div>
 

@@ -82,6 +82,8 @@ Current localStorage keys:
 
 Always write production-quality code that can be reviewed by senior developers or CTOs.
 
+Follow the guardrails in `docs/ENGINEERING_RULES.md` for every code change.
+
 Prioritize:
 - type safety
 - readability
@@ -102,6 +104,8 @@ Avoid:
 - duplicated storage access
 - duplicated validation
 - direct localStorage usage inside pages
+- extensionless TypeScript modules
+- stale duplicate files such as `src/lib/storage` beside `src/lib/storage.ts`
 - giant messy page files
 - frontend secrets
 - API keys in client code
@@ -149,6 +153,17 @@ Always guard browser APIs:
 ```ts
 typeof window !== "undefined"
 ```
+
+All TypeScript modules must use `.ts` or `.tsx` extensions. Never create extensionless TypeScript files. After moving or renaming files, check for stale extensionless duplicates with `rg --files`.
+
+Before finishing code changes, run:
+
+```bash
+git diff --check
+npm run build
+```
+
+Do not stop while the build is red. If Next/Turbopack reports strange parser, module resolution, or fetch/cache errors after file renames, clear the local cache with `rm -rf .next` and rebuild.
 
 ---
 
