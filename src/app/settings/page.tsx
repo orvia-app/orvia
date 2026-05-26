@@ -53,7 +53,7 @@ const appearanceOptions: {
 ];
 
 export default function SettingsPage() {
-  const { theme, resolvedTheme, setTheme } = useTheme();
+  const { hydrated, theme, resolvedTheme, setTheme } = useTheme();
 
   function exportData() {
     const dataExport = createPersonalOsExport();
@@ -116,7 +116,9 @@ export default function SettingsPage() {
                   <>
                     Current selection:{" "}
                     <span className="font-medium text-zinc-950 dark:text-white">
-                      {theme === "system"
+                      {!hydrated
+                        ? "Loading"
+                        : theme === "system"
                         ? `System (${resolvedTheme})`
                         : theme.charAt(0).toUpperCase() + theme.slice(1)}
                     </span>
@@ -126,7 +128,7 @@ export default function SettingsPage() {
               <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                 {appearanceOptions.map(
                   ({ value, label, description, icon: Icon }) => {
-                    const active = theme === value;
+                    const active = hydrated && theme === value;
 
                     return (
                       <button

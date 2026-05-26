@@ -20,6 +20,7 @@ export type ResolvedTheme = "dark" | "light";
 const DEFAULT_THEME: Theme = "dark";
 
 type ThemeContextValue = {
+  hydrated: boolean;
   theme: Theme;
   resolvedTheme: ResolvedTheme;
   setTheme: (next: Theme) => void;
@@ -55,6 +56,7 @@ function applyDarkClass(isDark: boolean) {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(DEFAULT_THEME);
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("dark");
+  const [hydrated, setHydrated] = useState(false);
   const themeRef = useRef(theme);
   themeRef.current = theme;
 
@@ -65,6 +67,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const resolved = resolveTheme(stored);
     setResolvedTheme(resolved);
     applyDarkClass(resolved === "dark");
+    setHydrated(true);
   }, []);
 
   useEffect(() => {
@@ -91,8 +94,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ theme, resolvedTheme, setTheme }),
-    [theme, resolvedTheme, setTheme],
+    () => ({ hydrated, theme, resolvedTheme, setTheme }),
+    [hydrated, theme, resolvedTheme, setTheme],
   );
 
   return (

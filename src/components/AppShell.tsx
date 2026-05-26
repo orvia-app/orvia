@@ -63,7 +63,7 @@ function isNavActive(pathname: string, href: string) {
 }
 
 function ThemeSwitcher() {
-  const { theme, setTheme } = useTheme();
+  const { hydrated, theme, setTheme } = useTheme();
 
   return (
     <div>
@@ -72,7 +72,7 @@ function ThemeSwitcher() {
       </p>
       <div className="grid grid-cols-3 gap-1.5">
         {themeOptions.map(({ value, label, icon: Icon }) => {
-          const active = theme === value;
+          const active = hydrated && theme === value;
           return (
             <button
               key={value}
