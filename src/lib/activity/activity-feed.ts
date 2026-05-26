@@ -1,9 +1,9 @@
 import { entityToActivityItems } from "@/lib/activity/activity-utils";
-import { getStoredCars } from "@/lib/cars";
+import { getCars } from "@/lib/cars";
 import { getTransactions } from "@/lib/finance";
-import { getStoredNotes } from "@/lib/notes";
+import { getNotes } from "@/lib/notes";
 import { getQuickCaptures } from "@/lib/quick-captures";
-import { getStoredTasks } from "@/lib/tasks";
+import { getTasks } from "@/lib/tasks";
 import {
   carToEntity,
   noteToEntity,
@@ -111,13 +111,13 @@ export function createActivityFeed(
 
 export function getLocalActivitySourceEntities(): ActivitySourceEntity[] {
   return [
-    ...getStoredTasks().map((task) => taskToEntity(task)),
-    ...getStoredNotes().map((note) => noteToEntity(note)),
+    ...getTasks().map((task) => taskToEntity(task)),
+    ...getNotes().map((note) => noteToEntity(note)),
     ...getQuickCaptures().map((capture) => quickCaptureToEntity(capture)),
     ...getTransactions().map((transaction) =>
       transactionToEntity(transaction),
     ),
-    ...getStoredCars().map((car) => carToEntity(car)),
+    ...getCars().map((car) => carToEntity(car)),
   ];
 }
 

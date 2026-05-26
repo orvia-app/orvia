@@ -157,10 +157,10 @@ export function CommandPalette({
                           aria-selected={active}
                           className={
                             active
-                          ? "flex w-full cursor-pointer items-center gap-3 rounded-xl bg-zinc-950 px-3 py-2.5 text-left text-white shadow-sm shadow-zinc-950/10 dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none"
+                          ? "flex w-full cursor-pointer items-center gap-3 rounded-xl bg-zinc-950 px-3 py-2.5 text-left text-white dark:bg-zinc-100 dark:text-zinc-950"
                           : primary
-                            ? "flex w-full cursor-pointer items-center gap-3 rounded-xl bg-zinc-100/70 px-3 py-2.5 text-left text-zinc-800 ring-1 ring-zinc-200/60 transition hover:bg-white hover:text-zinc-950 hover:ring-zinc-300 dark:bg-zinc-900/45 dark:text-zinc-200 dark:ring-zinc-800/70 dark:hover:bg-zinc-900 dark:hover:text-white dark:hover:ring-zinc-700"
-                            : "flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left text-zinc-700 transition hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white"
+                            ? "flex w-full cursor-pointer items-center gap-3 rounded-xl bg-zinc-100/70 px-3 py-2.5 text-left text-zinc-800 ring-1 ring-zinc-200/60 hover:bg-white hover:text-zinc-950 hover:ring-zinc-300 dark:bg-zinc-900/45 dark:text-zinc-200 dark:ring-zinc-800/70 dark:hover:bg-zinc-900 dark:hover:text-white dark:hover:ring-zinc-700"
+                            : "flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white"
                           }
                           onClick={() => onCommandSelect(command)}
                           onMouseEnter={() => onActiveIndexChange(index)}

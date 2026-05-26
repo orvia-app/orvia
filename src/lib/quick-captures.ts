@@ -1,4 +1,5 @@
-import { safeReadStorage, safeWriteStorage, STORAGE_KEYS } from "@/lib/storage";
+import { createLocalEntityRepository } from "@/core/repositories/local-json-repository";
+import { STORAGE_KEYS } from "@/lib/storage";
 
 export type QuickCapture = {
   id: string;
@@ -21,19 +22,18 @@ export function isQuickCapture(value: unknown): value is QuickCapture {
   );
 }
 
-export function getQuickCaptures(): QuickCapture[] {
-  const storedCaptures = safeReadStorage<unknown[]>(
-    STORAGE_KEYS.quickCaptures,
-    [],
-  );
+export const quickCaptureRepository =
+  createLocalEntityRepository<QuickCapture>({
+    key: STORAGE_KEYS.quickCaptures,
+    validate: isQuickCapture,
+  });
 
-  return Array.isArray(storedCaptures)
-    ? storedCaptures.filter(isQuickCapture)
-    : [];
+export function getQuickCaptures(): QuickCapture[] {
+  return quickCaptureRepository.list();
 }
 
 export function saveQuickCaptures(captures: QuickCapture[]): void {
-  safeWriteStorage(STORAGE_KEYS.quickCaptures, captures);
+  quickCaptureRepository.save(captures);
 }
 
 export function createQuickCapture(capture: QuickCapture): QuickCapture[] {

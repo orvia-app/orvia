@@ -1,5 +1,6 @@
+import { createLocalListRepository } from "@/core/repositories/local-json-repository";
 import type { CommandItem } from "@/lib/commands/types";
-import { safeReadStorage, safeWriteStorage, STORAGE_KEYS } from "@/lib/storage";
+import { STORAGE_KEYS } from "@/lib/storage";
 
 const MAX_COMMAND_HISTORY_ITEMS = 8;
 
@@ -23,10 +24,14 @@ function isCommandHistoryEntry(value: unknown): value is CommandHistoryEntry {
   );
 }
 
-function readCommandHistoryEntries(): CommandHistoryEntry[] {
-  const value = safeReadStorage<unknown[]>(STORAGE_KEYS.commandHistory, []);
+const commandHistoryRepository =
+  createLocalListRepository<CommandHistoryEntry>({
+    key: STORAGE_KEYS.commandHistory,
+    validate: isCommandHistoryEntry,
+  });
 
-  return value.filter(isCommandHistoryEntry).slice(0, MAX_COMMAND_HISTORY_ITEMS);
+function readCommandHistoryEntries(): CommandHistoryEntry[] {
+  return commandHistoryRepository.list().slice(0, MAX_COMMAND_HISTORY_ITEMS);
 }
 
 export function getRecentCommandIds(): string[] {
@@ -54,5 +59,5 @@ export function recordCommandExecution(commandId: string): void {
     ),
   ].slice(0, MAX_COMMAND_HISTORY_ITEMS);
 
-  safeWriteStorage(STORAGE_KEYS.commandHistory, nextEntries);
+  commandHistoryRepository.save(nextEntries);
 }

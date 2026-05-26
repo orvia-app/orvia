@@ -1,3 +1,4 @@
+import { listStorageKeys } from "@/core/storage/keys";
 import {
   markLocalDataResetCompleted,
   safeRemoveStorage,
@@ -10,7 +11,7 @@ export type PersonalOsStorageKey =
   (typeof STORAGE_KEYS)[PersonalOsStorageKeyName];
 
 export function listPersonalOsStorageKeys(): PersonalOsStorageKey[] {
-  return Object.values(STORAGE_KEYS);
+  return listStorageKeys();
 }
 
 export function resetLocalPersonalOsData(): void {

@@ -1,4 +1,5 @@
-import { safeReadStorage, safeWriteStorage, STORAGE_KEYS } from "@/lib/storage";
+import { createLocalEntityRepository } from "@/core/repositories/local-json-repository";
+import { STORAGE_KEYS } from "@/lib/storage";
 
 export type TransactionType = "income" | "expense";
 
@@ -48,19 +49,18 @@ export function isTransaction(value: unknown): value is Transaction {
   );
 }
 
-export function getTransactions(): Transaction[] {
-  const storedTransactions = safeReadStorage<unknown[]>(
-    STORAGE_KEYS.financeTransactions,
-    [],
-  );
+export const financeTransactionRepository =
+  createLocalEntityRepository<Transaction>({
+    key: STORAGE_KEYS.financeTransactions,
+    validate: isTransaction,
+  });
 
-  return Array.isArray(storedTransactions)
-    ? storedTransactions.filter(isTransaction)
-    : [];
+export function getTransactions(): Transaction[] {
+  return financeTransactionRepository.list();
 }
 
 export function saveTransactions(transactions: Transaction[]): void {
-  safeWriteStorage(STORAGE_KEYS.financeTransactions, transactions);
+  financeTransactionRepository.save(transactions);
 }
 
 export function createTransaction(transaction: Transaction): Transaction[] {

@@ -122,6 +122,8 @@ Risks:
 
 Do not store integration tokens, API keys, payment secrets, or high-risk credentials in `localStorage`.
 
+Browser storage access should stay isolated behind the storage adapter and domain repositories. Pages and components must not read or write browser storage directly. This keeps validation, corrupt JSON handling, export/reset behavior, and future migration to IndexedDB or backend sync in one controlled boundary.
+
 ## Future Server-Side AI Architecture
 
 Server-side AI should:
@@ -278,4 +280,6 @@ When a backend is introduced:
 - avoid broad service-role usage in request paths
 - rotate credentials safely
 - monitor abuse and failed auth events
+
+Repository and storage adapter contracts are the migration boundary for backend security. Future backend adapters must enforce authentication, authorization, schema validation, rate limits where applicable, and deletion/export guarantees server-side rather than trusting client state.
 - treat AI tool execution as a privileged action
