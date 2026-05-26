@@ -79,6 +79,16 @@ Entities include stable typed IDs, source IDs, title/subtitle helpers, metadata,
 
 The entity layer is the shared substrate for search, activity, memory, future relations, and backend synchronization.
 
+## Workspace And Tags Foundation
+
+`src/lib/workspaces/*` defines stable workspace keys for personal, work, cars, business, and knowledge. The helpers map current legacy workspace IDs such as `1` and `2`, plus local domain aliases such as `finance`, into canonical workspace keys and labels.
+
+Current storage still preserves existing workspace IDs where repositories expect them. Entity, activity, memory, search, and timeline helpers can use canonical labels without forcing a storage migration.
+
+`src/lib/tags/*` defines lightweight tag types plus deterministic normalization, validation, deduplication, and search-text helpers. Tags are not yet a full UI feature; they are a foundation for future filtering, search ranking, memory context, and backend-owned tag records.
+
+Future backend work should treat workspaces and tags as first-class organization primitives with user ownership, permissions, filtering, and migration paths from legacy local IDs.
+
 ## Search Architecture
 
 Search is deterministic and local today. `src/lib/search.ts` maps domain data into normalized searchable entities and filters them by text.

@@ -14,10 +14,15 @@ import {
   TASK_PRIORITIES,
   TASK_STATUSES,
 } from "@/lib/tasks";
+import {
+  getLegacyWorkspaceId,
+  getWorkspaceLabel,
+} from "@/lib/workspaces/workspaces";
 import type { Task, TaskPriority, TaskStatus } from "@/types";
 
 type FilterValue = "all" | TaskStatus;
-type WorkspaceChoice = "Personal" | "Work";
+const taskWorkspaceKeys = ["personal", "work"] as const;
+type WorkspaceChoice = (typeof taskWorkspaceKeys)[number];
 
 type TaskFormState = {
   title: string;
@@ -39,7 +44,7 @@ const emptyForm: TaskFormState = {
   description: "",
   priority: "medium",
   status: "todo",
-  workspace: "Personal",
+  workspace: "personal",
 };
 
 function statusLabel(status: TaskStatus): string {
@@ -86,7 +91,7 @@ export default function TasksPage() {
       return;
     }
 
-    const workspaceId = form.workspace === "Personal" ? "1" : "2";
+    const workspaceId = getLegacyWorkspaceId(form.workspace);
 
     const newTask: Task = {
       id: Date.now().toString(),
@@ -159,7 +164,7 @@ export default function TasksPage() {
 
                     <div className="mt-4 flex flex-wrap gap-2">
                       <Badge>{task.priority}</Badge>
-                      <Badge>Workspace {task.workspaceId}</Badge>
+                      <Badge>{getWorkspaceLabel(task.workspaceId)}</Badge>
                     </div>
                   </div>
 
@@ -336,8 +341,11 @@ export default function TasksPage() {
                   }
                   className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
                 >
-                  <option value="Personal">Personal</option>
-                  <option value="Work">Work</option>
+                  {taskWorkspaceKeys.map((workspaceKey) => (
+                    <option key={workspaceKey} value={workspaceKey}>
+                      {getWorkspaceLabel(workspaceKey)}
+                    </option>
+                  ))}
                 </select>
               </div>
 

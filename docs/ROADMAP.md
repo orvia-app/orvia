@@ -15,6 +15,7 @@
 - AI memory model, candidate helpers, and Dashboard Memory Preview.
 - Dashboard Recent Activity preview.
 - Local-only export/reset data foundation in Settings.
+- Workspace and tag helper foundation for organization, search, and future AI context.
 - Initial product, architecture, roadmap, and security docs.
 
 ## Next UX/Product Phase
@@ -29,6 +30,8 @@
 - Add entity detail/open flows where appropriate.
 - Build first timeline/activity UI beyond Dashboard preview.
 - Improve Today workflow around planning, capture, and briefing.
+- Add workspace filters across search, timeline, tasks, notes, and memory previews.
+- Add tag capture/display in focused workflows where it improves retrieval.
 - Expand local data management:
   - import validation
   - clearer export schema docs
@@ -44,6 +47,7 @@
 - Introduce deterministic prompts and typed response contracts.
 - Add AI memory generation from source-linked entities.
 - Add semantic search with server-generated embeddings.
+- Use workspace and tag context to scope AI recall, summaries, and action suggestions.
 - Add source citations/references for memory and AI answers.
 - Add user controls for memory deletion, regeneration, and exclusion.
 - Add logging policy for AI requests that avoids storing unnecessary personal data.
@@ -53,6 +57,7 @@
 - Choose backend architecture and environment strategy.
 - Introduce authentication and secure sessions.
 - Add user/workspace ownership to persisted data.
+- Support user-created workspaces and backend-owned tag records.
 - Migrate repositories from browser-only storage to backend-compatible adapters.
 - Evaluate Supabase/PostgreSQL with row-level security or equivalent authorization.
 - Design offline/local-first sync and conflict handling.

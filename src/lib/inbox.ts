@@ -1,4 +1,5 @@
 import type { NoteType } from "@/lib/notes";
+import { getLegacyWorkspaceId } from "@/lib/workspaces/workspaces";
 import type { TaskPriority } from "@/types";
 
 export type InboxItemType = "Reminder" | "Idea" | "Task" | "Note" | "Inbox item";
@@ -80,25 +81,7 @@ export function priorityFromType(type: InboxItemType): TaskPriority {
 }
 
 export function workspaceIdFromLabel(workspace: string): string {
-  switch (workspace) {
-    case "Personal":
-      return "1";
-
-    case "Work":
-      return "2";
-
-    case "Cars":
-      return "3";
-
-    case "Business":
-      return "4";
-
-    case "Knowledge":
-      return "5";
-
-    default:
-      return "1";
-  }
+  return getLegacyWorkspaceId(workspace);
 }
 
 export function noteTypeFromInboxType(

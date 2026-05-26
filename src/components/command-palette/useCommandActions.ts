@@ -11,6 +11,7 @@ import {
 import { createNote } from "@/lib/notes";
 import { createTask } from "@/lib/tasks";
 import type { CommandAction } from "@/lib/commands/types";
+import { getLegacyWorkspaceId } from "@/lib/workspaces/workspaces";
 import type { Task } from "@/types";
 
 type CreatableCommandAction = Extract<
@@ -67,7 +68,7 @@ export function useCommandActions() {
           title,
           priority: "medium",
           status: "todo",
-          workspaceId: "1",
+          workspaceId: getLegacyWorkspaceId("personal"),
           createdAt: new Date().toISOString(),
         };
 

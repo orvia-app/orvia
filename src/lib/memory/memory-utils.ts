@@ -16,6 +16,8 @@ import type {
   MemoryItem,
   MemorySourceType,
 } from "@/lib/memory/types";
+import { dedupeTags } from "@/lib/tags/tag-utils";
+import { getWorkspaceKey } from "@/lib/workspaces/workspaces";
 
 type EntityMemorySourceType = Extract<
   MemorySourceType,
@@ -165,7 +167,7 @@ export function entityToMemoryCandidate(
       capturedAt: entity.metadata.createdAt,
       workspaceId: entity.metadata.workspaceId,
       relationIds: entity.metadata.relationIds,
-      tags: entity.metadata.memoryTags,
+      tags: dedupeTags(entity.metadata.memoryTags ?? []),
       source: entity.metadata.source,
     },
     candidateReason: `${sourceType} entity is available for future recall`,
@@ -246,10 +248,12 @@ export function createManualMemory(input: {
       createdAt: input.createdAt,
       updatedAt: input.updatedAt,
       capturedAt: input.createdAt,
-      workspaceId: input.workspaceId,
+      workspaceId: input.workspaceId
+        ? getWorkspaceKey(input.workspaceId)
+        : undefined,
       userId: input.userId,
       relationIds: input.relationIds,
-      tags: input.tags,
+      tags: dedupeTags(input.tags ?? []),
       source: "local",
     },
   };

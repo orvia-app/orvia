@@ -32,7 +32,9 @@ import {
 import type { MemoryCandidate } from "@/lib/memory/types";
 import { getNotes } from "@/lib/notes";
 import { getQuickCaptures } from "@/lib/quick-captures";
+import { tagsToSearchText } from "@/lib/tags/tag-utils";
 import { getTasks } from "@/lib/tasks";
+import { getWorkspaceLabel } from "@/lib/workspaces/workspaces";
 
 export type UniversalSearchResultType = "entity" | "activity" | "memory";
 
@@ -86,6 +88,9 @@ function entityToUniversalSearchResult(
 ): UniversalSearchResult {
   const searchableEntity = toSearchableEntity(entity);
   const subtitle = getEntitySubtitle(entity);
+  const workspaceLabel = entity.metadata.workspaceId
+    ? getWorkspaceLabel(entity.metadata.workspaceId)
+    : undefined;
 
   return {
     id: `entity:${entity.id}`,
@@ -100,7 +105,8 @@ function entityToUniversalSearchResult(
       compactText([
         searchableEntity.searchableText,
         searchableEntity.typeLabel,
-        entity.metadata.memoryTags?.join(" "),
+        workspaceLabel,
+        tagsToSearchText(entity.metadata.memoryTags),
       ]),
     ),
   };
@@ -110,6 +116,9 @@ function activityToUniversalSearchResult(
   activity: ActivityItem,
 ): UniversalSearchResult {
   const subtitle = getActivitySubtitle(activity);
+  const workspaceLabel = activity.metadata.workspaceId
+    ? getWorkspaceLabel(activity.metadata.workspaceId)
+    : undefined;
 
   return {
     id: `activity:${activity.id}`,
@@ -128,6 +137,7 @@ function activityToUniversalSearchResult(
         activity.entity.title,
         activity.entity.type,
         activity.metadata.workspaceId,
+        workspaceLabel,
       ]),
     ),
   };
@@ -148,6 +158,10 @@ function getMemoryHref(memory: MemoryCandidate): string | undefined {
 function memoryToUniversalSearchResult(
   memory: MemoryCandidate,
 ): UniversalSearchResult {
+  const workspaceLabel = memory.metadata.workspaceId
+    ? getWorkspaceLabel(memory.metadata.workspaceId)
+    : undefined;
+
   return {
     id: `memory:${memory.id}`,
     type: "memory",
@@ -163,7 +177,8 @@ function memoryToUniversalSearchResult(
         memory.content,
         memory.sourceType,
         memory.importance,
-        memory.metadata.tags?.join(" "),
+        workspaceLabel,
+        tagsToSearchText(memory.metadata.tags),
         memory.candidateReason,
       ]),
     ),

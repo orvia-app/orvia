@@ -14,6 +14,8 @@ import type {
   SearchableEntity,
   TaskEntity,
 } from "@/lib/entities/types";
+import { tagsToSearchText } from "@/lib/tags/tag-utils";
+import { getWorkspaceKey, getWorkspaceLabel } from "@/lib/workspaces/workspaces";
 
 function makeEntityId<TType extends EntityType>(
   type: TType,
@@ -73,7 +75,14 @@ export function getEntityUrl(entity: PersonalEntity): string {
 }
 
 export function taskToEntity(task: Task): TaskEntity {
-  const subtitle = compactText([task.description, task.priority, task.status]);
+  const workspaceKey = getWorkspaceKey(task.workspaceId);
+  const workspaceLabel = getWorkspaceLabel(task.workspaceId);
+  const subtitle = compactText([
+    task.description,
+    task.priority,
+    task.status,
+    workspaceLabel,
+  ]);
 
   return {
     id: makeEntityId("task", task.id),
@@ -84,7 +93,7 @@ export function taskToEntity(task: Task): TaskEntity {
     data: task,
     metadata: {
       createdAt: task.createdAt,
-      workspaceId: task.workspaceId,
+      workspaceId: workspaceKey,
       source: "local",
       url: "/tasks",
       searchableText: compactText([
@@ -94,12 +103,18 @@ export function taskToEntity(task: Task): TaskEntity {
         task.status,
         task.dueDate,
         task.workspaceId,
+        workspaceKey,
+        workspaceLabel,
       ]),
     },
   };
 }
 
 export function noteToEntity(note: Note): NoteEntity {
+  const workspaceKey = getWorkspaceKey("knowledge");
+  const workspaceLabel = getWorkspaceLabel(workspaceKey);
+  const memoryTags = [note.type];
+
   return {
     id: makeEntityId("note", note.id),
     type: "note",
@@ -108,10 +123,18 @@ export function noteToEntity(note: Note): NoteEntity {
     subtitle: note.content,
     data: note,
     metadata: {
+      workspaceId: workspaceKey,
       source: "local",
       url: "/notes",
-      searchableText: compactText([note.title, note.content, note.type]),
-      memoryTags: [note.type],
+      searchableText: compactText([
+        note.title,
+        note.content,
+        note.type,
+        workspaceKey,
+        workspaceLabel,
+        tagsToSearchText(memoryTags),
+      ]),
+      memoryTags,
     },
   };
 }
@@ -119,6 +142,9 @@ export function noteToEntity(note: Note): NoteEntity {
 export function transactionToEntity(
   transaction: Transaction,
 ): FinanceTransactionEntity {
+  const workspaceKey = getWorkspaceKey("finance");
+  const workspaceLabel = getWorkspaceLabel(workspaceKey);
+
   return {
     id: makeEntityId("finance_transaction", transaction.id),
     type: "finance_transaction",
@@ -133,7 +159,7 @@ export function transactionToEntity(
     data: transaction,
     metadata: {
       createdAt: transaction.createdAt,
-      workspaceId: "finance",
+      workspaceId: workspaceKey,
       source: "local",
       url: "/finance",
       searchableText: compactText([
@@ -142,12 +168,17 @@ export function transactionToEntity(
         transaction.amount,
         transaction.currency,
         transaction.note,
+        workspaceKey,
+        workspaceLabel,
       ]),
     },
   };
 }
 
 export function carToEntity(car: CarRecord): CarEntity {
+  const workspaceKey = getWorkspaceKey("cars");
+  const workspaceLabel = getWorkspaceLabel(workspaceKey);
+
   return {
     id: makeEntityId("car", car.id),
     type: "car",
@@ -156,7 +187,7 @@ export function carToEntity(car: CarRecord): CarEntity {
     subtitle: compactText([car.owner, car.mileage, car.notes]),
     data: car,
     metadata: {
-      workspaceId: "cars",
+      workspaceId: workspaceKey,
       source: "local",
       url: "/cars",
       searchableText: compactText([
@@ -164,12 +195,17 @@ export function carToEntity(car: CarRecord): CarEntity {
         car.owner,
         car.mileage,
         car.notes,
+        workspaceKey,
+        workspaceLabel,
       ]),
     },
   };
 }
 
 export function quickCaptureToEntity(capture: QuickCapture): InboxItemEntity {
+  const workspaceKey = getWorkspaceKey("personal");
+  const workspaceLabel = getWorkspaceLabel(workspaceKey);
+
   return {
     id: makeEntityId("inbox_item", capture.id),
     type: "inbox_item",
@@ -179,9 +215,15 @@ export function quickCaptureToEntity(capture: QuickCapture): InboxItemEntity {
     data: capture,
     metadata: {
       createdAt: capture.createdAt,
+      workspaceId: workspaceKey,
       source: "local",
       url: "/inbox",
-      searchableText: compactText([capture.text, capture.createdAt]),
+      searchableText: compactText([
+        capture.text,
+        capture.createdAt,
+        workspaceKey,
+        workspaceLabel,
+      ]),
     },
   };
 }

@@ -21,6 +21,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { getTimelineActivityFeed } from "@/lib/activity/activity-feed";
 import { getActivityEventLabel } from "@/lib/activity/activity-utils";
 import type { ActivityItem } from "@/lib/activity/types";
+import { getWorkspaceLabel } from "@/lib/workspaces/workspaces";
 
 type TimelineGroup = {
   dateLabel: string;
@@ -97,7 +98,7 @@ function TimelineItem({ item }: { item: ActivityItem }) {
             ) : null}
             {item.metadata.workspaceId ? (
               <span className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
-                {item.metadata.workspaceId}
+                {getWorkspaceLabel(item.metadata.workspaceId)}
               </span>
             ) : null}
           </div>
