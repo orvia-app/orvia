@@ -10,6 +10,12 @@ Archflow is a calm personal operating layer for capture, organization, recall, a
 
 Archflow is not an admin panel, CRUD dashboard, generic chatbot, or demo parser.
 
+## Naming Status
+
+Archflow is the current working brand, but it is not final. Treat it as temporary until domain, trademark, App Store, Telegram handle, and searchability checks are complete.
+
+Before buying domains, naming production Supabase/Vercel projects, creating Telegram bots, or preparing public beta/App Store assets, read `docs/BRANDING_NAMING.md` and finalize the brand decision.
+
 ## Product Vision
 
 Long term, Archflow should become a private, command-first AI operating system for personal and work context. The product moat is not a single model call; it is the combination of trusted capture, structured local data, explicit memory, timeline context, workspace/tag organization, and safe actions.
@@ -150,6 +156,7 @@ Before coding major work, read the specific plan docs:
 - Backend: `docs/BACKEND_PLAN.md`, `docs/DATABASE_SCHEMA.md`, `docs/SUPABASE_MIGRATIONS.md`, `docs/SYNC_STRATEGY.md`.
 - Security/env: `docs/SECURITY.md`, `docs/ENVIRONMENT.md`, `docs/ENGINEERING_RULES.md`.
 - Product: `docs/PRODUCT.md`, `docs/PRODUCT_PRINCIPLES.md`, `docs/ROADMAP.md`.
+- Naming/brand: `docs/BRANDING_NAMING.md`.
 - Teammate workflow: `docs/DEVELOPMENT_GUIDE.md`, `docs/CONTRIBUTING.md`, `docs/QA_CHECKLIST.md`.
 - Telegram: `docs/TELEGRAM_INTEGRATION_PLAN.md`.
 

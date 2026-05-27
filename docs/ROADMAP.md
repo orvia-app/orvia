@@ -9,6 +9,7 @@
 - `docs/SYNC_STRATEGY.md`: local-first sync migration plan.
 - `docs/TELEGRAM_INTEGRATION_PLAN.md`: future Telegram quick capture roadmap.
 - `docs/QA_CHECKLIST.md`: release and preview QA coverage.
+- `docs/BRANDING_NAMING.md`: naming criteria and brand decision checklist before public infrastructure.
 
 ## Current Foundation Completed
 
@@ -55,7 +56,8 @@
   - selective reset controls
   - user-facing data inventory
 - Rewrite README into a fuller product/developer overview later.
-- Run naming and branding pass before public launch materials.
+- Finalize naming and branding before domain purchase, production Supabase/Vercel naming, public beta, Telegram bot handles, or App Store assets.
+- Run domain, trademark, App Store, Telegram handle, GitHub, and SEO/searchability checks for naming finalists.
 
 ## AI Layer Phase
 
@@ -72,6 +74,7 @@
 ## Backend/Auth/Sync Phase
 
 - Use `docs/BACKEND_PLAN.md`, `docs/DATABASE_SCHEMA.md`, and `docs/SYNC_STRATEGY.md` as the backend planning baseline before implementation.
+- Finalize the product name before creating production Supabase project names or public auth/email templates.
 - Create Supabase project and environment separation for local, preview, and production.
 - Review and apply the first migration set in `supabase/migrations/202605270001_initial_schema.sql` for profiles, workspaces, tasks, notes, captures, activity events, entity relations, memory candidates, finance transactions, cars, and preferences.
 - Include optional module preferences and integration registry/state tables in the first migration set.
@@ -133,6 +136,7 @@ Safe implementation phases:
 - Improve mobile responsive capture flows.
 - Add share-sheet-friendly capture direction.
 - Use `docs/TELEGRAM_INTEGRATION_PLAN.md` when backend/auth is ready for external capture channels.
+- Finalize brand and handle strategy before creating a public Telegram bot or App Store listing.
 - Explore PWA or native companion after core data model stabilizes.
 - Support fast capture for notes, tasks, inbox, links, and voice-derived text.
 - Keep mobile sync/auth assumptions aligned with backend phase.
@@ -158,6 +162,7 @@ Safe implementation phases:
 ## Documentation Backlog
 
 - Fuller README rewrite.
+- Naming shortlist, evaluation notes, and final brand decision record.
 - Architecture diagrams after backend choice.
 - Security checklist tied to backend launch gates.
 - Threat model expanded for Supabase, RLS, auth sessions, service-role usage, AI routes, and Stripe webhooks.

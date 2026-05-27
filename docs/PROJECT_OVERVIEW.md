@@ -5,12 +5,15 @@
 - `docs/MASTER_CONTEXT.md`: compressed project memory for teammates, reviewers, and future AI sessions.
 - `docs/PRODUCT_PRINCIPLES.md`: product decision rules and anti-patterns.
 - `docs/PHASE_HISTORY.md`: concise milestone history.
+- `docs/BRANDING_NAMING.md`: naming criteria and brand decision checklist.
 
 ## What Archflow Is
 
 Archflow is a local-first, AI-native productivity and life operating system. It is designed to help users capture, organize, retrieve, and act on personal and work context across tasks, notes, inbox captures, search, timeline, memory, finance, cars, and future automation.
 
 The current app is a frontend-only MVP. It is not a production SaaS backend yet.
+
+Archflow is the current working brand. The final public name should be decided before domain purchase, production backend project naming, Telegram bot creation, or App Store preparation.
 
 ## Product Vision
 
