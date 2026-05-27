@@ -188,6 +188,10 @@ Future auth should support:
 
 Client-side route visibility is not a security boundary. Backend authorization must enforce access.
 
+Initial backend auth should use email/password with verified email before public launch. OAuth can be added later after account linking and session rules are reviewed. Anonymous/local-only mode should remain supported, but cloud sync requires an authenticated account and explicit migration of local data.
+
+Sessions should avoid storing sensitive tokens in localStorage. Prefer provider-supported secure session patterns and server-side checks for privileged operations.
+
 ## Future Access Control Plan
 
 When backend storage exists:
@@ -209,6 +213,19 @@ Expected principles:
 - service-role credentials are never exposed to the browser
 - privileged jobs are isolated from normal user request paths
 - migrations preserve data ownership and deletion behavior
+
+Current backend recommendation is Supabase for MVP. Before implementation:
+- create schema migrations from `docs/DATABASE_SCHEMA.md`
+- enable RLS on every user-owned table
+- test per-user isolation policies before exposing browser clients
+- keep service-role keys server-only
+- keep admin/support access explicit, scoped, logged, and time-limited
+
+RLS policy direction:
+- users can select, insert, update, and soft-delete only rows where `user_id = auth.uid()`
+- workspace-scoped rows must also belong to a workspace owned by or shared with the current user
+- future collaboration should use explicit workspace membership rows, not ad hoc shared IDs
+- admin access should use audited server-side paths, not direct broad client privileges
 
 ## Future Stripe Rules
 
@@ -283,3 +300,5 @@ When a backend is introduced:
 
 Repository and storage adapter contracts are the migration boundary for backend security. Future backend adapters must enforce authentication, authorization, schema validation, rate limits where applicable, and deletion/export guarantees server-side rather than trusting client state.
 - treat AI tool execution as a privileged action
+
+Backend implementation should follow the phase plan in `docs/BACKEND_PLAN.md`. Do not add production AI, payments, or integrations until auth, ownership, RLS, deletion, and logging policies are implemented and reviewed.

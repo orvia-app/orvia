@@ -1,5 +1,16 @@
 # Archflow Architecture
 
+## Related Documentation
+
+- `docs/PROJECT_OVERVIEW.md`: teammate-friendly product and MVP overview.
+- `docs/ARCHITECTURE_DECISIONS.md`: ADR-style summary of major technical decisions.
+- `docs/DEVELOPMENT_GUIDE.md`: local development and module workflow.
+- `docs/QA_CHECKLIST.md`: manual QA expectations before merge.
+- `docs/BACKEND_PLAN.md`: backend/auth/sync implementation plan.
+- `docs/DATABASE_SCHEMA.md`: Supabase/PostgreSQL schema draft.
+- `docs/SYNC_STRATEGY.md`: local-first to cloud sync strategy.
+- `docs/TELEGRAM_INTEGRATION_PLAN.md`: future Telegram capture plan.
+
 ## Current Stack
 
 - Next.js App Router
@@ -214,6 +225,17 @@ The intended migration path is:
 UI → hooks/services → public domain helpers → repository contracts → storage adapter
 
 The initial adapter is localStorage. Future adapters can target IndexedDB, server actions, Supabase/PostgreSQL, or a sync engine while preserving current helper APIs during migration.
+
+Backend planning references:
+- `docs/BACKEND_PLAN.md`: recommended Supabase MVP path, auth model, implementation phases, and open questions.
+- `docs/DATABASE_SCHEMA.md`: first PostgreSQL schema draft for users/profiles, workspaces, tasks, notes, captures, activity events, entity relations, memory candidates, finance, cars, and preferences.
+- `docs/SYNC_STRATEGY.md`: localStorage → IndexedDB → Supabase migration path, sync metadata, conflict handling, operation queue direction, and deletion behavior.
+
+Current recommendation: use Supabase/PostgreSQL for the MVP backend while keeping Next.js server routes for AI gateways, Stripe webhooks, and privileged operations. A custom backend is not recommended for the first backend phase because it would add auth, session, database, authorization, migrations, and operations work before the product needs that flexibility.
+
+Backend implementation must preserve local-only mode. Authenticated cloud sync should be added behind repository adapters rather than by introducing direct persistence calls in pages.
+
+Initial auth should start with email/password and secure session handling. OAuth can follow after the core account model, export/delete behavior, and RLS policies are stable.
 
 ## Security Principles
 

@@ -1,5 +1,15 @@
 # Archflow Roadmap
 
+## Planning References
+
+- `docs/PROJECT_OVERVIEW.md`: current MVP, product loops, and future direction.
+- `docs/ARCHITECTURE_DECISIONS.md`: accepted architecture decisions and tradeoffs.
+- `docs/BACKEND_PLAN.md`: backend/auth/sync phases.
+- `docs/DATABASE_SCHEMA.md`: first cloud schema draft.
+- `docs/SYNC_STRATEGY.md`: local-first sync migration plan.
+- `docs/TELEGRAM_INTEGRATION_PLAN.md`: future Telegram quick capture roadmap.
+- `docs/QA_CHECKLIST.md`: release and preview QA coverage.
+
 ## Current Foundation Completed
 
 - App shell with responsive navigation and theme support.
@@ -22,6 +32,7 @@
 - Core backend-ready entity, relation, search, capture, activity, and memory seams.
 - Sync metadata type foundation without network sync.
 - Initial product, architecture, roadmap, and security docs.
+- Teammate-facing project overview, development guide, ADR-style architecture decisions, Telegram integration plan, contributing guide, and QA checklist.
 
 ## Next UX/Product Phase
 
@@ -60,8 +71,12 @@
 
 ## Backend/Auth/Sync Phase
 
-- Choose backend architecture and environment strategy.
-- Introduce authentication and secure sessions.
+- Use `docs/BACKEND_PLAN.md`, `docs/DATABASE_SCHEMA.md`, and `docs/SYNC_STRATEGY.md` as the backend planning baseline before implementation.
+- Create Supabase project and environment separation for local, preview, and production.
+- Implement the first migration set for profiles, workspaces, tasks, notes, captures, activity events, entity relations, memory candidates, finance transactions, cars, and preferences.
+- Enable Row Level Security on all user-owned tables before exposing browser access.
+- Introduce email/password authentication and secure sessions.
+- Preserve anonymous/local-only mode and add an explicit local-to-cloud migration flow.
 - Add user/workspace ownership to persisted data.
 - Add `user_id` ownership to every user-owned record.
 - Support user-created workspaces and backend-owned tag records.
@@ -76,6 +91,14 @@
 - Add auditable deletion records for backend account/data deletion flows.
 - Replace local-only export/reset with authenticated cloud export/delete workflows.
 - Define migration/versioning strategy for stored data.
+
+Safe implementation phases:
+- Phase A: environment setup and secret handling.
+- Phase B: Supabase schema and RLS policies.
+- Phase C: auth and local-only/cloud account boundary.
+- Phase D: cloud repository adapter behind existing contracts.
+- Phase E: sync queue and conflict handling.
+- Phase F: server-side AI route with consent, scoping, and retention controls.
 
 ## Security Hardening Phase
 
@@ -107,6 +130,7 @@
 
 - Improve mobile responsive capture flows.
 - Add share-sheet-friendly capture direction.
+- Use `docs/TELEGRAM_INTEGRATION_PLAN.md` when backend/auth is ready for external capture channels.
 - Explore PWA or native companion after core data model stabilizes.
 - Support fast capture for notes, tasks, inbox, links, and voice-derived text.
 - Keep mobile sync/auth assumptions aligned with backend phase.
@@ -132,11 +156,11 @@
 
 - Fuller README rewrite.
 - Architecture diagrams after backend choice.
-- Security checklist.
-- Threat model.
-- Data classification policy.
-- AI data handling policy.
-- Logging policy.
-- Stripe/payment data policy.
+- Security checklist tied to backend launch gates.
+- Threat model expanded for Supabase, RLS, auth sessions, service-role usage, AI routes, and Stripe webhooks.
+- Data classification policy with implementation rules for AI, sync, logs, and integrations.
+- AI data handling policy with consent, provider retention assumptions, embeddings, and deletion behavior.
+- Logging policy with redaction, access controls, and retention windows.
+- Stripe/payment data policy with no card data stored by Archflow.
 - Environment and secrets management guide.
 - Public privacy/security posture before launch.

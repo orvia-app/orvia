@@ -13,10 +13,20 @@ npm run build
 
 ## Documentation
 
+- [Project Overview](docs/PROJECT_OVERVIEW.md)
 - [Product](docs/PRODUCT.md)
 - [Architecture](docs/ARCHITECTURE.md)
+- [Architecture Decisions](docs/ARCHITECTURE_DECISIONS.md)
+- [Development Guide](docs/DEVELOPMENT_GUIDE.md)
+- [Contributing](docs/CONTRIBUTING.md)
+- [QA Checklist](docs/QA_CHECKLIST.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Security](docs/SECURITY.md)
+- [Environment Strategy](docs/ENVIRONMENT.md)
+- [Backend Plan](docs/BACKEND_PLAN.md)
+- [Database Schema Draft](docs/DATABASE_SCHEMA.md)
+- [Sync Strategy](docs/SYNC_STRATEGY.md)
+- [Telegram Integration Plan](docs/TELEGRAM_INTEGRATION_PLAN.md)
 
 ## Current Focus
 
