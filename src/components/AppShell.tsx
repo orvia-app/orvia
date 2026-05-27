@@ -151,7 +151,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <div>
             <p className="text-base font-semibold tracking-tight text-zinc-950 dark:text-white">
-              Archflow
+              Orvia
             </p>
             <p className="text-[11px] text-zinc-500 dark:text-zinc-500">
               Capture operating system
@@ -199,7 +199,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <BrandMark className="h-4.5 w-4.5" />
               </span>
               <p className="truncate text-sm font-semibold text-zinc-950 dark:text-white">
-                Archflow
+                Orvia
               </p>
             </div>
             <button
@@ -238,7 +238,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </span>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-zinc-950 dark:text-white">
-                      Archflow
+                      Orvia
                     </p>
                     <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-500">
                       Capture operating system

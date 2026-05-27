@@ -1,8 +1,8 @@
-# Archflow Sync Strategy
+# Orvia Sync Strategy
 
 ## Current State
 
-Archflow is local-first. User data is stored in browser storage through typed repositories and storage adapters. There is no backend, auth, cloud sync, operation queue, realtime, or conflict resolver yet.
+Orvia is local-first. User data is stored in browser storage through typed repositories and storage adapters. There is no backend, auth, cloud sync, operation queue, realtime, or conflict resolver yet.
 
 The current architecture target remains:
 
@@ -81,7 +81,7 @@ Future strategy:
 
 ## Delete And Reset Behavior
 
-Local reset currently clears known Archflow browser keys only.
+Local reset currently clears known app-owned browser keys only. Legacy `personal-os.*` key names remain intentionally unchanged after the Orvia visible rebrand.
 
 Future cloud deletion must:
 - mark records with `deleted_at`

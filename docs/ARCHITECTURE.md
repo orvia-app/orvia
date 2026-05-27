@@ -1,4 +1,4 @@
-# Archflow Architecture
+# Orvia Architecture
 
 ## Related Documentation
 
@@ -48,7 +48,7 @@ Current public domain helpers include:
 - `src/lib/quick-captures.ts`
 
 Core storage and repository contracts live in:
-- `src/core/storage/keys.ts`: single registry for all Archflow browser storage keys.
+- `src/core/storage/keys.ts`: single registry for all app-owned browser storage keys. Legacy `personal-os.*` key names remain intentionally unchanged after the Orvia visible rebrand.
 - `src/core/storage/storage-adapter.ts`: typed adapter interface plus safe JSON helpers.
 - `src/core/storage/local-storage-adapter.ts`: browser-safe localStorage implementation.
 - `src/core/repositories/*`: generic list/entity repository contracts and local JSON repository implementation.

@@ -121,11 +121,11 @@ export default function InboxPage() {
               </div>
 
               <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
-                Archflow Inbox
+                Orvia Inbox
               </h1>
 
               <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400 sm:text-base">
-                Drop anything into your second brain. Archflow can preview how a
+                Drop anything into your second brain. Orvia can preview how a
                 capture may become a task or note later, using local
                 deterministic rules for now.
               </p>

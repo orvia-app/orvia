@@ -1,8 +1,8 @@
-# Archflow — Agent Instructions
+# Orvia — Agent Instructions
 
 ## Product Vision
 
-Archflow is a future commercial AI productivity/life operating system for US/EU markets.
+Orvia is a future commercial AI productivity/life operating system for US/EU markets.
 
 Treat this project as a real SaaS product, not a demo or toy app.
 

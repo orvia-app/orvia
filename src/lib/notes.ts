@@ -24,7 +24,7 @@ export const NOTE_TYPES: readonly NoteType[] = [
 export const initialNotes: Note[] = [
   {
     id: "1",
-    title: "Archflow idea",
+    title: "Orvia idea",
     content: "Add AI weekly review and Telegram reminders.",
     type: "idea",
   },

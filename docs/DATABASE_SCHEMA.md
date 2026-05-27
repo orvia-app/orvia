@@ -1,4 +1,4 @@
-# Archflow Database Schema Draft
+# Orvia Database Schema Draft
 
 This is the planning reference for the Supabase/PostgreSQL backend schema. The first migration draft lives in `supabase/migrations/202605270001_initial_schema.sql`.
 
@@ -336,7 +336,7 @@ Notes:
 
 ## user_module_preferences
 
-Purpose: per-user module visibility, pinning, and ordering. This prevents Archflow from assuming every user needs every module.
+Purpose: per-user module visibility, pinning, and ordering. This prevents Orvia from assuming every user needs every module.
 
 Fields:
 - `id uuid primary key default gen_random_uuid()`

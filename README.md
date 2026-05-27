@@ -1,6 +1,6 @@
-# Archflow
+# Orvia
 
-Archflow is a local-first, AI-native productivity and life operating system MVP. It is currently a frontend-only Next.js app with typed local repositories, command actions, entity/search foundations, activity/briefing foundations, and early AI memory architecture.
+Orvia is a local-first, AI-native productivity and life operating system MVP. It is currently a frontend-only Next.js app with typed local repositories, command actions, entity/search foundations, activity/briefing foundations, and early AI memory architecture.
 
 This project is not production SaaS-ready yet. There is no backend, authentication, sync, payment integration, or real AI provider integration.
 
@@ -16,6 +16,7 @@ npm run build
 - [Master Context](docs/MASTER_CONTEXT.md)
 - [Product Principles](docs/PRODUCT_PRINCIPLES.md)
 - [Phase History](docs/PHASE_HISTORY.md)
+- [Rebrand Plan](docs/REBRAND_PLAN.md)
 - [Project Overview](docs/PROJECT_OVERVIEW.md)
 - [Product](docs/PRODUCT.md)
 - [Architecture](docs/ARCHITECTURE.md)

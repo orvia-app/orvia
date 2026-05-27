@@ -1,11 +1,11 @@
-# Archflow Backend Plan
+# Orvia Backend Plan
 
 ## Recommendation
 
 Use Supabase for the MVP backend.
 
 Why:
-- PostgreSQL matches Archflow's entity, relation, timeline, and future memory model.
+- PostgreSQL matches Orvia's entity, relation, timeline, and future memory model.
 - Supabase Auth, Row Level Security, migrations, storage primitives, and Vercel-friendly environment setup reduce implementation surface area.
 - RLS gives a strong first security boundary for per-user and workspace-owned records.
 - The current repository/storage architecture can migrate behind adapters without rewriting UI flows.

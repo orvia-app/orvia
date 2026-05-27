@@ -10,7 +10,7 @@ import {
   type PersonalOsExport,
 } from "@/lib/data-export/types";
 
-const APP_NAME = "Archflow";
+const APP_NAME = "Orvia";
 const APP_VERSION_PLACEHOLDER = "0.1.0-local";
 
 function readStoredTheme(): ExportedTheme | null {
@@ -53,5 +53,5 @@ export function getPersonalOsExportFileName(
 ): string {
   const date = dataExport.metadata.exportedAt.split("T")[0] || "export";
 
-  return `archflow-export-${date}.json`;
+  return `orvia-export-${date}.json`;
 }

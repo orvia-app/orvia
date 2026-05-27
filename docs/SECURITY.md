@@ -1,8 +1,8 @@
-# Archflow Security
+# Orvia Security
 
 ## Current Security Posture
 
-Archflow is currently a local-first MVP. Data is stored in browser storage through typed repository helpers. There is no backend, authentication, cloud sync, production AI API integration, payment system, or external integration layer yet.
+Orvia is currently a local-first MVP. Data is stored in browser storage through typed repository helpers. There is no backend, authentication, cloud sync, production AI API integration, payment system, or external integration layer yet.
 
 This document defines security direction and engineering constraints. It is not a claim of production security readiness.
 
@@ -64,7 +64,7 @@ Secrets must never enter the frontend. Sensitive and user personal data need exp
 
 ## Local Export And Reset
 
-The MVP includes local-only data export and reset controls in Settings. Export produces a JSON snapshot from existing local repositories. Reset clears only known Archflow browser storage keys and does not clear unrelated browser storage.
+The MVP includes local-only data export and reset controls in Settings. Export produces a JSON snapshot from existing local repositories. Reset clears only known app-owned browser storage keys and does not clear unrelated browser storage.
 
 This is not cloud account deletion. Future backend sync will need authenticated export/delete workflows that remove server-side data, synced replicas, AI-derived memory, integration data where applicable, and billing/account references according to retention policy.
 
@@ -73,7 +73,7 @@ This is not cloud account deletion. Future backend sync will need authenticated 
 Current local-only behavior:
 - user data lives in browser storage through repository helpers
 - export is a local JSON download only
-- reset clears known Archflow browser storage keys only
+- reset clears known app-owned browser storage keys only
 - reset does not clear unrelated browser storage, remote accounts, backups, or synced replicas because those do not exist yet
 
 Future cloud behavior:

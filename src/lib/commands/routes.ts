@@ -39,7 +39,7 @@ export const routeCommands: readonly CommandItem[] = [
   {
     id: "route-inbox",
     title: "Open Inbox",
-    subtitle: "Drop anything into Archflow",
+    subtitle: "Drop anything into Orvia",
     keywords: ["capture", "quick capture", "go to inbox"],
     group: "Capture",
     icon: Inbox,

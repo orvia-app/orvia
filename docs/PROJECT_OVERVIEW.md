@@ -1,4 +1,4 @@
-# Archflow Project Overview
+# Orvia Project Overview
 
 ## Related Context
 
@@ -6,18 +6,19 @@
 - `docs/PRODUCT_PRINCIPLES.md`: product decision rules and anti-patterns.
 - `docs/PHASE_HISTORY.md`: concise milestone history.
 - `docs/BRANDING_NAMING.md`: naming criteria and brand decision checklist.
+- `docs/REBRAND_PLAN.md`: visible rebrand scope and compatibility notes.
 
-## What Archflow Is
+## What Orvia Is
 
-Archflow is a local-first, AI-native productivity and life operating system. It is designed to help users capture, organize, retrieve, and act on personal and work context across tasks, notes, inbox captures, search, timeline, memory, finance, cars, and future automation.
+Orvia is a local-first, AI-native productivity and life operating system. It is designed to help users capture, organize, retrieve, and act on personal and work context across tasks, notes, inbox captures, search, timeline, memory, finance, cars, and future automation.
 
 The current app is a frontend-only MVP. It is not a production SaaS backend yet.
 
-Archflow is the current working brand. The final public name should be decided before domain purchase, production backend project naming, Telegram bot creation, or App Store preparation.
+Orvia is the current visible brand after Rebrand Phase 1. The prior working name was Archflow. External brand validation should be completed before domain purchase, production backend project naming, Telegram bot creation, or App Store preparation.
 
 ## Product Vision
 
-Archflow should become a private second brain and operating layer that:
+Orvia should become a private second brain and operating layer that:
 - captures anything quickly
 - organizes user context into useful entities
 - resurfaces relevant information at the right time
@@ -37,7 +38,7 @@ Current scope:
 
 Current data is stored locally in browser storage through typed repository helpers. Browser storage is not a secure vault and does not sync across devices.
 
-Archflow should not assume every user needs every module. Future backend module preferences will allow users to enable, disable, pin, and order modules such as tasks, notes, finance, cars, automation, AI chat, Telegram capture, and future modules.
+Orvia should not assume every user needs every module. Future backend module preferences will allow users to enable, disable, pin, and order modules such as tasks, notes, finance, cars, automation, AI chat, Telegram capture, and future modules.
 
 ## What Is Implemented
 

@@ -1,4 +1,4 @@
-# Archflow Architecture Decisions
+# Orvia Architecture Decisions
 
 This document captures current architectural decisions in ADR-style form. It is intentionally concise and should evolve when major direction changes.
 
@@ -83,7 +83,7 @@ Decision: Add a responsive shell with desktop sidebar and mobile header/drawer.
 
 Why:
 - Mobile users need reliable navigation.
-- Archflow's capture loop must work on phone widths.
+- Orvia's capture loop must work on phone widths.
 - The shell keeps navigation and theme controls consistent across routes.
 
 Tradeoffs:
@@ -121,13 +121,13 @@ Why:
 
 Status: Accepted.
 
-Decision: Archflow may have database tables for all supported modules, but module visibility and ordering must be configurable per user.
+Decision: Orvia may have database tables for all supported modules, but module visibility and ordering must be configurable per user.
 
 Why:
 - Not every user needs finance, cars, automation, AI chat, Telegram capture, or future modules.
 - Module data should not need to be deleted just because a user hides a module.
 - Settings -> Modules can later control enabled, pinned, and ordered modules.
-- This keeps Archflow extensible without turning the default product into an overloaded dashboard.
+- This keeps Orvia extensible without turning the default product into an overloaded dashboard.
 
 Tradeoffs:
 - Backend account setup must decide how default module preferences are created or derived.

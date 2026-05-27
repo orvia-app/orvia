@@ -1,8 +1,8 @@
-# Archflow Environment Strategy
+# Orvia Environment Strategy
 
 ## Current State
 
-Archflow currently has no backend, production AI provider, authentication provider, payment provider, or server-side secret usage.
+Orvia currently has no backend, production AI provider, authentication provider, payment provider, or server-side secret usage.
 
 Environment documentation exists now so future backend, AI, auth, sync, and payments work can start with safe defaults.
 

@@ -43,8 +43,8 @@ export function CommandActionDialog({
   const isTask = action.type === "create-task";
   const title = isTask ? "Create task" : "Create note";
   const description = isTask
-    ? "Add a task to Archflow."
-    : "Capture a note in Archflow.";
+    ? "Add a task to Orvia."
+    : "Capture a note in Orvia.";
 
   return (
     <div

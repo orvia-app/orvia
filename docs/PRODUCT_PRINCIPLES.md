@@ -1,12 +1,12 @@
-# Archflow Product Principles
+# Orvia Product Principles
 
 ## Product Shape
 
-Archflow should feel like a calm AI operating system for personal context: fast to capture into, easy to search, clear about what it knows, and careful about user control. It should feel closer to Linear, Raycast, Arc, and modern local-first productivity tools than to an admin panel or generic dashboard template.
+Orvia should feel like a calm AI operating system for personal context: fast to capture into, easy to search, clear about what it knows, and careful about user control. It should feel closer to Linear, Raycast, Arc, and modern local-first productivity tools than to an admin panel or generic dashboard template.
 
 ## Core Loop
 
-Archflow's core loop is:
+Orvia's core loop is:
 
 1. Capture anything.
 2. Organize it into useful structure.
@@ -39,7 +39,7 @@ Users should be able to understand, export, delete, and eventually sync their da
 
 ### Optional Modules
 
-Archflow must not assume every user needs every module. Tasks, notes, finance, cars, automation, AI chat, Telegram capture, and future modules should become configurable per user.
+Orvia must not assume every user needs every module. Tasks, notes, finance, cars, automation, AI chat, Telegram capture, and future modules should become configurable per user.
 
 ### Future Integrations
 
@@ -51,7 +51,7 @@ The strategic advantage is source-linked context across capture, tasks, notes, t
 
 ### Avoid Admin-Panel Feel
 
-Archflow should not look or behave like a generic data management console. Prioritize hierarchy, scanability, calm surfaces, and flows that feel personal and operational.
+Orvia should not look or behave like a generic data management console. Prioritize hierarchy, scanability, calm surfaces, and flows that feel personal and operational.
 
 ### Avoid Feature Bloat
 

@@ -1,4 +1,4 @@
-# Archflow Phase History
+# Orvia Phase History
 
 This is a concise milestone memory for teammates, reviewers, and future AI sessions. It is not a full changelog.
 
@@ -7,7 +7,7 @@ This is a concise milestone memory for teammates, reviewers, and future AI sessi
 What changed:
 - Added shared UI primitives and visual polish across core surfaces.
 - Introduced Dashboard Recent Activity and Today Daily Briefing previews.
-- Added Command Center route/action flows, task/note creation dialogs, onboarding v1, and Archflow branding.
+- Added Command Center route/action flows, task/note creation dialogs, onboarding v1, and Orvia branding.
 - Improved theme, modal, density, sidebar, scrollbar, and mobile-aware UI details.
 
 Why it matters:

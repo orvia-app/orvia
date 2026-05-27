@@ -18,7 +18,7 @@ export const workspaces: Workspace[] = [
 export const tasks: Task[] = [
   {
     id: "1",
-    title: "Finish Archflow MVP",
+    title: "Finish Orvia MVP",
     description: "Build dashboard and task architecture",
     status: "in-progress",
     priority: "high",

@@ -1,8 +1,8 @@
-# Archflow Telegram Integration Plan
+# Orvia Telegram Integration Plan
 
 ## Purpose
 
-Telegram is a future quick capture channel for Archflow. Users should be able to send a message to a bot and have it appear as an Inbox capture in Archflow.
+Telegram is a future quick capture channel for Orvia. Users should be able to send a message to a bot and have it appear as an Inbox capture in Orvia.
 
 This is not implemented yet.
 
@@ -11,7 +11,7 @@ This is not implemented yet.
 Telegram requires:
 - server-side bot token storage
 - webhook validation
-- account linking between Telegram users and Archflow users
+- account linking between Telegram users and Orvia users
 - rate limiting and abuse protection
 - secure capture creation
 - deletion/export behavior for imported messages
@@ -43,7 +43,7 @@ Telegram message -> backend webhook -> validate Telegram user/account link -> cr
 Details:
 1. Telegram sends an update to a server-side webhook.
 2. Backend validates request source and bot secret configuration.
-3. Backend maps Telegram user ID to an Archflow user account.
+3. Backend maps Telegram user ID to an Orvia user account.
 4. Backend creates a capture row for that user.
 5. Deterministic capture pipeline classifies and enriches the capture.
 6. The app receives it through normal repository/sync behavior.
@@ -51,7 +51,7 @@ Details:
 ## User Linking Strategy
 
 Initial linking direction:
-- user signs into Archflow
+- user signs into Orvia
 - user opens Telegram linking flow from Settings or Integrations
 - backend creates a short-lived linking code
 - user sends the code to the Telegram bot
@@ -66,14 +66,14 @@ Do not trust Telegram display names or usernames as identity. Use Telegram user 
 - Incorrect account linking.
 - Spam or message flooding.
 - Sensitive data captured unintentionally.
-- Deleted Archflow account leaving Telegram mappings behind.
+- Deleted Orvia account leaving Telegram mappings behind.
 - Logs retaining message content unnecessarily.
 
 ## Rate Limiting And Abuse
 
 Future implementation should include:
 - per-Telegram-user rate limits
-- per-Archflow-account rate limits
+- per-Orvia-account rate limits
 - message length limits
 - attachment limits before file support exists
 - blocked account handling
@@ -117,7 +117,7 @@ Current preparation:
 
 - Convert messages into captures.
 - Run deterministic classification/enrichment.
-- Persist under the linked Archflow user.
+- Persist under the linked Orvia user.
 
 ### Phase F: Error Handling And Logging
 

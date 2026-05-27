@@ -1,24 +1,24 @@
-# Archflow Master Context
+# Orvia Master Context
 
 ## Current Status In One Paragraph
 
-Archflow is a local-first, frontend-only MVP for a future AI-native productivity operating system. It currently runs as a Next.js App Router app with TypeScript, Tailwind, typed local repositories, storage adapters, command workflows, deterministic capture/search/timeline/memory foundations, responsive navigation, and planning docs for Supabase/auth/sync. It does not yet have production auth, backend persistence, cloud sync, real AI provider calls, payments, Telegram capture, or external integrations.
+Orvia is a local-first, frontend-only MVP for a future AI-native productivity operating system. It currently runs as a Next.js App Router app with TypeScript, Tailwind, typed local repositories, storage adapters, command workflows, deterministic capture/search/timeline/memory foundations, responsive navigation, and planning docs for Supabase/auth/sync. It does not yet have production auth, backend persistence, cloud sync, real AI provider calls, payments, Telegram capture, or external integrations.
 
-## What Archflow Is
+## What Orvia Is
 
-Archflow is a calm personal operating layer for capture, organization, recall, and action. It should help users drop anything into one trusted workspace, structure it into tasks/notes/captures/entities, retrieve it later through search/timeline/memory, and eventually act through safe user-approved AI and automation.
+Orvia is a calm personal operating layer for capture, organization, recall, and action. It should help users drop anything into one trusted workspace, structure it into tasks/notes/captures/entities, retrieve it later through search/timeline/memory, and eventually act through safe user-approved AI and automation.
 
-Archflow is not an admin panel, CRUD dashboard, generic chatbot, or demo parser.
+Orvia is not an admin panel, CRUD dashboard, generic chatbot, or demo parser.
 
 ## Naming Status
 
-Archflow is the current working brand, but it is not final. Treat it as temporary until domain, trademark, App Store, Telegram handle, and searchability checks are complete.
+Orvia is the current visible product brand after Rebrand Phase 1. The prior working name was Archflow.
 
-Before buying domains, naming production Supabase/Vercel projects, creating Telegram bots, or preparing public beta/App Store assets, read `docs/BRANDING_NAMING.md` and finalize the brand decision.
+Before buying domains, naming production Supabase/Vercel projects, creating Telegram bots, or preparing public beta/App Store assets, read `docs/BRANDING_NAMING.md` and `docs/REBRAND_PLAN.md`. External validation is still required before public infrastructure is named.
 
 ## Product Vision
 
-Long term, Archflow should become a private, command-first AI operating system for personal and work context. The product moat is not a single model call; it is the combination of trusted capture, structured local data, explicit memory, timeline context, workspace/tag organization, and safe actions.
+Long term, Orvia should become a private, command-first AI operating system for personal and work context. The product moat is not a single model call; it is the combination of trusted capture, structured local data, explicit memory, timeline context, workspace/tag organization, and safe actions.
 
 ## Current Product State
 
@@ -58,7 +58,7 @@ Implemented today:
 
 ## Local-First Philosophy
 
-Archflow currently stores data locally in the browser. Local-first is used for fast iteration, privacy-first defaults, and offline-friendly product shaping. Browser storage is not a secure vault and does not sync across devices.
+Orvia currently stores data locally in the browser. Local-first is used for fast iteration, privacy-first defaults, and offline-friendly product shaping. Browser storage is not a secure vault and does not sync across devices.
 
 Future cloud sync must preserve an intentional local-only mode and use repository adapters instead of direct network calls from pages.
 
@@ -70,7 +70,7 @@ Future cloud sync must preserve an intentional local-only mode and use repositor
 - Memory/context foundation: deterministic source-linked memory candidates, ranking, and relationship helpers.
 - Capture pipeline: deterministic inbox classification, workspace/tag suggestions, and preview structure.
 - Command system: route commands, action commands, recent history, and typed future action unions.
-- Data management: local export/reset helpers that only target known Archflow keys.
+- Data management: local export/reset helpers that only target known Orvia-owned browser storage keys. Legacy `personal-os.*` key names remain intentionally unchanged for compatibility.
 - Environment boundary: `src/env/server.ts` and `src/env/client.ts`.
 - Backend prep: typed auth/backend/sync models and Supabase factory seams with no live connection.
 
@@ -164,7 +164,7 @@ Before coding major work, read the specific plan docs:
 
 Use this brief:
 
-> You are working on Archflow, a local-first, frontend-only MVP for a future AI-native productivity operating system. Read `AGENTS.md`, `docs/MASTER_CONTEXT.md`, `docs/PRODUCT_PRINCIPLES.md`, `docs/ARCHITECTURE.md`, `docs/SECURITY.md`, and `docs/DEVELOPMENT_GUIDE.md` before editing. Do not add backend, auth, sync, real AI, provider calls, payments, or dependencies unless explicitly requested. Preserve local-first behavior, routes, storage keys, Command Center, timeline, theme behavior, and mobile shell. No direct `localStorage` in pages/components, no frontend secrets, no fake AI claims, no broad rewrites. Use typed repositories/helpers and shared UI primitives. Run `npm run typecheck`, `npm run build`, and `git diff --check` before finishing.
+> You are working on Orvia, a local-first, frontend-only MVP for a future AI-native productivity operating system. Read `AGENTS.md`, `docs/MASTER_CONTEXT.md`, `docs/PRODUCT_PRINCIPLES.md`, `docs/ARCHITECTURE.md`, `docs/SECURITY.md`, and `docs/DEVELOPMENT_GUIDE.md` before editing. Do not add backend, auth, sync, real AI, provider calls, payments, or dependencies unless explicitly requested. Preserve local-first behavior, routes, storage keys, Command Center, timeline, theme behavior, and mobile shell. No direct `localStorage` in pages/components, no frontend secrets, no fake AI claims, no broad rewrites. Use typed repositories/helpers and shared UI primitives. Run `npm run typecheck`, `npm run build`, and `git diff --check` before finishing.
 
 For backend-related tasks, add:
 

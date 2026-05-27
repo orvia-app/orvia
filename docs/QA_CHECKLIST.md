@@ -1,4 +1,4 @@
-# Archflow QA Checklist
+# Orvia QA Checklist
 
 Use this checklist before merging meaningful changes or shipping a preview.
 
@@ -50,7 +50,7 @@ Use this checklist before merging meaningful changes or shipping a preview.
 - Create an inbox capture, refresh, confirm it remains where expected.
 - Add finance/car data if the change touches those modules.
 - Export downloads JSON.
-- Reset local data clears Archflow keys and does not restore demo data after reset.
+- Reset local data clears known app-owned keys and does not restore demo data after reset.
 - Onboarding dismiss/reset state works.
 
 ## Command Center Checklist

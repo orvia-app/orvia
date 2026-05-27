@@ -22,7 +22,7 @@ type ChatMessage = {
 };
 
 const INITIAL_ASSISTANT =
-  "This local preview shows how Archflow can become a contextual workspace assistant. Responses are deterministic until the server-side AI layer exists.";
+  "This local preview shows how Orvia can become a contextual workspace assistant. Responses are deterministic until the server-side AI layer exists.";
 
 const THINKING_MS = 800;
 
@@ -51,10 +51,10 @@ function deterministicAssistantReply(userText: string): string {
     return "Vehicle maintenance check: note mileage, next oil or service interval, tire pressure seasonally, and brake feel on every long drive. Set reminders for registration and insurance renewals so nothing slips when life gets busy.";
   }
   if (t.includes("learn") || t.includes("course") || t.includes("devops")) {
-    return "Learning progress: anchor on one outcome per week (for example, a working container build or a CI pipeline diagram). Spend 70% of time building, 30% reading—ship a tiny artifact each session so Archflow can track real momentum, not just hours logged.";
+    return "Learning progress: anchor on one outcome per week (for example, a working container build or a CI pipeline diagram). Spend 70% of time building, 30% reading—ship a tiny artifact each session so Orvia can track real momentum, not just hours logged.";
   }
 
-    return "Use Archflow as your operating layer: capture the loose input, turn it into a task or note, then use Search, Timeline, and Memory Preview to keep the context visible.";
+    return "Use Orvia as your operating layer: capture the loose input, turn it into a task or note, then use Search, Timeline, and Memory Preview to keep the context visible.";
 }
 
 export default function AiChatPage() {

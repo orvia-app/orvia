@@ -1,4 +1,4 @@
-# Archflow Supabase Migrations
+# Orvia Supabase Migrations
 
 ## Current Status
 
@@ -11,6 +11,8 @@ These migrations have not been applied locally in this phase. No local Supabase 
 ## Migration Files
 
 - `supabase/migrations/202605270001_initial_schema.sql`
+
+This migration predates the Orvia visible rebrand. Internal SQL identifiers such as `archflow_set_updated_at` and `archflow_user_owns_workspace` remain intentionally unchanged in Rebrand Phase 1 to avoid mutating backend-preparation history.
 
 This migration creates:
 - `profiles`
@@ -73,7 +75,7 @@ Future team sharing is intentionally not implemented. There are no workspace mem
 
 ## Optional Modules
 
-Archflow should not assume every user wants every module. Module-specific tables may exist in the database even when that module is disabled or hidden for a user.
+Orvia should not assume every user wants every module. Module-specific tables may exist in the database even when that module is disabled or hidden for a user.
 
 `user_module_preferences` controls:
 - module visibility

@@ -73,7 +73,7 @@ export default function SettingsPage() {
 
   function resetData() {
     const confirmed = window.confirm(
-      "Reset all local Archflow data on this browser? This cannot be undone.",
+      "Reset all local Orvia data on this browser? This cannot be undone.",
     );
 
     if (!confirmed) {
@@ -188,7 +188,7 @@ export default function SettingsPage() {
                     Reset local data
                   </h3>
                   <p className="mt-1 text-sm leading-6 text-red-800/80 dark:text-red-200/80">
-                    Clear only Archflow local data from this browser. Other
+                    Clear only Orvia local data from this browser. Other
                     browser storage is left untouched.
                   </p>
                   <Button

@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Archflow",
+  title: "Orvia",
   description: "Local-first capture and memory operating system",
 };
 

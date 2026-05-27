@@ -74,7 +74,7 @@ export function CommandPalette({
           <div className="flex items-center justify-between gap-3 px-4 pt-3">
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
-                Archflow Command Center
+                Orvia Command Center
               </p>
               <p className="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400">
                 Capture, navigate, and recall context from one place.

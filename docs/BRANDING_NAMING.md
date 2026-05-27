@@ -1,22 +1,23 @@
-# Archflow Branding And Naming
+# Orvia Branding And Naming
 
-## Current Temporary Brand
+## Current Visible Brand
 
-Current working name: Archflow.
+Current visible product name: Orvia.
 
-Archflow is the internal/product-facing name used in the current UI and docs. It should be treated as a temporary brand until domain, trademark, search, App Store, and Telegram handle checks are complete.
+Orvia replaces the prior working name, Archflow, for visible product branding in the app, README, and project docs. Treat this as Rebrand Phase 1: visible naming changes only.
 
-## Why Archflow Is Temporary Or Risky
+External brand validation is still required before domain purchase, public beta, production infrastructure naming, Telegram bot creation, or App Store preparation.
 
-Archflow fits the current product direction because it suggests architecture, flow, and an operating layer. It may still be risky because:
-- it combines common product words that may already be used in software, architecture, workflow, or AI contexts
-- it may be confused with workflow, architecture, or automation tools
+## Why Orvia Still Needs Validation
+
+Orvia fits the current product direction because it is short, calm, and abstract enough for a productivity operating system. It may still be risky because:
 - domain and social handle availability are unknown
 - trademark conflict risk has not been reviewed
 - App Store and Telegram handle suitability has not been checked
+- search/SEO conflict risk has not been reviewed
 - production projects, domains, and public assets become harder to rename later
 
-Do not purchase domains, name production Supabase projects, create public Telegram bots, or prepare App Store assets until the brand decision is made.
+Do not purchase domains, name production Supabase projects, create public Telegram bots, or prepare App Store assets until validation is complete.
 
 ## Naming Criteria
 
@@ -55,6 +56,8 @@ The name should support these product ideas:
 The brand should feel trustworthy enough for personal notes, work context, finance-adjacent records, and future AI memory.
 
 ## Candidate Naming Directions
+
+These directions are retained for future comparison if Orvia fails external validation.
 
 ### Memory
 
@@ -132,7 +135,7 @@ This checklist is not legal advice. A serious finalist should receive profession
 
 ## Decision Timing
 
-Finalize naming before:
+Complete Orvia validation before:
 - buying a domain
 - naming production Supabase projects
 - naming Vercel production projects if public-facing
@@ -142,9 +145,9 @@ Finalize naming before:
 - creating public social accounts
 - publishing launch or investor materials
 
-## Risks Of Delaying Naming Too Long
+## Risks Of Delaying External Validation Too Long
 
-Delaying the decision too long can cause:
+Delaying validation too long can cause:
 - duplicated renaming work across UI, docs, infrastructure, and marketing assets
 - confusing public/private project names
 - domain or handle loss
@@ -158,9 +161,9 @@ Internal technical identifiers such as legacy localStorage keys should not be re
 ## Next Action
 
 Recommended next step:
-1. Create a human/AI naming shortlist of 20-40 candidates across the directions above.
-2. Narrow to 5-8 serious finalists.
-3. Run web, domain, App Store, Telegram handle, GitHub, and basic trademark searches.
+1. Run web, domain, App Store, Telegram handle, GitHub, and basic trademark searches for Orvia.
+2. If Orvia passes, record the decision and reserve public assets.
+3. If Orvia fails, create a fallback shortlist of 20-40 candidates across the directions above.
 4. Score finalists against the evaluation checklist.
-5. Choose a final brand before production backend/project naming.
-6. Create a rename plan for user-facing UI/docs first, then technical identifiers only if necessary and safely migrated.
+5. Choose the final public brand before production backend/project naming.
+6. Plan technical identifier migrations only if necessary and safely versioned.

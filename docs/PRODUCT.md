@@ -1,8 +1,8 @@
-# Archflow Product
+# Orvia Product
 
 ## Vision
 
-Archflow, formerly developed under the Personal OS working name, is a future commercial, AI-native life and productivity operating system. It helps users capture, organize, retrieve, and act on personal, work, financial, vehicle, learning, and operational information from one trusted workspace.
+Orvia, formerly developed under the Personal OS working name, is a future commercial, AI-native life and productivity operating system. It helps users capture, organize, retrieve, and act on personal, work, financial, vehicle, learning, and operational information from one trusted workspace.
 
 The long-term product direction is a private second brain that remembers useful context, surfaces the right information, and executes safe user-approved actions.
 
@@ -21,7 +21,7 @@ The long-term product direction is a private second brain that remembers useful 
 
 ## Product Direction
 
-Archflow should become an AI-native operating layer over a user's personal data and workflows. The product should not be a generic chatbot wrapped around notes. It should combine capture, structure, search, memory, timeline, planning, and action.
+Orvia should become an AI-native operating layer over a user's personal data and workflows. The product should not be a generic chatbot wrapped around notes. It should combine capture, structure, search, memory, timeline, planning, and action.
 
 Near-term work should strengthen the deterministic product foundation before adding real AI:
 - reliable capture
@@ -88,7 +88,7 @@ The MVP stores data locally in the browser through repository helpers. This supp
 
 ## Onboarding Direction
 
-Current onboarding is local-only and lightweight. It introduces the core loop: drop anything into Archflow, turn it into tasks or notes, and retrieve context later through Search, Timeline, and Memory Preview.
+Current onboarding is local-only and lightweight. It introduces the core loop: drop anything into Orvia, turn it into tasks or notes, and retrieve context later through Search, Timeline, and Memory Preview.
 
 Future onboarding should include a sample capture, guided setup, workspace preferences, and optional privacy-first sync choices after backend/auth exist.
 

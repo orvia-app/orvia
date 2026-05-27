@@ -253,7 +253,7 @@ export default function Home() {
                   <div>
                     <Badge>Start here</Badge>
                     <h2 className="mt-3 text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-                      Drop anything into Archflow.
+                      Drop anything into Orvia.
                     </h2>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
                       It helps organize captures into tasks, notes, memory, and
