@@ -10,11 +10,19 @@ Orvia is a calm personal operating layer for capture, organization, recall, and 
 
 Orvia is not an admin panel, CRUD dashboard, generic chatbot, or demo parser.
 
-## Naming Status
+## Brand And Infrastructure Status
 
-Orvia is the current visible product brand after Rebrand Phase 1. The prior working name was Archflow.
+Orvia is the current product brand after Rebrand Phase 1. The prior working name was Archflow.
 
-Before buying domains, naming production Supabase/Vercel projects, creating Telegram bots, or preparing public beta/App Store assets, read `docs/BRANDING_NAMING.md` and `docs/REBRAND_PLAN.md`. External validation is still required before public infrastructure is named.
+Production-facing infrastructure now exists:
+- Primary domain: `https://useorvia.com`
+- `www` redirect: `https://www.useorvia.com` -> `https://useorvia.com`
+- GitHub org/repo: `orvia-app/orvia`
+- Vercel project: `orvia`
+- Registrar/DNS: Cloudflare
+- Cloudflare account security: app-based 2FA enabled
+
+The repository is public because Vercel Hobby does not support private organization repositories. No secrets, API keys, tokens, private env files, or production credentials should ever be committed. Move to paid/pro private infrastructure before auth, users, payments, server-side AI, or sensitive integrations go live.
 
 ## Product Vision
 
@@ -43,6 +51,7 @@ Implemented today:
 - Tailwind CSS.
 - Local-first persistence through typed repositories over browser storage.
 - Vercel-oriented deployment path.
+- Production domain hosted at `https://useorvia.com`.
 - Supabase/PostgreSQL planned for MVP backend, but not connected.
 
 ## Architecture Principles
@@ -156,7 +165,7 @@ Before coding major work, read the specific plan docs:
 - Backend: `docs/BACKEND_PLAN.md`, `docs/DATABASE_SCHEMA.md`, `docs/SUPABASE_MIGRATIONS.md`, `docs/SYNC_STRATEGY.md`.
 - Security/env: `docs/SECURITY.md`, `docs/ENVIRONMENT.md`, `docs/ENGINEERING_RULES.md`.
 - Product: `docs/PRODUCT.md`, `docs/PRODUCT_PRINCIPLES.md`, `docs/ROADMAP.md`.
-- Naming/brand: `docs/BRANDING_NAMING.md`.
+- Naming/brand/infrastructure: `docs/BRANDING_NAMING.md`, `docs/REBRAND_PLAN.md`.
 - Teammate workflow: `docs/DEVELOPMENT_GUIDE.md`, `docs/CONTRIBUTING.md`, `docs/QA_CHECKLIST.md`.
 - Telegram: `docs/TELEGRAM_INTEGRATION_PLAN.md`.
 
