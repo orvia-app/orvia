@@ -1,5 +1,11 @@
 # Archflow Project Overview
 
+## Related Context
+
+- `docs/MASTER_CONTEXT.md`: compressed project memory for teammates, reviewers, and future AI sessions.
+- `docs/PRODUCT_PRINCIPLES.md`: product decision rules and anti-patterns.
+- `docs/PHASE_HISTORY.md`: concise milestone history.
+
 ## What Archflow Is
 
 Archflow is a local-first, AI-native productivity and life operating system. It is designed to help users capture, organize, retrieve, and act on personal and work context across tasks, notes, inbox captures, search, timeline, memory, finance, cars, and future automation.

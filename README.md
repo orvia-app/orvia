@@ -13,6 +13,9 @@ npm run build
 
 ## Documentation
 
+- [Master Context](docs/MASTER_CONTEXT.md)
+- [Product Principles](docs/PRODUCT_PRINCIPLES.md)
+- [Phase History](docs/PHASE_HISTORY.md)
 - [Project Overview](docs/PROJECT_OVERVIEW.md)
 - [Product](docs/PRODUCT.md)
 - [Architecture](docs/ARCHITECTURE.md)

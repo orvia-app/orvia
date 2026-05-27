@@ -39,11 +39,12 @@ npm run check
 ## Workflow
 
 1. Read `AGENTS.md`.
-2. Read the relevant docs in `docs/`.
-3. Inspect existing code patterns before editing.
-4. Keep changes focused.
-5. Preserve local-first behavior unless the task explicitly changes it.
-6. Run typecheck, build, and diff hygiene checks.
+2. Read `docs/MASTER_CONTEXT.md` and `docs/PRODUCT_PRINCIPLES.md` for project context.
+3. Read the relevant task-specific docs in `docs/`.
+4. Inspect existing code patterns before editing.
+5. Keep changes focused.
+6. Preserve local-first behavior unless the task explicitly changes it.
+7. Run typecheck, build, and diff hygiene checks.
 
 ## Folder Structure
 
@@ -85,6 +86,7 @@ Avoid:
 
 - Give scoped tasks and explicit constraints.
 - Ask the agent to read `AGENTS.md` and relevant docs first.
+- For new sessions, include `docs/MASTER_CONTEXT.md`, `docs/PRODUCT_PRINCIPLES.md`, and `docs/PHASE_HISTORY.md` when the task spans product or architecture context.
 - Require `npm run typecheck`, `npm run build`, and `git diff --check`.
 - Review diffs before accepting broad edits.
 - Do not allow agents to add dependencies casually.
