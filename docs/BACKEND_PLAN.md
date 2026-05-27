@@ -148,6 +148,14 @@ Product boundary:
 - Add server-only secret handling rules to implementation PR.
 - Confirm Vercel preview/prod variable separation.
 
+Initial infrastructure preparation now exists without connecting live services:
+- `.env.example` documents future public and server-only placeholders.
+- `src/env/server.ts` and `src/env/client.ts` centralize typed env reads and validation.
+- `src/server/supabase/*` and `src/lib/supabase/*` define config readiness and client factory seams without installing or invoking Supabase.
+- `src/core/auth/*`, `src/core/backend/*`, and `src/core/sync/*` define backend/auth/sync types and deterministic local sync helpers.
+
+Before moving beyond preparation, install the Supabase SDK intentionally, review RLS policies, and ensure no service-role key is reachable from client code.
+
 ### Phase B: Supabase Schema
 
 - Create migrations for the tables in `docs/DATABASE_SCHEMA.md`.

@@ -52,6 +52,9 @@ npm run check
 - `src/components/ui/*`: shared UI primitives.
 - `src/components/command-palette/*`: Command Center UI and hooks.
 - `src/core/*`: backend-ready contracts and adapters for storage, repositories, entities, relations, search, capture, activity, and memory.
+- `src/env/*`: typed environment access. Do not read `process.env` elsewhere.
+- `src/server/supabase/*`: future server-side Supabase setup seams. No live integration yet.
+- `src/lib/supabase/*`: future browser-safe Supabase setup seams. No live integration yet.
 - `src/lib/*`: domain repositories, helpers, command registries, local-first foundations.
 - `src/types/index.ts`: shared domain types.
 - `src/data/mock.ts`: local seed data for first-time MVP experience.
@@ -113,6 +116,8 @@ Avoid:
 - No OpenAI, Supabase service-role, Stripe secret, Telegram bot, or integration tokens in client code.
 - Treat `NEXT_PUBLIC_*` as public.
 - Use `.env.example` only for blank placeholders.
+- Use `src/env/server.ts` and `src/env/client.ts` for env access.
+- Do not read `process.env` directly outside the env layer.
 - Future AI, Telegram, Stripe, and privileged backend work must run server-side.
 
 ## Manual QA Before Push

@@ -97,6 +97,8 @@ Public configuration must be clearly safe for browser exposure. Secrets belong i
 
 See `docs/ENVIRONMENT.md` for environment variable strategy. `NEXT_PUBLIC_*` variables are bundled into browser JavaScript and must be treated as public.
 
+Current env access is centralized in `src/env/server.ts` and `src/env/client.ts`. Do not read `process.env` elsewhere. `src/env/client.ts` must only expose `NEXT_PUBLIC_*` values.
+
 ## No Direct AI Provider Calls From Client
 
 Future AI features must not call AI providers directly from client components. AI calls should go through server-side gateways that can enforce:
@@ -220,6 +222,7 @@ Current backend recommendation is Supabase for MVP. Before implementation:
 - test per-user isolation policies before exposing browser clients
 - keep service-role keys server-only
 - keep admin/support access explicit, scoped, logged, and time-limited
+- install and wire Supabase only after env separation and RLS review are complete
 
 RLS policy direction:
 - users can select, insert, update, and soft-delete only rows where `user_id = auth.uid()`
@@ -302,3 +305,5 @@ Repository and storage adapter contracts are the migration boundary for backend 
 - treat AI tool execution as a privileged action
 
 Backend implementation should follow the phase plan in `docs/BACKEND_PLAN.md`. Do not add production AI, payments, or integrations until auth, ownership, RLS, deletion, and logging policies are implemented and reviewed.
+
+The current Supabase files are preparation only. They must not be treated as evidence that auth, sync, RLS, or cloud persistence is implemented.

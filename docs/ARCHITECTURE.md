@@ -59,6 +59,14 @@ This boundary is the migration point for future API routes, server actions, Supa
 
 Do not leave stale extensionless duplicates such as `src/lib/storage` beside `src/lib/storage.ts`. After moving or renaming repository files, verify the final file list with `rg --files`.
 
+## Environment Boundary
+
+Environment variables are accessed only through:
+- `src/env/server.ts`: server-only env plus public server-readable values.
+- `src/env/client.ts`: browser-safe `NEXT_PUBLIC_*` values only.
+
+No app code should read `process.env` directly outside those modules. This keeps secret review centralized and reduces the chance of accidentally exposing server-only values to the browser.
+
 ## Command System
 
 The command system is split into:
@@ -193,6 +201,8 @@ Core entities include sync metadata fields for future backend work:
 
 These fields are type foundations only. There is no network sync, offline queue, conflict resolver, auth, Supabase, or backend persistence yet.
 
+`src/core/auth/*`, `src/core/backend/*`, and `src/core/sync/*` now provide backend-ready type foundations for sessions, backend errors, sync operations, device IDs, and conflict handling. The sync helpers are local and deterministic only; they do not persist an operation queue, start timers, poll, or contact a backend.
+
 ## SSR And Hydration Safety
 
 Patterns to preserve:
@@ -236,6 +246,12 @@ Current recommendation: use Supabase/PostgreSQL for the MVP backend while keepin
 Backend implementation must preserve local-only mode. Authenticated cloud sync should be added behind repository adapters rather than by introducing direct persistence calls in pages.
 
 Initial auth should start with email/password and secure session handling. OAuth can follow after the core account model, export/delete behavior, and RLS policies are stable.
+
+Supabase preparation currently consists of typed config readiness and factory seams only:
+- `src/server/supabase/*` for server-side future client creation.
+- `src/lib/supabase/*` for browser-safe future client creation.
+
+There is no Supabase dependency, live query, auth UI, server action, API route, or storage migration yet.
 
 ## Security Principles
 

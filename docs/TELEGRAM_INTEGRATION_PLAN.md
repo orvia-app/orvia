@@ -92,6 +92,11 @@ Future implementation should include:
 - Keep token out of frontend and repo.
 - Document rotation process.
 
+Current preparation:
+- `.env.example` includes a blank `TELEGRAM_BOT_TOKEN` placeholder.
+- `src/env/server.ts` can validate the token when a future server route requires it.
+- No Telegram route, bot client, webhook, polling, or capture creation exists yet.
+
 ### Phase C: Webhook Endpoint
 
 - Add server-side webhook route.

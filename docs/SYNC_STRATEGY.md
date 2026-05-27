@@ -107,6 +107,14 @@ A future queue should store:
 
 Do not add this until cloud repositories and auth are in place.
 
+Current preparation:
+- `src/core/sync/types.ts` defines operation, status, device, and conflict models.
+- `src/core/sync/operation-queue.ts` provides pure local queue transforms and deterministic operation IDs.
+- `src/core/sync/conflict-resolution.ts` provides deterministic conflict detection and low-risk preference resolution helpers.
+- `src/core/sync/device.ts` provides deterministic device ID helpers.
+
+These helpers do not persist data, start background work, open network connections, or imply that cloud sync exists.
+
 ## AI And Sync
 
 AI-derived data must remain source-linked:

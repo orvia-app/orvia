@@ -6,6 +6,12 @@ Archflow currently has no backend, production AI provider, authentication provid
 
 Environment documentation exists now so future backend, AI, auth, sync, and payments work can start with safe defaults.
 
+Environment access is centralized in:
+- `src/env/server.ts` for server-only and public variables.
+- `src/env/client.ts` for browser-safe `NEXT_PUBLIC_*` variables only.
+
+Do not read `process.env` outside these modules. Future backend code should import typed env helpers instead of accessing runtime variables directly.
+
 ## Local Environment Files
 
 Use local `.env` files only for developer-specific configuration. These files must stay untracked:
@@ -70,11 +76,17 @@ Future AI calls should go through a backend route or server action that enforces
 
 Expected future variables:
 
-- `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 
 The anon key may be browser-visible only after Row Level Security is configured and reviewed. The service-role key must remain server-only and must not be used in normal user request paths unless strictly scoped.
+
+Current Supabase preparation files:
+- `src/server/supabase/*`: server-side config readiness and typed factory seams.
+- `src/lib/supabase/*`: browser-safe public config readiness and typed factory seams.
+
+These files do not install Supabase, open network connections, query data, or replace local-first repositories. They exist so a future `@supabase/supabase-js` installation can be introduced intentionally behind typed boundaries.
 
 ## Future Stripe Handling
 
