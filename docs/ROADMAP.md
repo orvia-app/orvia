@@ -28,6 +28,7 @@
 - Local-only export/reset data foundation in Settings.
 - Workspace and tag helper foundation for organization, search, and future AI context.
 - Local onboarding v1 for the Orvia capture, organize, and retrieve loop.
+- Production brand infrastructure for `useorvia.com`, `orvia-app/orvia`, and Vercel project `orvia`.
 - Central storage key registry and browser-safe storage adapter foundation.
 - Generic local repository contracts for current local-first domains.
 - Core backend-ready entity, relation, search, capture, activity, and memory seams.
@@ -56,8 +57,8 @@
   - selective reset controls
   - user-facing data inventory
 - Rewrite README into a fuller product/developer overview later.
-- Complete Orvia external validation before domain purchase, production Supabase/Vercel naming, public beta, Telegram bot handles, or App Store assets.
-- Run domain, trademark, App Store, Telegram handle, GitHub, and SEO/searchability checks for Orvia.
+- Keep production brand infrastructure documented and consistent across README, docs, Vercel, Cloudflare, and GitHub.
+- Complete any remaining trademark, App Store, Telegram handle, and SEO/searchability checks before public beta.
 
 ## AI Layer Phase
 
@@ -109,6 +110,8 @@ Safe implementation phases:
 
 - Keep security checklist current for releases.
 - Re-audit `.gitignore`, repository contents, and generated artifacts before public launch.
+- Treat `orvia-app/orvia` as public while on Vercel Hobby; never commit secrets or production credentials.
+- Move repo/private infrastructure to paid/pro setup before auth, users, payments, server-side AI, or sensitive integrations go live.
 - Keep main deployable and add protected-branch workflow before teammates join.
 - Add required checks before merge:
   - build

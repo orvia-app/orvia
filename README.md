@@ -4,6 +4,16 @@ Orvia is a local-first, AI-native productivity and life operating system MVP. It
 
 This project is not production SaaS-ready yet. There is no backend, authentication, sync, payment integration, or real AI provider integration.
 
+## Production Infrastructure
+
+- Primary domain: [https://useorvia.com](https://useorvia.com)
+- `www` redirects to apex: [https://www.useorvia.com](https://www.useorvia.com) -> [https://useorvia.com](https://useorvia.com)
+- GitHub org/repo: `orvia-app/orvia`
+- Vercel project: `orvia`
+- Domain registrar/DNS: Cloudflare
+
+The repository is public because Vercel Hobby does not support private organization repositories. Do not commit secrets, API keys, tokens, private env files, or production credentials.
+
 ## Development
 
 ```bash

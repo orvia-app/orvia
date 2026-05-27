@@ -20,6 +20,16 @@ Build production output:
 npm run build
 ```
 
+## Project Infrastructure
+
+- Primary domain: `https://useorvia.com`
+- `www` redirects to `https://useorvia.com`
+- GitHub org/repo: `orvia-app/orvia`
+- Vercel project: `orvia`
+- Domain registrar/DNS: Cloudflare
+
+The repository is public because Vercel Hobby does not support private organization repositories. Treat every committed file as public.
+
 ## Required Commands
 
 Use these before handing off meaningful work:
@@ -116,6 +126,7 @@ Avoid:
 
 - No frontend secrets.
 - No OpenAI, Supabase service-role, Stripe secret, Telegram bot, or integration tokens in client code.
+- No secrets, tokens, production credentials, or private `.env` files may be committed to the public repository.
 - Treat `NEXT_PUBLIC_*` as public.
 - Use `.env.example` only for blank placeholders.
 - Use `src/env/server.ts` and `src/env/client.ts` for env access.

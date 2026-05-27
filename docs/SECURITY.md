@@ -42,6 +42,13 @@ Current repository hygiene:
 - keep the main branch deployable
 - run `npm run build` and `git diff --check` before pushing meaningful changes
 - do not leave merge conflict markers, broken builds, or placeholder secrets in committed files
+- GitHub org/repo is `orvia-app/orvia`
+- Vercel project name is `orvia`
+- primary domain is `https://useorvia.com`
+- `https://www.useorvia.com` redirects to `https://useorvia.com`
+- Cloudflare is used for registrar/DNS
+- Cloudflare account has app-based 2FA enabled
+- the repository is public because Vercel Hobby does not support private organization repositories
 
 Future team workflow:
 - require pull requests before merging to main
@@ -50,6 +57,7 @@ Future team workflow:
 - use Vercel preview deployments for PR validation
 - keep production deployments tied to reviewed main-branch changes
 - restrict production environment variable access to trusted maintainers only
+- move to paid/pro private repository and production-grade infrastructure before auth, users, payments, server-side AI, or sensitive integrations go live
 
 ## Data Classification
 
@@ -92,6 +100,8 @@ Frontend code must never contain:
 - integration tokens
 - database credentials
 - private webhooks
+
+The repository is public. Never commit secrets, `.env` files with real values, API keys, tokens, service-role credentials, webhook secrets, private certificates, customer data, or production-only configuration.
 
 Public configuration must be clearly safe for browser exposure. Secrets belong in server-side runtime configuration only.
 
