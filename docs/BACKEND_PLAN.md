@@ -161,6 +161,8 @@ Before moving beyond preparation, install the Supabase SDK intentionally, review
 - Create migrations for the tables in `docs/DATABASE_SCHEMA.md`.
 - Enable RLS on all user-owned tables.
 - Add basic per-user policies.
+- Add module preference tables so users can enable, disable, pin, and order modules without deleting underlying module data.
+- Add integration registry and per-user integration state tables without storing provider secrets.
 - Add seed-free local dev migration workflow.
 - Create typed schema generation plan.
 
@@ -170,6 +172,7 @@ Before moving beyond preparation, install the Supabase SDK intentionally, review
 - Add protected server/client boundaries.
 - Preserve local-only mode.
 - Add account deletion planning stub, not full destructive flow until retention policy is final.
+- Decide whether account setup should create default `user_module_preferences` rows or derive defaults until the user customizes Settings -> Modules.
 
 ### Phase D: Cloud Repository Adapter
 
@@ -202,3 +205,5 @@ Before moving beyond preparation, install the Supabase SDK intentionally, review
 - What is the retention window for deleted records and backups?
 - Should IndexedDB be introduced before Supabase sync for larger local datasets?
 - What audit events are required before beta launch?
+- Which modules should be enabled by default for new users?
+- Should integration registry rows be managed by migrations, internal admin tooling, or both?

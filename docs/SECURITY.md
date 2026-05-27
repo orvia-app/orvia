@@ -224,11 +224,27 @@ Current backend recommendation is Supabase for MVP. Before implementation:
 - keep admin/support access explicit, scoped, logged, and time-limited
 - install and wire Supabase only after env separation and RLS review are complete
 
+The first schema/RLS migration draft exists at `supabase/migrations/202605270001_initial_schema.sql`. It is not applied yet and does not connect the app to Supabase.
+
 RLS policy direction:
 - users can select, insert, update, and soft-delete only rows where `user_id = auth.uid()`
 - workspace-scoped rows must also belong to a workspace owned by or shared with the current user
 - future collaboration should use explicit workspace membership rows, not ad hoc shared IDs
 - admin access should use audited server-side paths, not direct broad client privileges
+
+Current migration policy details:
+- every user-owned table has RLS enabled
+- every user-owned table uses `user_id = auth.uid()` ownership policies
+- workspace-scoped insert/update policies require the referenced workspace to belong to the current user
+- `user_module_preferences` is user-owned and controls module visibility/order without implying module data deletion
+- `integrations` is authenticated-read only from the client; client write policies are intentionally absent
+- `user_integrations` stores connection state only, not provider secrets or tokens
+- team sharing and workspace membership policies are intentionally not implemented yet
+
+Integration security:
+- Telegram bot tokens, OAuth client secrets, refresh tokens, and provider credentials must stay server-side.
+- Do not store provider secrets in `user_integrations`, `preferences`, `metadata`, or browser storage.
+- Future integration management should use server-side routes/jobs and audited admin/service-role access.
 
 ## Future Stripe Rules
 

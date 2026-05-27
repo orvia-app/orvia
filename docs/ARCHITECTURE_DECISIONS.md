@@ -116,3 +116,19 @@ Why:
 - Incoming messages need authenticated account mapping.
 - Abuse controls, rate limits, logging, and deletion behavior require backend infrastructure.
 - Client-only Telegram integration would be insecure and hard to scale.
+
+## ADR 009: Modules Are Optional Per User
+
+Status: Accepted.
+
+Decision: Archflow may have database tables for all supported modules, but module visibility and ordering must be configurable per user.
+
+Why:
+- Not every user needs finance, cars, automation, AI chat, Telegram capture, or future modules.
+- Module data should not need to be deleted just because a user hides a module.
+- Settings -> Modules can later control enabled, pinned, and ordered modules.
+- This keeps Archflow extensible without turning the default product into an overloaded dashboard.
+
+Tradeoffs:
+- Backend account setup must decide how default module preferences are created or derived.
+- UI surfaces must eventually respect module preferences once backend/auth exists.

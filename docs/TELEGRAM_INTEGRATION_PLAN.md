@@ -22,6 +22,8 @@ None of these should happen in frontend code.
 
 Never put a Telegram bot token in frontend code, browser storage, `NEXT_PUBLIC_*`, or committed files. The token belongs only in server-side environment variables.
 
+Do not store the Telegram bot token in `user_integrations`, `preferences`, `metadata`, or any user-owned database row. `user_integrations` may store connection state such as Telegram user ID/username, but provider secrets must remain server-side.
+
 ## Webhook Vs Polling
 
 Recommended MVP approach: webhook.
@@ -95,6 +97,8 @@ Future implementation should include:
 Current preparation:
 - `.env.example` includes a blank `TELEGRAM_BOT_TOKEN` placeholder.
 - `src/env/server.ts` can validate the token when a future server route requires it.
+- `integrations` can represent Telegram as a supported global integration.
+- `user_integrations` can represent a user's Telegram connection state.
 - No Telegram route, bot client, webhook, polling, or capture creation exists yet.
 
 ### Phase C: Webhook Endpoint

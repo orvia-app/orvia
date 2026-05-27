@@ -73,13 +73,15 @@
 
 - Use `docs/BACKEND_PLAN.md`, `docs/DATABASE_SCHEMA.md`, and `docs/SYNC_STRATEGY.md` as the backend planning baseline before implementation.
 - Create Supabase project and environment separation for local, preview, and production.
-- Implement the first migration set for profiles, workspaces, tasks, notes, captures, activity events, entity relations, memory candidates, finance transactions, cars, and preferences.
-- Enable Row Level Security on all user-owned tables before exposing browser access.
+- Review and apply the first migration set in `supabase/migrations/202605270001_initial_schema.sql` for profiles, workspaces, tasks, notes, captures, activity events, entity relations, memory candidates, finance transactions, cars, and preferences.
+- Include optional module preferences and integration registry/state tables in the first migration set.
+- Enable and verify Row Level Security on all user-owned tables before exposing browser access.
 - Introduce email/password authentication and secure sessions.
 - Preserve anonymous/local-only mode and add an explicit local-to-cloud migration flow.
 - Add user/workspace ownership to persisted data.
 - Add `user_id` ownership to every user-owned record.
 - Support user-created workspaces and backend-owned tag records.
+- Add Settings -> Modules after auth/backend foundations so users can enable, disable, pin, and order modules.
 - Add workspace-level permissions and server-side authorization checks.
 - Migrate repositories from browser-only storage to backend-compatible adapters.
 - Add a second storage adapter target, likely IndexedDB or server-backed sync, behind the existing repository contracts.
@@ -94,7 +96,7 @@
 
 Safe implementation phases:
 - Phase A: environment setup and secret handling.
-- Phase B: Supabase schema and RLS policies.
+- Phase B: Supabase schema and RLS policies. Initial migration SQL now exists, but it has not been applied and the app is not connected.
 - Phase C: auth and local-only/cloud account boundary.
 - Phase D: cloud repository adapter behind existing contracts.
 - Phase E: sync queue and conflict handling.
@@ -148,6 +150,7 @@ Safe implementation phases:
 
 - Define permission scopes and token storage requirements.
 - Add calendar/email/messenger/file integrations behind authenticated backend endpoints.
+- Use the global integrations registry plus per-user integration state; do not store provider secrets in user-owned integration rows.
 - Avoid storing integration tokens in browser storage.
 - Add integration-specific export/delete behavior.
 - Log integration actions in activity timeline where useful.
