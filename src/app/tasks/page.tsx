@@ -22,6 +22,7 @@ import {
   TASK_PRIORITIES,
   TASK_STATUSES,
 } from "@/lib/tasks";
+import { createTaskViaApi } from "@/lib/tasks-api";
 import {
   getEntityContext,
   getLocalContextEntities,
@@ -122,6 +123,8 @@ function TasksContent() {
   );
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<TaskFormState>(emptyForm);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
 
   useEffect(() => {
     const nextTasks = getTasks();
@@ -165,16 +168,22 @@ function TasksContent() {
   }, [statusFilter, tasks]);
 
   function openModal(): void {
+    setCreateError(null);
     setModalOpen(true);
   }
 
   function closeModal(): void {
     setModalOpen(false);
     setForm(emptyForm);
+    setCreateError(null);
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
+
+    if (isCreatingTask) {
+      return;
+    }
 
     const title = form.title.trim();
 
@@ -184,32 +193,39 @@ function TasksContent() {
 
     const workspaceId = getLegacyWorkspaceId(form.workspace);
 
-    const newTask: Task = {
-      id: Date.now().toString(),
-      title,
-      description: form.description.trim() || undefined,
-      status: form.status,
-      priority: form.priority,
-      workspaceId,
-      createdAt: new Date().toISOString(),
-    };
+    setCreateError(null);
+    setIsCreatingTask(true);
 
-    const nextTasks = [newTask, ...tasks];
+    try {
+      const newTask = await createTaskViaApi({
+        title,
+        description: form.description.trim() || undefined,
+        status: form.status,
+        priority: form.priority,
+        workspaceId,
+      });
 
-    setTasks(nextTasks);
-    saveTasks(nextTasks);
-    const entities = getLocalContextEntities();
-    setTaskContextById(
-      Object.fromEntries(
-        entities
-          .filter((entity) => entity.type === "task")
-          .map((entity) => [
-            entity.sourceId,
-            getEntityContext(entity, entities),
-          ]),
-      ),
-    );
-    closeModal();
+      const nextTasks = [newTask, ...tasks];
+
+      setTasks(nextTasks);
+      saveTasks(nextTasks);
+      const entities = getLocalContextEntities();
+      setTaskContextById(
+        Object.fromEntries(
+          entities
+            .filter((entity) => entity.type === "task")
+            .map((entity) => [
+              entity.sourceId,
+              getEntityContext(entity, entities),
+            ]),
+        ),
+      );
+      closeModal();
+    } catch {
+      setCreateError("Could not create task. Please try again.");
+    } finally {
+      setIsCreatingTask(false);
+    }
   }
 
   return (
@@ -512,8 +528,19 @@ function TasksContent() {
                   Cancel
                 </Button>
 
-                <Button type="submit">Create</Button>
+                <Button type="submit" disabled={isCreatingTask}>
+                  Create
+                </Button>
               </div>
+
+              {createError ? (
+                <p
+                  className="text-sm text-red-600 dark:text-red-400"
+                  role="alert"
+                >
+                  {createError}
+                </p>
+              ) : null}
             </form>
           </Card>
         </div>
