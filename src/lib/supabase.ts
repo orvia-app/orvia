@@ -2,15 +2,24 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getRequiredServerEnv } from "@/env/server";
 
 export type SupabaseTaskRow = {
-  id?: string;
+  id: string;
   title: string;
-  created_at?: string;
+  description: string | null;
+  status: "todo" | "in-progress" | "done";
+  priority: "low" | "medium" | "high" | "critical";
+  workspace_id: string | null;
+  due_date: string | null;
+  created_at: string;
   [key: string]: unknown;
 };
 
 export type SupabaseTaskInsert = {
   title: string;
-  [key: string]: unknown;
+  description?: string | null;
+  status?: SupabaseTaskRow["status"];
+  priority?: SupabaseTaskRow["priority"];
+  workspace_id?: string | null;
+  due_date?: string | null;
 };
 
 export type SupabaseDatabase = {
