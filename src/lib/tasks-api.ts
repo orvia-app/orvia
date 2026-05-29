@@ -18,6 +18,20 @@ type CreateTaskApiResponse = {
   error?: unknown;
 };
 
+type ListTasksApiResponse = {
+  ok?: unknown;
+  tasks?: unknown;
+  error?: unknown;
+};
+
+type TaskMappingFallback = {
+  description?: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  workspaceId: string;
+  dueDate?: string;
+};
+
 export type CreateTaskApiInput = {
   title: string;
   description?: string;
@@ -26,6 +40,22 @@ export type CreateTaskApiInput = {
   workspaceId: string;
   dueDate?: string;
 };
+
+const DEFAULT_TASK_MAPPING_FALLBACK: TaskMappingFallback = {
+  status: "todo",
+  priority: "medium",
+  workspaceId: "1",
+};
+
+export function mergeApiTasksWithLocalTasks(
+  apiTasks: Task[],
+  localTasks: Task[],
+): Task[] {
+  const apiTaskIds = new Set(apiTasks.map((task) => task.id));
+  const localOnlyTasks = localTasks.filter((task) => !apiTaskIds.has(task.id));
+
+  return [...apiTasks, ...localOnlyTasks];
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -53,7 +83,7 @@ function optionalString(value: unknown): string | undefined {
 
 function mapApiTaskToTask(
   row: ApiTaskRow,
-  input: CreateTaskApiInput,
+  fallback: TaskMappingFallback,
 ): Task | null {
   const id = optionalString(row.id);
   const title = optionalString(row.title);
@@ -63,16 +93,16 @@ function mapApiTaskToTask(
     return null;
   }
 
-  const description = optionalString(row.description) ?? input.description;
-  const dueDate = optionalString(row.due_date) ?? input.dueDate;
-  const workspaceId = optionalString(row.workspace_id) ?? input.workspaceId;
+  const description = optionalString(row.description) ?? fallback.description;
+  const dueDate = optionalString(row.due_date) ?? fallback.dueDate;
+  const workspaceId = optionalString(row.workspace_id) ?? fallback.workspaceId;
 
   return {
     id,
     title,
     description,
-    status: isTaskStatus(row.status) ? row.status : input.status,
-    priority: isTaskPriority(row.priority) ? row.priority : input.priority,
+    status: isTaskStatus(row.status) ? row.status : fallback.status,
+    priority: isTaskPriority(row.priority) ? row.priority : fallback.priority,
     workspaceId,
     dueDate,
     createdAt,
@@ -94,6 +124,65 @@ function parseCreateTaskResponse(
   }
 
   return mapApiTaskToTask(response.task, input);
+}
+
+function parseListTasksResponse(value: unknown): Task[] | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const response: ListTasksApiResponse = value;
+
+  if (response.ok !== true || !Array.isArray(response.tasks)) {
+    return null;
+  }
+
+  const mappedTasks = response.tasks.map((task) =>
+    isRecord(task)
+      ? mapApiTaskToTask(task, DEFAULT_TASK_MAPPING_FALLBACK)
+      : null,
+  );
+
+  if (mappedTasks.some((task) => task === null)) {
+    return null;
+  }
+
+  const tasksById = new Map<string, Task>();
+
+  for (const task of mappedTasks) {
+    if (task && !tasksById.has(task.id)) {
+      tasksById.set(task.id, task);
+    }
+  }
+
+  return Array.from(tasksById.values());
+}
+
+export async function fetchTasksViaApi(): Promise<Task[]> {
+  const response = await fetch("/api/tasks", {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  let responseBody: unknown;
+
+  try {
+    responseBody = await response.json();
+  } catch {
+    throw new Error("Tasks response was not valid JSON.");
+  }
+
+  if (!response.ok) {
+    throw new Error("Tasks request failed.");
+  }
+
+  const tasks = parseListTasksResponse(responseBody);
+
+  if (!tasks) {
+    throw new Error("Tasks response shape was invalid.");
+  }
+
+  return tasks;
 }
 
 export async function createTaskViaApi(

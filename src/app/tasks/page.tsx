@@ -22,7 +22,11 @@ import {
   TASK_PRIORITIES,
   TASK_STATUSES,
 } from "@/lib/tasks";
-import { createTaskViaApi } from "@/lib/tasks-api";
+import {
+  createTaskViaApi,
+  fetchTasksViaApi,
+  mergeApiTasksWithLocalTasks,
+} from "@/lib/tasks-api";
 import {
   getEntityContext,
   getLocalContextEntities,
@@ -127,19 +131,48 @@ function TasksContent() {
   const [isCreatingTask, setIsCreatingTask] = useState(false);
 
   useEffect(() => {
-    const nextTasks = getTasks();
-    const entities = getLocalContextEntities();
-    const nextContextById = Object.fromEntries(
-      entities
-        .filter((entity) => entity.type === "task")
-        .map((entity) => [
-          entity.sourceId,
-          getEntityContext(entity, entities),
-        ]),
-    );
+    let cancelled = false;
 
-    setTasks(nextTasks);
-    setTaskContextById(nextContextById);
+    function getNextContextById(): TaskContextById {
+      const entities = getLocalContextEntities();
+
+      return Object.fromEntries(
+        entities
+          .filter((entity) => entity.type === "task")
+          .map((entity) => [
+            entity.sourceId,
+            getEntityContext(entity, entities),
+          ]),
+      );
+    }
+
+    async function loadTasks(): Promise<void> {
+      try {
+        const apiTasks = await fetchTasksViaApi();
+        const mergedTasks = mergeApiTasksWithLocalTasks(apiTasks, getTasks());
+
+        if (cancelled) {
+          return;
+        }
+
+        saveTasks(mergedTasks);
+        setTasks(mergedTasks);
+      } catch {
+        if (cancelled) {
+          return;
+        }
+
+        setTasks(getTasks());
+      }
+
+      setTaskContextById(getNextContextById());
+    }
+
+    void loadTasks();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
