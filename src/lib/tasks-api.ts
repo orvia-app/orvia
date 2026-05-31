@@ -1,4 +1,9 @@
-import { TASK_PRIORITIES, TASK_STATUSES } from "@/lib/tasks";
+import {
+  getTasks,
+  saveTasks,
+  TASK_PRIORITIES,
+  TASK_STATUSES,
+} from "@/lib/tasks";
 import type { Task, TaskPriority, TaskStatus } from "@/types";
 
 type ApiTaskRow = {
@@ -204,6 +209,21 @@ export async function fetchTasksViaApi(
   }
 
   return tasks;
+}
+
+export async function loadTasksFromPrimarySource(
+  options: TasksApiRequestOptions = {},
+): Promise<Task[]> {
+  try {
+    const apiTasks = await fetchTasksViaApi(options);
+    const mergedTasks = mergeApiTasksWithLocalTasks(apiTasks, getTasks());
+
+    saveTasks(mergedTasks);
+
+    return mergedTasks;
+  } catch {
+    return getTasks();
+  }
 }
 
 export async function createTaskViaApi(
