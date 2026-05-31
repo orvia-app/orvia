@@ -111,7 +111,7 @@ function AuthStatus() {
 
   if (loading) {
     return (
-      <div className="rounded-xl bg-zinc-100/70 px-3 py-2 text-xs text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-900/45 dark:text-zinc-500 dark:ring-zinc-800/70">
+      <div className="rounded-lg bg-zinc-100/60 px-2.5 py-2 text-[11px] text-zinc-500 ring-1 ring-zinc-200/60 dark:bg-zinc-900/35 dark:text-zinc-500 dark:ring-zinc-800/60">
         Checking account...
       </div>
     );
@@ -119,22 +119,26 @@ function AuthStatus() {
 
   if (isAuthenticated) {
     return (
-      <div className="rounded-xl bg-zinc-100/70 px-3 py-2 ring-1 ring-zinc-200/70 dark:bg-zinc-900/45 dark:ring-zinc-800/70">
-        <p className="truncate text-xs font-medium text-zinc-800 dark:text-zinc-200">
-          {user?.email ?? "Signed in"}
-        </p>
-        <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-500">
-          Auth only. Cloud sync is not enabled yet.
-        </p>
-        <button
-          type="button"
-          onClick={handleSignOut}
-          className="mt-2 text-xs font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
-        >
-          Sign out
-        </button>
+      <div className="rounded-lg bg-zinc-100/55 px-2.5 py-2 ring-1 ring-zinc-200/60 dark:bg-zinc-900/35 dark:ring-zinc-800/60">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[11px] font-medium text-zinc-800 dark:text-zinc-200">
+              {user?.email ?? "Signed in"}
+            </p>
+            <p className="mt-0.5 truncate text-[10px] text-zinc-500 dark:text-zinc-500">
+              Auth only. Sync not enabled yet.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="shrink-0 text-[11px] font-medium text-zinc-500 hover:text-zinc-950 dark:text-zinc-500 dark:hover:text-white"
+          >
+            Sign out
+          </button>
+        </div>
         {signOutError ? (
-          <p className="mt-2 text-xs text-red-600 dark:text-red-400">
+          <p className="mt-1.5 text-[11px] text-red-600 dark:text-red-400">
             {signOutError}
           </p>
         ) : null}
@@ -143,29 +147,29 @@ function AuthStatus() {
   }
 
   return (
-    <div className="rounded-xl bg-zinc-100/70 px-3 py-2 ring-1 ring-zinc-200/70 dark:bg-zinc-900/45 dark:ring-zinc-800/70">
-      <p className="text-xs font-medium text-zinc-800 dark:text-zinc-200">
+    <div className="rounded-lg bg-zinc-100/55 px-2.5 py-2 ring-1 ring-zinc-200/60 dark:bg-zinc-900/35 dark:ring-zinc-800/60">
+      <p className="text-[11px] font-medium text-zinc-800 dark:text-zinc-200">
         Local-first mode
       </p>
-      <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-500">
-        Sign in is available, but sync is not enabled yet.
+      <p className="mt-0.5 text-[10px] text-zinc-500 dark:text-zinc-500">
+        Auth available. Sync not enabled yet.
       </p>
-      <div className="mt-2 flex gap-2">
+      <div className="mt-1.5 flex gap-2">
         <Link
           href="/login"
-          className="text-xs font-medium text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white"
+          className="text-[11px] font-medium text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white"
         >
           Log in
         </Link>
         <Link
           href="/register"
-          className="text-xs font-medium text-zinc-500 hover:text-zinc-950 dark:text-zinc-500 dark:hover:text-white"
+          className="text-[11px] font-medium text-zinc-500 hover:text-zinc-950 dark:text-zinc-500 dark:hover:text-white"
         >
           Register
         </Link>
       </div>
       {authError ? (
-        <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-500">
+        <p className="mt-1.5 text-[11px] text-zinc-500 dark:text-zinc-500">
           {authError}
         </p>
       ) : null}
