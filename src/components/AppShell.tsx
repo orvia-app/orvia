@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -15,6 +15,7 @@ import {
   MessageSquare,
   Monitor,
   Moon,
+  Plus,
   Settings,
   Search,
   Sun,
@@ -27,6 +28,7 @@ import type { LucideIcon } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { useAuthSession } from "@/components/auth/useAuthSession";
 import { CommandCenter } from "@/components/command-palette/CommandCenter";
+import { QuickCapture } from "@/components/quick-capture/QuickCapture";
 import { useTheme, type Theme } from "@/components/ThemeProvider";
 
 type NavItem = {
@@ -179,8 +181,15 @@ function AuthStatus() {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { session } = useAuthSession();
   const navItemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [quickCaptureOpen, setQuickCaptureOpen] = useState(false);
+
+  const openQuickCapture = useCallback((): void => {
+    setMobileMenuOpen(false);
+    setQuickCaptureOpen(true);
+  }, []);
 
   useEffect(() => {
     const activeItem = navItems.find((item) => isNavActive(pathname, item.href));
@@ -223,9 +232,34 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
   }, [mobileMenuOpen]);
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent): void {
+      const isQuickCaptureShortcut =
+        event.key.toLowerCase() === "k" &&
+        event.shiftKey &&
+        (event.metaKey || event.ctrlKey);
+
+      if (!isQuickCaptureShortcut) {
+        return;
+      }
+
+      event.preventDefault();
+      openQuickCapture();
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [openQuickCapture]);
+
   return (
     <div className="flex h-screen overflow-hidden bg-zinc-50 text-zinc-950 dark:bg-black dark:text-white">
       <CommandCenter />
+      <QuickCapture
+        accessToken={session?.access_token}
+        onOpenChange={setQuickCaptureOpen}
+        open={quickCaptureOpen}
+      />
 
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-zinc-200/80 bg-white/95 dark:border-zinc-800/80 dark:bg-zinc-950 lg:flex">
         <div className="flex shrink-0 items-center gap-3 px-5 pt-5">
@@ -270,7 +304,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="shrink-0 border-t border-zinc-200/80 bg-white/95 px-5 pb-5 pt-4 dark:border-zinc-800/80 dark:bg-zinc-950">
-          <div className="mb-4">
+          <button
+            type="button"
+            onClick={openQuickCapture}
+            className="mb-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-950 px-3 py-2.5 text-sm font-medium text-white shadow-sm shadow-zinc-950/10 transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none dark:hover:bg-white dark:focus-visible:ring-zinc-600"
+          >
+            <Plus className="h-4 w-4" aria-hidden />
+            Capture
+          </button>
+          <div className="mb-3">
             <AuthStatus />
           </div>
           <ThemeSwitcher />
@@ -363,6 +405,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </nav>
 
               <div className="mt-6 border-t border-zinc-200/80 pt-4 dark:border-zinc-800/80">
+                <button
+                  type="button"
+                  onClick={openQuickCapture}
+                  className="mb-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-zinc-950 px-3 text-sm font-medium text-white shadow-sm shadow-zinc-950/10 transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none dark:hover:bg-white dark:focus-visible:ring-zinc-600"
+                >
+                  <Plus className="h-4 w-4" aria-hidden />
+                  Capture
+                </button>
                 <div className="mb-4">
                   <AuthStatus />
                 </div>
@@ -375,13 +425,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <main className="app-scrollbar min-w-0 flex-1 overflow-y-auto overflow-x-hidden pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:pb-0">
           {children}
         </main>
-        <Link
-          href="/inbox"
-          className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-40 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-950 text-white shadow-lg shadow-zinc-950/20 transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-black/30 dark:hover:bg-white lg:hidden"
-          aria-label="Capture in Inbox"
+        <button
+          type="button"
+          onClick={openQuickCapture}
+          className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-40 inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-zinc-950 px-4 text-sm font-medium text-white shadow-lg shadow-zinc-950/20 transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-black/30 dark:hover:bg-white dark:focus-visible:ring-zinc-600 lg:hidden"
+          aria-label="Open quick capture"
         >
-          <Inbox className="h-5 w-5" aria-hidden />
-        </Link>
+          <Plus className="h-5 w-5" aria-hidden />
+          Capture
+        </button>
       </div>
     </div>
   );
