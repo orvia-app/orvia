@@ -4,6 +4,7 @@ import {
   type SupabaseTaskInsert,
   type SupabaseTaskRow,
 } from "@/lib/supabase";
+import { createSupabaseServerAuthClient } from "@/server/supabase/auth";
 
 const TASK_TITLE_MAX_LENGTH = 240;
 const TASK_DESCRIPTION_MAX_LENGTH = 5000;
@@ -24,6 +25,10 @@ type CreateTaskBody = {
   dueDate?: unknown;
 };
 
+type AuthenticatedUser =
+  | { ok: true; userId: string }
+  | { ok: false; response: NextResponse };
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -31,6 +36,50 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 type ParsedTaskPayload =
   | { ok: true; payload: SupabaseTaskInsert }
   | { ok: false; error: string };
+
+function parseBearerToken(authorizationHeader: string | null): string | null {
+  if (!authorizationHeader) {
+    return null;
+  }
+
+  const [scheme, token, ...extraParts] = authorizationHeader.trim().split(/\s+/);
+
+  if (scheme?.toLowerCase() !== "bearer" || !token || extraParts.length > 0) {
+    return null;
+  }
+
+  return token;
+}
+
+async function authenticateRequest(request: Request): Promise<AuthenticatedUser> {
+  const accessToken = parseBearerToken(request.headers.get("authorization"));
+
+  if (!accessToken) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { ok: false, error: "Authentication is required." },
+        { status: 401 },
+      ),
+    };
+  }
+
+  const supabase = createSupabaseServerAuthClient({ accessToken });
+  const { data, error } = await supabase.auth.getUser();
+  const userId = data.user?.id;
+
+  if (error || !userId) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { ok: false, error: "Authentication is invalid." },
+        { status: 401 },
+      ),
+    };
+  }
+
+  return { ok: true, userId };
+}
 
 function parseTaskTitle(body: CreateTaskBody): string | null {
   if (typeof body.title !== "string") {
@@ -179,11 +228,18 @@ function parseCreateTaskPayload(body: CreateTaskBody): ParsedTaskPayload {
   return { ok: true, payload };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const auth = await authenticateRequest(request);
+
+  if (!auth.ok) {
+    return auth.response;
+  }
+
   const supabase = getSupabaseServerClient();
   const { data, error } = await supabase
     .from("tasks")
     .select("*")
+    .eq("user_id", auth.userId)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -199,6 +255,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const auth = await authenticateRequest(request);
+
+  if (!auth.ok) {
+    return auth.response;
+  }
+
   let body: unknown;
 
   try {
@@ -229,7 +291,7 @@ export async function POST(request: Request) {
   const supabase = getSupabaseServerClient();
   const { data, error } = await supabase
     .from("tasks")
-    .insert(parsedPayload.payload)
+    .insert({ ...parsedPayload.payload, user_id: auth.userId })
     .select("*")
     .returns<SupabaseTaskRow>()
     .single();

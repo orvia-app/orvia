@@ -3,6 +3,7 @@ import { getRequiredServerEnv } from "@/env/server";
 
 export type SupabaseTaskRow = {
   id: string;
+  user_id: string | null;
   title: string;
   description: string | null;
   status: "todo" | "in-progress" | "done";
@@ -14,6 +15,7 @@ export type SupabaseTaskRow = {
 };
 
 export type SupabaseTaskInsert = {
+  user_id?: string | null;
   title: string;
   description?: string | null;
   status?: SupabaseTaskRow["status"];
