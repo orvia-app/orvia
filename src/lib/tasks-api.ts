@@ -41,6 +41,10 @@ export type CreateTaskApiInput = {
   dueDate?: string;
 };
 
+export type TasksApiRequestOptions = {
+  accessToken?: string;
+};
+
 const DEFAULT_TASK_MAPPING_FALLBACK: TaskMappingFallback = {
   status: "todo",
   priority: "medium",
@@ -79,6 +83,20 @@ function optionalString(value: unknown): string | undefined {
   return typeof value === "string" && value.trim().length > 0
     ? value.trim()
     : undefined;
+}
+
+function getAuthorizationHeaders(
+  options: TasksApiRequestOptions = {},
+): HeadersInit | undefined {
+  const accessToken = options.accessToken?.trim();
+
+  if (!accessToken) {
+    return undefined;
+  }
+
+  return {
+    Authorization: `Bearer ${accessToken}`,
+  };
 }
 
 function mapApiTaskToTask(
@@ -158,10 +176,13 @@ function parseListTasksResponse(value: unknown): Task[] | null {
   return Array.from(tasksById.values());
 }
 
-export async function fetchTasksViaApi(): Promise<Task[]> {
+export async function fetchTasksViaApi(
+  options: TasksApiRequestOptions = {},
+): Promise<Task[]> {
   const response = await fetch("/api/tasks", {
     method: "GET",
     cache: "no-store",
+    headers: getAuthorizationHeaders(options),
   });
 
   let responseBody: unknown;
@@ -187,11 +208,13 @@ export async function fetchTasksViaApi(): Promise<Task[]> {
 
 export async function createTaskViaApi(
   input: CreateTaskApiInput,
+  options: TasksApiRequestOptions = {},
 ): Promise<Task> {
   const response = await fetch("/api/tasks", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...getAuthorizationHeaders(options),
     },
     body: JSON.stringify(input),
   });
