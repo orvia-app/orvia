@@ -44,3 +44,13 @@ export function createQuickCapture(capture: QuickCapture): QuickCapture[] {
 
   return nextCaptures;
 }
+
+export function removeQuickCapture(captureId: string): QuickCapture[] {
+  const nextCaptures = getQuickCaptures().filter(
+    (capture) => capture.id !== captureId,
+  );
+
+  saveQuickCaptures(nextCaptures);
+
+  return nextCaptures;
+}

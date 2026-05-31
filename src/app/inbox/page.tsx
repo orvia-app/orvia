@@ -1,21 +1,42 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, Inbox, Loader2, Tags } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Archive,
+  ArrowRight,
+  CheckSquare,
+  FileText,
+  Inbox,
+  Loader2,
+  Tags,
+} from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
+import { useAuthSession } from "@/components/auth/useAuthSession";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 import {
   noteTypeFromInboxType,
   parseInboxInput,
   workspaceIdFromLabel,
   type InboxParseResult,
 } from "@/lib/inbox";
-import { createNote, type Note } from "@/lib/notes";
-import { createTask } from "@/lib/tasks";
-import type { Task } from "@/types";
+import {
+  archiveInboxItem,
+  convertInboxItemToNote,
+  convertInboxItemToTask,
+  type InboxProcessingResult,
+} from "@/lib/inbox-processing";
+import {
+  getQuickCaptures,
+  type QuickCapture,
+} from "@/lib/quick-captures";
+import {
+  createQuickCaptureNote,
+  createQuickCaptureTask,
+} from "@/lib/quick-capture";
 
 const exampleLines = [
   "Remind me to call John tomorrow",
@@ -36,13 +57,29 @@ function confidenceBadgeVariant(confidence: InboxParseResult["confidence"]) {
 }
 
 export default function InboxPage() {
+  const { session } = useAuthSession();
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<InboxParseResult | null>(null);
   const [itemCreated, setItemCreated] = useState(false);
+  const [captures, setCaptures] = useState<QuickCapture[]>([]);
+  const [processingCaptureId, setProcessingCaptureId] = useState<string | null>(
+    null,
+  );
+  const [queueError, setQueueError] = useState<string | null>(null);
+  const [queueStatus, setQueueStatus] = useState<string | null>(null);
 
   const timeoutRef = useRef<number | null>(null);
   const processingRef = useRef(false);
+
+  const queuedCaptures = useMemo(
+    () =>
+      captures.map((capture) => ({
+        capture,
+        preview: parseInboxInput(capture.text),
+      })),
+    [captures],
+  );
 
   const handleProcess = useCallback(() => {
     const trimmedInput = input.trim();
@@ -66,33 +103,27 @@ export default function InboxPage() {
     }, 1000);
   }, [input]);
 
-  function handleCreateItem(): void {
+  async function handleCreateItem(): Promise<void> {
     if (!result || itemCreated) {
       return;
     }
 
     try {
       if (result.actionKind === "task") {
-        const newTask: Task = {
-          id: Date.now().toString(),
+        await createQuickCaptureTask({
           title: result.suggestedTitle,
           description: result.summary,
           priority: result.priority,
           status: "todo",
           workspaceId: workspaceIdFromLabel(result.suggestedWorkspace),
-          createdAt: new Date().toISOString(),
-        };
-
-        createTask(newTask);
+          accessToken: session?.access_token,
+        });
       } else {
-        const newNote: Note = {
-          id: Date.now().toString(),
+        createQuickCaptureNote({
           title: result.suggestedTitle,
           content: result.summary,
           type: noteTypeFromInboxType(result.type),
-        };
-
-        createNote(newNote);
+        });
       }
 
       setItemCreated(true);
@@ -102,7 +133,54 @@ export default function InboxPage() {
     }
   }
 
+  async function handleProcessQueuedCapture(
+    capture: QuickCapture,
+    action: "task" | "note" | "archive",
+  ): Promise<void> {
+    if (processingCaptureId) {
+      return;
+    }
+
+    setProcessingCaptureId(capture.id);
+    setQueueError(null);
+    setQueueStatus(null);
+
+    try {
+      let processingResult: InboxProcessingResult;
+
+      if (action === "task") {
+        processingResult = await convertInboxItemToTask(capture, {
+          accessToken: session?.access_token,
+        });
+      } else if (action === "note") {
+        processingResult = convertInboxItemToNote(capture);
+      } else {
+        processingResult = archiveInboxItem(capture);
+      }
+
+      setCaptures(processingResult.remainingCaptures);
+
+      if (processingResult.action === "task") {
+        setQueueStatus(
+          processingResult.source === "api"
+            ? "Converted to task."
+            : "Converted to local task.",
+        );
+      } else if (processingResult.action === "note") {
+        setQueueStatus("Converted to note.");
+      } else {
+        setQueueStatus("Archived.");
+      }
+    } catch {
+      setQueueError("Could not process this inbox item. Please try again.");
+    } finally {
+      setProcessingCaptureId(null);
+    }
+  }
+
   useEffect(() => {
+    setCaptures(getQuickCaptures());
+
     return () => {
       if (timeoutRef.current) {
         window.clearTimeout(timeoutRef.current);
@@ -297,6 +375,135 @@ export default function InboxPage() {
               </div>
             </Card>
           ) : null}
+
+          <section className="mt-8">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-zinc-950 dark:text-white">
+                  Processing queue
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
+                  Convert captured thoughts into tasks or notes, or archive
+                  what no longer needs action.
+                </p>
+              </div>
+              <Badge>{queuedCaptures.length} waiting</Badge>
+            </div>
+
+            {queueError ? (
+              <div
+                role="alert"
+                className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 ring-1 ring-red-200/70 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/20"
+              >
+                {queueError}
+              </div>
+            ) : null}
+
+            {queueStatus ? (
+              <div
+                role="status"
+                className="mb-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 ring-1 ring-emerald-200/70 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20"
+              >
+                {queueStatus}
+              </div>
+            ) : null}
+
+            {queuedCaptures.length === 0 ? (
+              <EmptyState
+                icon={Inbox}
+                title="Inbox zero"
+                description="No captures are waiting. Drop a thought here or use + Capture when something needs a home."
+              />
+            ) : (
+              <div className="space-y-3">
+                {queuedCaptures.map(({ capture, preview }) => {
+                  const processing = processingCaptureId === capture.id;
+                  const disabled = processingCaptureId !== null;
+
+                  return (
+                    <Card key={capture.id} className="p-4 sm:p-5">
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge>{preview.detectedType}</Badge>
+                            <Badge variant={confidenceBadgeVariant(preview.confidence)}>
+                              {preview.confidence.label} confidence
+                            </Badge>
+                            <span className="text-xs font-medium text-zinc-400 dark:text-zinc-600">
+                              {capture.createdAt.slice(0, 10)}
+                            </span>
+                          </div>
+
+                          <h3 className="mt-3 text-base font-semibold text-zinc-950 dark:text-white">
+                            {preview.suggestedTitle}
+                          </h3>
+                          <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                            {capture.text}
+                          </p>
+
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <Badge>{preview.suggestedWorkspace}</Badge>
+                            {preview.suggestedTags.slice(0, 4).map((tag) => (
+                              <Badge key={tag}>{tag}</Badge>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="gap-2"
+                            disabled={disabled}
+                            onClick={() =>
+                              void handleProcessQueuedCapture(capture, "task")
+                            }
+                          >
+                            {processing ? (
+                              <Loader2
+                                className="h-4 w-4 animate-spin"
+                                aria-hidden
+                              />
+                            ) : (
+                              <CheckSquare className="h-4 w-4" aria-hidden />
+                            )}
+                            Convert to Task
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="gap-2"
+                            disabled={disabled}
+                            onClick={() =>
+                              void handleProcessQueuedCapture(capture, "note")
+                            }
+                          >
+                            <FileText className="h-4 w-4" aria-hidden />
+                            Convert to Note
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="gap-2"
+                            disabled={disabled}
+                            onClick={() =>
+                              void handleProcessQueuedCapture(
+                                capture,
+                                "archive",
+                              )
+                            }
+                          >
+                            <Archive className="h-4 w-4" aria-hidden />
+                            Archive
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </section>
         </div>
       </main>
     </AppShell>

@@ -10,11 +10,15 @@ export type QuickCaptureTaskInput = {
   title: string;
   description?: string;
   accessToken?: string;
+  priority?: Task["priority"];
+  status?: Task["status"];
+  workspaceId?: string;
 };
 
 export type QuickCaptureNoteInput = {
   title: string;
   content: string;
+  type?: Note["type"];
 };
 
 export type QuickCaptureResult =
@@ -41,9 +45,10 @@ function createLocalTask(input: QuickCaptureTaskInput): Task {
     id: crypto.randomUUID(),
     title: input.title,
     description: input.description,
-    status: DEFAULT_TASK_STATUS,
-    priority: DEFAULT_TASK_PRIORITY,
-    workspaceId: getLegacyWorkspaceId(DEFAULT_TASK_WORKSPACE),
+    status: input.status ?? DEFAULT_TASK_STATUS,
+    priority: input.priority ?? DEFAULT_TASK_PRIORITY,
+    workspaceId:
+      input.workspaceId ?? getLegacyWorkspaceId(DEFAULT_TASK_WORKSPACE),
     createdAt: new Date().toISOString(),
   };
 }
@@ -60,9 +65,10 @@ export async function createQuickCaptureTask(
       {
         title: input.title,
         description: input.description,
-        status: DEFAULT_TASK_STATUS,
-        priority: DEFAULT_TASK_PRIORITY,
-        workspaceId: getLegacyWorkspaceId(DEFAULT_TASK_WORKSPACE),
+        status: input.status ?? DEFAULT_TASK_STATUS,
+        priority: input.priority ?? DEFAULT_TASK_PRIORITY,
+        workspaceId:
+          input.workspaceId ?? getLegacyWorkspaceId(DEFAULT_TASK_WORKSPACE),
       },
       taskRequestOptions,
     );
@@ -86,7 +92,7 @@ export function createQuickCaptureNote(
     id: crypto.randomUUID(),
     title: input.title,
     content: input.content,
-    type: "note",
+    type: input.type ?? "note",
   };
 
   createNote(note);
