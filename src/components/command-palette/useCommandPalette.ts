@@ -295,7 +295,9 @@ export function useCommandPalette(
       }
 
       const isPaletteShortcut =
-        event.key.toLowerCase() === "k" && (event.metaKey || event.ctrlKey);
+        event.key.toLowerCase() === "k" &&
+        !event.shiftKey &&
+        (event.metaKey || event.ctrlKey);
 
       if (isPaletteShortcut) {
         event.preventDefault();
