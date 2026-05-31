@@ -220,7 +220,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [mobileMenuOpen]);
 
   return (
-    <div className="flex min-h-screen overflow-x-hidden bg-zinc-50 text-zinc-950 dark:bg-black dark:text-white">
+    <div className="flex h-screen overflow-hidden bg-zinc-50 text-zinc-950 dark:bg-black dark:text-white">
       <CommandCenter />
 
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-zinc-200/80 bg-white/95 dark:border-zinc-800/80 dark:bg-zinc-950 lg:flex">
@@ -273,7 +273,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col overflow-x-hidden bg-zinc-50 dark:bg-black">
+      <div className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden bg-zinc-50 dark:bg-black">
         <header className="sticky top-0 z-30 border-b border-zinc-200/70 bg-white/90 px-4 py-3 backdrop-blur dark:border-zinc-800/70 dark:bg-black/85 lg:hidden">
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2.5">
@@ -368,7 +368,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         ) : null}
 
-        <main className="min-w-0 flex-1 pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:pb-0">
+        <main className="app-scrollbar min-w-0 flex-1 overflow-y-auto overflow-x-hidden pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:pb-0">
           {children}
         </main>
         <Link

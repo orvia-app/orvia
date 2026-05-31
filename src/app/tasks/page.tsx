@@ -11,6 +11,7 @@ import { useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
+import { useAuthSession } from "@/components/auth/useAuthSession";
 import { Badge } from "@/components/ui/Badge";
 import type { BadgeVariant } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -113,6 +114,8 @@ function getTaskPageContextFromSearchParams(
 
 function TasksContent() {
   const searchParams = useSearchParams();
+  const { session } = useAuthSession();
+  const accessToken = session?.access_token;
   const initialPageContext = useMemo(
     () => getTaskPageContextFromSearchParams(searchParams),
     [searchParams],
@@ -148,7 +151,7 @@ function TasksContent() {
 
     async function loadTasks(): Promise<void> {
       try {
-        const apiTasks = await fetchTasksViaApi();
+        const apiTasks = await fetchTasksViaApi({ accessToken });
         const mergedTasks = mergeApiTasksWithLocalTasks(apiTasks, getTasks());
 
         if (cancelled) {
@@ -173,7 +176,7 @@ function TasksContent() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [accessToken]);
 
   useEffect(() => {
     setStatusFilter(initialPageContext.statusFilter);
@@ -230,13 +233,18 @@ function TasksContent() {
     setIsCreatingTask(true);
 
     try {
-      const newTask = await createTaskViaApi({
-        title,
-        description: form.description.trim() || undefined,
-        status: form.status,
-        priority: form.priority,
-        workspaceId,
-      });
+      const newTask = await createTaskViaApi(
+        {
+          title,
+          description: form.description.trim() || undefined,
+          status: form.status,
+          priority: form.priority,
+          workspaceId,
+        },
+        {
+          accessToken,
+        },
+      );
 
       const nextTasks = [newTask, ...tasks];
 
