@@ -18,15 +18,13 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
-  getTasks,
   saveTasks,
   TASK_PRIORITIES,
   TASK_STATUSES,
 } from "@/lib/tasks";
 import {
   createTaskViaApi,
-  fetchTasksViaApi,
-  mergeApiTasksWithLocalTasks,
+  loadTasksFromPrimarySource,
 } from "@/lib/tasks-api";
 import {
   getEntityContext,
@@ -150,24 +148,13 @@ function TasksContent() {
     }
 
     async function loadTasks(): Promise<void> {
-      try {
-        const apiTasks = await fetchTasksViaApi({ accessToken });
-        const mergedTasks = mergeApiTasksWithLocalTasks(apiTasks, getTasks());
+      const loadedTasks = await loadTasksFromPrimarySource({ accessToken });
 
-        if (cancelled) {
-          return;
-        }
-
-        saveTasks(mergedTasks);
-        setTasks(mergedTasks);
-      } catch {
-        if (cancelled) {
-          return;
-        }
-
-        setTasks(getTasks());
+      if (cancelled) {
+        return;
       }
 
+      setTasks(loadedTasks);
       setTaskContextById(getNextContextById());
     }
 
