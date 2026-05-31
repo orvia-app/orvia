@@ -25,6 +25,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import { BrandMark } from "@/components/BrandMark";
+import { useAuthSession } from "@/components/auth/useAuthSession";
 import { CommandCenter } from "@/components/command-palette/CommandCenter";
 import { useTheme, type Theme } from "@/components/ThemeProvider";
 
@@ -90,6 +91,84 @@ function ThemeSwitcher() {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function AuthStatus() {
+  const { authError, isAuthenticated, loading, signOut, user } =
+    useAuthSession();
+  const [signOutError, setSignOutError] = useState<string | null>(null);
+
+  async function handleSignOut(): Promise<void> {
+    setSignOutError(null);
+    const result = await signOut();
+
+    if (!result.ok) {
+      setSignOutError(result.error);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="rounded-xl bg-zinc-100/70 px-3 py-2 text-xs text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-900/45 dark:text-zinc-500 dark:ring-zinc-800/70">
+        Checking account...
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return (
+      <div className="rounded-xl bg-zinc-100/70 px-3 py-2 ring-1 ring-zinc-200/70 dark:bg-zinc-900/45 dark:ring-zinc-800/70">
+        <p className="truncate text-xs font-medium text-zinc-800 dark:text-zinc-200">
+          {user?.email ?? "Signed in"}
+        </p>
+        <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-500">
+          Auth only. Cloud sync is not enabled yet.
+        </p>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="mt-2 text-xs font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
+        >
+          Sign out
+        </button>
+        {signOutError ? (
+          <p className="mt-2 text-xs text-red-600 dark:text-red-400">
+            {signOutError}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl bg-zinc-100/70 px-3 py-2 ring-1 ring-zinc-200/70 dark:bg-zinc-900/45 dark:ring-zinc-800/70">
+      <p className="text-xs font-medium text-zinc-800 dark:text-zinc-200">
+        Local-first mode
+      </p>
+      <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-500">
+        Sign in is available, but sync is not enabled yet.
+      </p>
+      <div className="mt-2 flex gap-2">
+        <Link
+          href="/login"
+          className="text-xs font-medium text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white"
+        >
+          Log in
+        </Link>
+        <Link
+          href="/register"
+          className="text-xs font-medium text-zinc-500 hover:text-zinc-950 dark:text-zinc-500 dark:hover:text-white"
+        >
+          Register
+        </Link>
+      </div>
+      {authError ? (
+        <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-500">
+          {authError}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -187,6 +266,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="shrink-0 border-t border-zinc-200/80 bg-white/95 px-5 pb-5 pt-4 dark:border-zinc-800/80 dark:bg-zinc-950">
+          <div className="mb-4">
+            <AuthStatus />
+          </div>
           <ThemeSwitcher />
         </div>
       </aside>
@@ -277,6 +359,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </nav>
 
               <div className="mt-6 border-t border-zinc-200/80 pt-4 dark:border-zinc-800/80">
+                <div className="mb-4">
+                  <AuthStatus />
+                </div>
                 <ThemeSwitcher />
               </div>
             </div>
