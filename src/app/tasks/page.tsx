@@ -24,7 +24,9 @@ import {
 } from "@/lib/tasks";
 import {
   createTaskViaApi,
+  deleteTaskViaApi,
   loadTasksFromPrimarySource,
+  updateTaskViaApi,
 } from "@/lib/tasks-api";
 import {
   getEntityContext,
@@ -129,6 +131,10 @@ function TasksContent() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<TaskFormState>(emptyForm);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [taskActionError, setTaskActionError] = useState<string | null>(null);
+  const [pendingTaskIds, setPendingTaskIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [isCreatingTask, setIsCreatingTask] = useState(false);
 
   useEffect(() => {
@@ -201,6 +207,49 @@ function TasksContent() {
     setCreateError(null);
   }
 
+  function syncTasks(nextTasks: Task[]): void {
+    saveTasks(nextTasks);
+    setTasks(nextTasks);
+
+    const entities = getLocalContextEntities();
+    setTaskContextById(
+      Object.fromEntries(
+        entities
+          .filter((entity) => entity.type === "task")
+          .map((entity) => [
+            entity.sourceId,
+            getEntityContext(entity, entities),
+          ]),
+      ),
+    );
+  }
+
+  function createLocalTaskFromForm(title: string, workspaceId: string): Task {
+    return {
+      id: crypto.randomUUID(),
+      title,
+      description: form.description.trim() || undefined,
+      status: form.status,
+      priority: form.priority,
+      workspaceId,
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  function setTaskPending(taskId: string, pending: boolean): void {
+    setPendingTaskIds((currentIds) => {
+      const nextIds = new Set(currentIds);
+
+      if (pending) {
+        nextIds.add(taskId);
+      } else {
+        nextIds.delete(taskId);
+      }
+
+      return nextIds;
+    });
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
 
@@ -220,39 +269,121 @@ function TasksContent() {
     setIsCreatingTask(true);
 
     try {
-      const newTask = await createTaskViaApi(
-        {
-          title,
-          description: form.description.trim() || undefined,
-          status: form.status,
-          priority: form.priority,
-          workspaceId,
-        },
-        {
-          accessToken,
-        },
-      );
+      const newTask = accessToken
+        ? await createTaskViaApi(
+            {
+              title,
+              description: form.description.trim() || undefined,
+              status: form.status,
+              priority: form.priority,
+              workspaceId,
+            },
+            {
+              accessToken,
+            },
+          )
+        : createLocalTaskFromForm(title, workspaceId);
 
       const nextTasks = [newTask, ...tasks];
 
-      setTasks(nextTasks);
-      saveTasks(nextTasks);
-      const entities = getLocalContextEntities();
-      setTaskContextById(
-        Object.fromEntries(
-          entities
-            .filter((entity) => entity.type === "task")
-            .map((entity) => [
-              entity.sourceId,
-              getEntityContext(entity, entities),
-            ]),
-        ),
-      );
+      syncTasks(nextTasks);
       closeModal();
     } catch {
-      setCreateError("Could not create task. Please try again.");
+      if (!accessToken) {
+        setCreateError("Could not create task. Please try again.");
+        return;
+      }
+
+      const localTask = createLocalTaskFromForm(title, workspaceId);
+      const nextTasks = [localTask, ...tasks];
+
+      syncTasks(nextTasks);
+      closeModal();
     } finally {
       setIsCreatingTask(false);
+    }
+  }
+
+  async function updateTaskStatus(
+    task: Task,
+    nextStatus: TaskStatus,
+  ): Promise<void> {
+    if (task.status === nextStatus || pendingTaskIds.has(task.id)) {
+      return;
+    }
+
+    setTaskActionError(null);
+    setTaskPending(task.id, true);
+
+    try {
+      const updatedTask = accessToken
+        ? await updateTaskViaApi(
+            task.id,
+            {
+              status: nextStatus,
+            },
+            { accessToken },
+          )
+        : {
+            ...task,
+            status: nextStatus,
+          };
+
+      const nextTasks = tasks.map((currentTask) =>
+        currentTask.id === task.id ? updatedTask : currentTask,
+      );
+
+      syncTasks(nextTasks);
+    } catch {
+      const nextTasks = tasks.map((currentTask) =>
+        currentTask.id === task.id
+          ? {
+              ...currentTask,
+              status: nextStatus,
+            }
+          : currentTask,
+      );
+
+      syncTasks(nextTasks);
+      setTaskActionError("Cloud update failed. Saved this change locally.");
+    } finally {
+      setTaskPending(task.id, false);
+    }
+  }
+
+  async function deleteTask(task: Task): Promise<void> {
+    if (pendingTaskIds.has(task.id)) {
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete "${task.title}"?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    setTaskActionError(null);
+    setTaskPending(task.id, true);
+
+    try {
+      if (accessToken) {
+        await deleteTaskViaApi(task.id, { accessToken });
+      }
+
+      const nextTasks = tasks.filter(
+        (currentTask) => currentTask.id !== task.id,
+      );
+
+      syncTasks(nextTasks);
+    } catch {
+      const nextTasks = tasks.filter(
+        (currentTask) => currentTask.id !== task.id,
+      );
+
+      syncTasks(nextTasks);
+      setTaskActionError("Cloud delete failed. Removed this task locally.");
+    } finally {
+      setTaskPending(task.id, false);
     }
   }
 
@@ -297,9 +428,19 @@ function TasksContent() {
           </div>
 
           <div className="mt-8 space-y-4">
+            {taskActionError ? (
+              <p
+                className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200"
+                role="status"
+              >
+                {taskActionError}
+              </p>
+            ) : null}
+
             {filteredTasks.map((task) => {
               const selected = task.id === selectedTaskId;
               const context = taskContextById[task.id];
+              const taskPending = pendingTaskIds.has(task.id);
 
               return (
                 <Card
@@ -366,12 +507,47 @@ function TasksContent() {
                       ) : null}
                     </div>
 
-                    <Badge
-                      variant={statusVariant(task.status)}
-                      className="shrink-0 px-3 py-1.5 sm:text-sm"
-                    >
-                      {statusLabel(task.status)}
-                    </Badge>
+                    <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+                      <Badge
+                        variant={statusVariant(task.status)}
+                        className="px-3 py-1.5 sm:text-sm"
+                      >
+                        {statusLabel(task.status)}
+                      </Badge>
+
+                      <label className="sr-only" htmlFor={`task-status-${task.id}`}>
+                        Update task status
+                      </label>
+                      <select
+                        id={`task-status-${task.id}`}
+                        value={task.status}
+                        disabled={taskPending}
+                        onChange={(event) => {
+                          void updateTaskStatus(
+                            task,
+                            event.target.value as TaskStatus,
+                          );
+                        }}
+                        className="w-full cursor-pointer rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 transition hover:border-zinc-300 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:border-zinc-700 sm:w-36"
+                      >
+                        {TASK_STATUSES.map((status) => (
+                          <option key={status} value={status}>
+                            {statusLabel(status)}
+                          </option>
+                        ))}
+                      </select>
+
+                      <Button
+                        className="w-full px-3 py-2 sm:w-auto"
+                        disabled={taskPending}
+                        onClick={() => {
+                          void deleteTask(task);
+                        }}
+                        variant="ghost"
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               );
