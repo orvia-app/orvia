@@ -1,3 +1,4 @@
+import { recordLocalImportCompletedActivity } from "@/lib/activity-recording";
 import { getStoredNotes, type Note } from "@/lib/notes";
 import {
   createNoteViaApi,
@@ -251,6 +252,17 @@ export async function importLocalItemsToCloud({
       summary.errors.push(`Could not import note: ${note.title}`);
     }
   }
+
+  void recordLocalImportCompletedActivity(
+    {
+      errorCount: summary.errors.length,
+      importedNotes: summary.importedNotes,
+      importedTasks: summary.importedTasks,
+      skippedNotes: summary.skippedNotes,
+      skippedTasks: summary.skippedTasks,
+    },
+    { accessToken },
+  );
 
   return summary;
 }
