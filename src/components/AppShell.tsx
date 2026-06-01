@@ -394,7 +394,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               Orvia
             </p>
             <p className="text-[11px] text-zinc-500 dark:text-zinc-500">
-              Capture operating system
+              Turn context into action
             </p>
           </div>
         </div>
@@ -520,7 +520,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       Orvia
                     </p>
                     <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-500">
-                      Capture operating system
+                      Turn context into action
                     </p>
                   </div>
                 </div>
