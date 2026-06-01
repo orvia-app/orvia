@@ -9,39 +9,67 @@ import { Section } from "@/components/ui/Section";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { TimelineEventCard } from "@/components/timeline/TimelineEventCard";
 import { useAuthSession } from "@/components/auth/useAuthSession";
-import { loadTasksFromPrimarySource } from "@/lib/tasks-api";
+import { fetchActivitiesViaApi } from "@/lib/activities-api";
 import {
-  createTimelineEventsFromTasks,
+  createTimelineEventsFromActivities,
   type TimelineEvent,
 } from "@/lib/timeline";
 
 export default function TimelinePage() {
-  const { session } = useAuthSession();
+  const { loading: authLoading, session } = useAuthSession();
   const accessToken = session?.access_token;
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadTimelineEvents(): Promise<void> {
-      const tasks = await loadTasksFromPrimarySource({ accessToken });
-
-      if (cancelled) {
+      if (!accessToken) {
+        setEvents([]);
+        setLoadError(null);
+        setLoaded(true);
         return;
       }
 
-      setEvents(createTimelineEventsFromTasks(tasks));
-      setLoaded(true);
+      try {
+        const activities = await fetchActivitiesViaApi({ accessToken });
+
+        if (cancelled) {
+          return;
+        }
+
+        setEvents(createTimelineEventsFromActivities(activities));
+        setLoadError(null);
+      } catch {
+        if (cancelled) {
+          return;
+        }
+
+        setEvents([]);
+        setLoadError("Could not load your activity timeline.");
+      } finally {
+        if (!cancelled) {
+          setLoaded(true);
+        }
+      }
     }
 
     setLoaded(false);
+
+    if (authLoading) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
     void loadTimelineEvents();
 
     return () => {
       cancelled = true;
     };
-  }, [accessToken]);
+  }, [accessToken, authLoading]);
 
   return (
     <AppShell>
@@ -56,7 +84,7 @@ export default function TimelinePage() {
                 Timeline
               </h1>
               <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">
-                Activity feed generated from your tasks.
+                Activity feed from your recorded task, note, and import events.
               </p>
             </div>
           </div>
@@ -66,19 +94,29 @@ export default function TimelinePage() {
               <Section>
                 <SectionHeader
                   title="Activity"
-                  subtitle="Loading your task timeline."
+                  subtitle="Loading your activity timeline."
                 />
               </Section>
+            ) : !accessToken ? (
+              <EmptyState
+                title="Timeline is available after sign in"
+                description="Sign in to view your recorded task, note, and import activity."
+              />
+            ) : loadError ? (
+              <EmptyState
+                title="Timeline could not load"
+                description={loadError}
+              />
             ) : events.length === 0 ? (
               <EmptyState
                 title="Your activity timeline is empty."
-                description="Create or complete a task to add timeline activity."
+                description="Create, update, or delete tasks and notes to add activity here."
               />
             ) : (
               <Section>
                 <SectionHeader
                   title="Activity"
-                  subtitle={`${events.length} task event${
+                  subtitle={`${events.length} event${
                     events.length === 1 ? "" : "s"
                   }`}
                 />

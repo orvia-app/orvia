@@ -1,4 +1,5 @@
-import { CheckCircle2, CheckSquare } from "lucide-react";
+import { CheckSquare, CircleDot, FileText, RefreshCw, Trash2 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
@@ -10,10 +11,44 @@ type TimelineEventCardProps = {
 
 function getEventLabel(event: TimelineEvent): string {
   switch (event.type) {
-    case "task-created":
+    case "task_created":
       return "Task created";
-    case "task-completed":
-      return "Task completed";
+    case "task_updated":
+      return "Task updated";
+    case "task_deleted":
+      return "Task deleted";
+    case "note_created":
+      return "Note created";
+    case "note_updated":
+      return "Note updated";
+    case "note_deleted":
+      return "Note deleted";
+    case "local_import_completed":
+      return "Local import";
+    default:
+      return event.type
+        .split("_")
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ") || "Activity";
+  }
+}
+
+function getEventIcon(event: TimelineEvent): LucideIcon {
+  switch (event.type) {
+    case "task_created":
+    case "task_updated":
+      return CheckSquare;
+    case "note_created":
+    case "note_updated":
+      return FileText;
+    case "task_deleted":
+    case "note_deleted":
+      return Trash2;
+    case "local_import_completed":
+      return RefreshCw;
+    default:
+      return CircleDot;
   }
 }
 
@@ -25,7 +60,7 @@ function getEventTimestampLabel(timestamp: string): string {
 }
 
 export function TimelineEventCard({ event }: TimelineEventCardProps) {
-  const Icon = event.type === "task-completed" ? CheckCircle2 : CheckSquare;
+  const Icon = getEventIcon(event);
 
   return (
     <Card className="p-4">
@@ -43,6 +78,11 @@ export function TimelineEventCard({ event }: TimelineEventCardProps) {
           <h3 className="mt-2 truncate text-sm font-semibold text-zinc-950 dark:text-white">
             {event.title}
           </h3>
+          {event.description ? (
+            <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+              {event.description}
+            </p>
+          ) : null}
         </div>
       </div>
     </Card>

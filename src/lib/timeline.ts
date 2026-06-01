@@ -1,15 +1,12 @@
-import type { Task } from "@/types";
+import type { Activity } from "@/lib/activities-api";
 
 export type TimelineEvent = {
   id: string;
-  type: "task-created" | "task-completed";
+  type: string;
   title: string;
+  description?: string;
   timestamp: string;
 };
-
-function getTimelineEventTimestamp(task: Task): string {
-  return task.createdAt;
-}
 
 function sortTimelineEventsNewestFirst(
   events: readonly TimelineEvent[],
@@ -26,17 +23,16 @@ function sortTimelineEventsNewestFirst(
   });
 }
 
-export function createTimelineEventsFromTasks(
-  tasks: readonly Task[],
+export function createTimelineEventsFromActivities(
+  activities: readonly Activity[],
 ): TimelineEvent[] {
-  const events: TimelineEvent[] = tasks
-    .filter((task) => task.status !== "done")
-    .map((task) => ({
-      id: `${task.id}-created`,
-      type: "task-created",
-      title: task.title,
-      timestamp: getTimelineEventTimestamp(task),
-    }));
+  const events = activities.map((activity) => ({
+    id: activity.id,
+    type: activity.type,
+    title: activity.title,
+    description: activity.description,
+    timestamp: activity.occurredAt,
+  }));
 
   return sortTimelineEventsNewestFirst(events);
 }
