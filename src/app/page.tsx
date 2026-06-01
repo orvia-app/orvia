@@ -4,14 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Brain,
   CalendarDays,
-  Car,
   CheckSquare,
+  CircleDot,
   FileText,
   Inbox,
-  Wallet,
-  Zap,
+  Search,
 } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
@@ -24,14 +22,12 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { getRecentActivityFeed } from "@/lib/activity/activity-feed";
 import type { ActivityItem } from "@/lib/activity/types";
-import { getStoredCars } from "@/lib/cars";
 import {
   getEntityTypeLabel,
   noteToEntity,
   quickCaptureToEntity,
   taskToEntity,
 } from "@/lib/entities/entity-utils";
-import { getTransactions } from "@/lib/finance";
 import {
   activitiesToMemoryCandidates,
   entitiesToMemoryCandidates,
@@ -57,8 +53,7 @@ type OverviewStats = {
   totalTasks: number;
   activeTasks: number;
   notesCount: number;
-  financeCount: number;
-  carsCount: number;
+  captureCount: number;
 };
 
 function computeOverview(): OverviewStats {
@@ -67,71 +62,56 @@ function computeOverview(): OverviewStats {
       totalTasks: 0,
       activeTasks: 0,
       notesCount: 0,
-      financeCount: 0,
-      carsCount: 0,
+      captureCount: 0,
     };
   }
   const taskList = getTasks();
   const notes = getStoredNotes();
-  const txs = getTransactions();
-  const cars = getStoredCars();
+  const captures = getQuickCaptures();
   return {
     totalTasks: taskList.length,
     activeTasks: taskList.filter((t) => t.status !== "done").length,
     notesCount: notes.length,
-    financeCount: txs.length,
-    carsCount: cars.length,
+    captureCount: captures.length,
   };
 }
 
 const cards = [
   {
     title: "Today",
-    description: "Daily focus, active work, and quick capture",
+    description: "Act on the priorities that matter now",
     icon: CalendarDays,
     href: "/today",
   },
   {
     title: "Inbox",
-    description: "Capture anything and review local structure",
+    description: "Capture scattered context before it disappears",
     icon: Inbox,
     href: "/inbox",
   },
   {
     title: "Tasks",
-    description: "Plan, prioritize, and keep work moving",
+    description: "Turn context into priorities and actions",
     icon: CheckSquare,
     href: "/tasks",
   },
   {
     title: "Notes",
-    description: "Knowledge, ideas, and context worth keeping",
+    description: "Organize useful context for later",
     icon: FileText,
     href: "/notes",
   },
   {
-    title: "AI Chat",
-    description: "Local preview of the future assistant layer",
-    icon: Brain,
-    href: "/ai-chat",
+    title: "Search",
+    description: "Find tasks, notes, captures, and timeline context",
+    icon: Search,
+    href: "/search",
   },
   {
-    title: "Finance",
-    description: "Income, expenses, and cashflow",
-    icon: Wallet,
-    href: "/finance",
-  },
-  {
-    title: "Cars",
-    description: "Maintenance, costs, and reminders",
-    icon: Car,
-    href: "/cars",
-  },
-  {
-    title: "Automation",
-    description: "Telegram bots and workflows",
-    icon: Zap,
-    href: "/automation",
+    title: "Timeline",
+    description: "Review what changed and how context is moving",
+    icon: CircleDot,
+    href: "/timeline",
   },
 ];
 
@@ -139,8 +119,7 @@ const initialOverview: OverviewStats = {
   totalTasks: 0,
   activeTasks: 0,
   notesCount: 0,
-  financeCount: 0,
-  carsCount: 0,
+  captureCount: 0,
 };
 
 const overviewCardClassName =
@@ -240,10 +219,10 @@ export default function Home() {
       <div className="px-4 py-6 sm:p-10">
         <div className="mx-auto max-w-5xl">
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
-            Dashboard
+            Daily focus
           </h1>
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">
-            Jump into your workspace modules.
+            Priorities, context, and recent signals for deciding what to do next.
           </p>
 
           {onboardingLoaded && showOnboarding ? (
@@ -331,8 +310,11 @@ export default function Home() {
           ) : null}
 
           <Section className="mt-10">
-            <SectionHeader title="System overview" />
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <SectionHeader
+              title="Priorities and context"
+              subtitle="A quick read on what needs attention."
+            />
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div className={overviewCardClassName}>
                 <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">Total tasks</p>
                 <p className="mt-1 text-2xl font-semibold text-zinc-950 dark:text-white">
@@ -361,18 +343,11 @@ export default function Home() {
                 </p>
               </div>
               <div className={overviewCardClassName}>
-                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">Finance txns</p>
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">Inbox captures</p>
                 <p className="mt-1 text-2xl font-semibold text-zinc-950 dark:text-white">
-                  {stats.financeCount}
+                  {stats.captureCount}
                 </p>
-                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-600">Transactions</p>
-              </div>
-              <div className={`${overviewCardClassName} sm:col-span-2 lg:col-span-1`}>
-                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">Cars</p>
-                <p className="mt-1 text-2xl font-semibold text-zinc-950 dark:text-white">
-                  {stats.carsCount}
-                </p>
-                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-600">Garage list</p>
+                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-600">Awaiting review</p>
               </div>
             </div>
           </Section>

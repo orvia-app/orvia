@@ -7,12 +7,12 @@ import {
   CalendarDays,
   Car,
   CheckSquare,
+  ChevronDown,
   CircleDot,
   FileText,
   House,
   Inbox,
   Menu,
-  MessageSquare,
   Monitor,
   Moon,
   Plus,
@@ -37,19 +37,34 @@ type NavItem = {
   icon: LucideIcon;
 };
 
-const navItems: NavItem[] = [
+const focusNavItems: NavItem[] = [
   { label: "Dashboard", href: "/", icon: House },
-  { label: "Search", href: "/search", icon: Search },
   { label: "Today", href: "/today", icon: CalendarDays },
-  { label: "Timeline", href: "/timeline", icon: CircleDot },
+];
+
+const workflowNavItems: NavItem[] = [
   { label: "Inbox", href: "/inbox", icon: Inbox },
   { label: "Tasks", href: "/tasks", icon: CheckSquare },
   { label: "Notes", href: "/notes", icon: FileText },
-  { label: "AI Chat", href: "/ai-chat", icon: MessageSquare },
-  { label: "Finance", href: "/finance", icon: Wallet },
-  { label: "Cars", href: "/cars", icon: Car },
-  { label: "Automation", href: "/automation", icon: Zap },
+  { label: "Search", href: "/search", icon: Search },
+  { label: "Timeline", href: "/timeline", icon: CircleDot },
+];
+
+const settingsNavItems: NavItem[] = [
   { label: "Settings", href: "/settings", icon: Settings },
+];
+
+const labsNavItems: NavItem[] = [
+  { label: "Cars", href: "/cars", icon: Car },
+  { label: "Finance", href: "/finance", icon: Wallet },
+  { label: "Automation", href: "/automation", icon: Zap },
+];
+
+const navItems: NavItem[] = [
+  ...focusNavItems,
+  ...workflowNavItems,
+  ...settingsNavItems,
+  ...labsNavItems,
 ];
 
 const themeOptions: { value: Theme; label: string; icon: LucideIcon }[] = [
@@ -93,6 +108,109 @@ function ThemeSwitcher() {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function NavSectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="px-3 pb-1 pt-3 text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-600">
+      {children}
+    </p>
+  );
+}
+
+function NavLinkItem({
+  active,
+  href,
+  icon: Icon,
+  label,
+  minHeight = false,
+  refCallback,
+}: NavItem & {
+  active: boolean;
+  minHeight?: boolean;
+  refCallback?: (element: HTMLAnchorElement | null) => void;
+}) {
+  return (
+    <Link
+      href={href}
+      ref={refCallback}
+      className={
+        active
+          ? [
+              "flex cursor-pointer items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-100 px-3 text-sm font-medium text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white",
+              minHeight ? "min-h-11" : "py-2",
+            ].join(" ")
+          : [
+              "flex cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 text-sm font-medium text-zinc-600 transition hover:border-zinc-200 hover:bg-zinc-50 hover:text-zinc-950 dark:text-zinc-400 dark:hover:border-zinc-800 dark:hover:bg-zinc-900/70 dark:hover:text-white",
+              minHeight ? "min-h-11" : "py-2",
+            ].join(" ")
+      }
+    >
+      <Icon className="h-4 w-4 shrink-0" aria-hidden />
+      <span>{label}</span>
+    </Link>
+  );
+}
+
+function LabsNavSection({
+  mobile = false,
+  open,
+  pathname,
+  setOpen,
+  setRef,
+}: {
+  mobile?: boolean;
+  open: boolean;
+  pathname: string;
+  setOpen: (open: boolean) => void;
+  setRef?: (href: string, element: HTMLAnchorElement | null) => void;
+}) {
+  return (
+    <div className={mobile ? "mt-3" : "mt-2"}>
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+        className={
+          mobile
+            ? "flex min-h-11 w-full cursor-pointer items-center justify-between rounded-xl px-3 text-left text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900/70 dark:hover:text-white"
+            : "flex w-full cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-950 dark:text-zinc-500 dark:hover:bg-zinc-900/70 dark:hover:text-white"
+        }
+      >
+        <span>
+          Labs
+          <span className="ml-2 align-middle text-[10px] font-normal text-zinc-400 dark:text-zinc-600">
+            Experimental
+          </span>
+        </span>
+        <ChevronDown
+          className={[
+            "h-4 w-4 shrink-0 transition",
+            open ? "rotate-180" : "",
+          ].join(" ")}
+          aria-hidden
+        />
+      </button>
+
+      {open ? (
+        <div className={mobile ? "mt-1 grid gap-1" : "mt-1 grid gap-1"}>
+          {labsNavItems.map(({ label, href, icon }) => (
+            <NavLinkItem
+              key={href}
+              active={isNavActive(pathname, href)}
+              href={href}
+              icon={icon}
+              label={label}
+              minHeight={mobile}
+              refCallback={
+                setRef ? (element) => setRef(href, element) : undefined
+              }
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -185,6 +303,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const navItemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [quickCaptureOpen, setQuickCaptureOpen] = useState(false);
+  const [desktopLabsOpen, setDesktopLabsOpen] = useState(false);
+  const [mobileLabsOpen, setMobileLabsOpen] = useState(false);
+  const labsActive = labsNavItems.some((item) => isNavActive(pathname, item.href));
+  const desktopLabsVisible = desktopLabsOpen || labsActive;
+  const mobileLabsVisible = mobileLabsOpen || labsActive;
 
   const openQuickCapture = useCallback((): void => {
     setMobileMenuOpen(false);
@@ -280,27 +403,55 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           className="app-scrollbar app-scrollbar-quiet mt-7 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-5 pb-4"
           aria-label="Main"
         >
-          {navItems.map(({ label, href, icon: Icon }) => {
-            const active = isNavActive(pathname, href);
+          {focusNavItems.map(({ label, href, icon }) => (
+            <NavLinkItem
+              key={href}
+              active={isNavActive(pathname, href)}
+              href={href}
+              icon={icon}
+              label={label}
+              refCallback={(element) => {
+                navItemRefs.current[href] = element;
+              }}
+            />
+          ))}
 
-            return (
-              <Link
-                key={href}
-                href={href}
-                ref={(element) => {
-                  navItemRefs.current[href] = element;
-                }}
-                className={
-                  active
-                    ? "flex cursor-pointer items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
-                    : "flex cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm font-medium text-zinc-600 transition hover:border-zinc-200 hover:bg-zinc-50 hover:text-zinc-950 dark:text-zinc-400 dark:hover:border-zinc-800 dark:hover:bg-zinc-900/70 dark:hover:text-white"
-                }
-              >
-                <Icon className="h-4 w-4 shrink-0" aria-hidden />
-                <span>{label}</span>
-              </Link>
-            );
-          })}
+          <NavSectionLabel>Workflow</NavSectionLabel>
+          {workflowNavItems.map(({ label, href, icon }) => (
+            <NavLinkItem
+              key={href}
+              active={isNavActive(pathname, href)}
+              href={href}
+              icon={icon}
+              label={label}
+              refCallback={(element) => {
+                navItemRefs.current[href] = element;
+              }}
+            />
+          ))}
+
+          <NavSectionLabel>System</NavSectionLabel>
+          {settingsNavItems.map(({ label, href, icon }) => (
+            <NavLinkItem
+              key={href}
+              active={isNavActive(pathname, href)}
+              href={href}
+              icon={icon}
+              label={label}
+              refCallback={(element) => {
+                navItemRefs.current[href] = element;
+              }}
+            />
+          ))}
+
+          <LabsNavSection
+            open={desktopLabsVisible}
+            pathname={pathname}
+            setOpen={setDesktopLabsOpen}
+            setRef={(href, element) => {
+              navItemRefs.current[href] = element;
+            }}
+          />
         </nav>
 
         <div className="shrink-0 border-t border-zinc-200/80 bg-white/95 px-5 pb-5 pt-4 dark:border-zinc-800/80 dark:bg-zinc-950">
@@ -384,24 +535,47 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
 
               <nav className="mt-6 grid gap-1" aria-label="Mobile main">
-                {navItems.map(({ label, href, icon: Icon }) => {
-                  const active = isNavActive(pathname, href);
+                {focusNavItems.map(({ label, href, icon }) => (
+                  <NavLinkItem
+                    key={href}
+                    active={isNavActive(pathname, href)}
+                    href={href}
+                    icon={icon}
+                    label={label}
+                    minHeight
+                  />
+                ))}
 
-                  return (
-                    <Link
-                      key={href}
-                      href={href}
-                      className={
-                        active
-                          ? "flex min-h-11 items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-100 px-3 text-sm font-medium text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
-                          : "flex min-h-11 items-center gap-3 rounded-xl border border-transparent px-3 text-sm font-medium text-zinc-600 hover:border-zinc-200 hover:bg-zinc-50 hover:text-zinc-950 dark:text-zinc-400 dark:hover:border-zinc-800 dark:hover:bg-zinc-900/70 dark:hover:text-white"
-                      }
-                    >
-                      <Icon className="h-4 w-4 shrink-0" aria-hidden />
-                      <span>{label}</span>
-                    </Link>
-                  );
-                })}
+                <NavSectionLabel>Workflow</NavSectionLabel>
+                {workflowNavItems.map(({ label, href, icon }) => (
+                  <NavLinkItem
+                    key={href}
+                    active={isNavActive(pathname, href)}
+                    href={href}
+                    icon={icon}
+                    label={label}
+                    minHeight
+                  />
+                ))}
+
+                <NavSectionLabel>System</NavSectionLabel>
+                {settingsNavItems.map(({ label, href, icon }) => (
+                  <NavLinkItem
+                    key={href}
+                    active={isNavActive(pathname, href)}
+                    href={href}
+                    icon={icon}
+                    label={label}
+                    minHeight
+                  />
+                ))}
+
+                <LabsNavSection
+                  mobile
+                  open={mobileLabsVisible}
+                  pathname={pathname}
+                  setOpen={setMobileLabsOpen}
+                />
               </nav>
 
               <div className="mt-6 border-t border-zinc-200/80 pt-4 dark:border-zinc-800/80">
