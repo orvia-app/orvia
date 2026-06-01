@@ -1,4 +1,11 @@
-import { NOTE_TYPES, type Note, type NoteType } from "@/lib/notes";
+import {
+  createNote,
+  getNotes,
+  NOTE_TYPES,
+  saveNotes,
+  type Note,
+  type NoteType,
+} from "@/lib/notes";
 
 type ApiNoteRow = {
   id?: unknown;
@@ -30,6 +37,34 @@ export type CreateNoteApiInput = {
 export type NotesApiRequestOptions = {
   accessToken?: string;
 };
+
+export type CreateNoteFromPrimarySourceResult = {
+  note: Note;
+  source: "api" | "local";
+};
+
+export function mergeApiNotesWithLocalNotes(
+  apiNotes: Note[],
+  localNotes: Note[],
+): Note[] {
+  const apiNoteIds = new Set(apiNotes.map((note) => note.id));
+  const localOnlyNotes = localNotes.filter((note) => !apiNoteIds.has(note.id));
+
+  return [...apiNotes, ...localOnlyNotes];
+}
+
+function createLocalFallbackNote(input: CreateNoteApiInput): Note {
+  const note: Note = {
+    id: crypto.randomUUID(),
+    title: input.title,
+    content: input.content?.trim() ?? "",
+    type: input.type ?? "note",
+  };
+
+  createNote(note);
+
+  return note;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -149,6 +184,25 @@ export async function fetchNotesViaApi(
   return notes;
 }
 
+export async function loadNotesFromPrimarySource(
+  options: NotesApiRequestOptions = {},
+): Promise<Note[]> {
+  if (!options.accessToken?.trim()) {
+    return getNotes();
+  }
+
+  try {
+    const apiNotes = await fetchNotesViaApi(options);
+    const mergedNotes = mergeApiNotesWithLocalNotes(apiNotes, getNotes());
+
+    saveNotes(mergedNotes);
+
+    return mergedNotes;
+  } catch {
+    return getNotes();
+  }
+}
+
 export async function createNoteViaApi(
   input: CreateNoteApiInput,
   options: NotesApiRequestOptions = {},
@@ -181,4 +235,28 @@ export async function createNoteViaApi(
   }
 
   return note;
+}
+
+export async function createNoteFromPrimarySource(
+  input: CreateNoteApiInput,
+  options: NotesApiRequestOptions = {},
+): Promise<CreateNoteFromPrimarySourceResult> {
+  if (!options.accessToken?.trim()) {
+    const note = createLocalFallbackNote(input);
+
+    return { note, source: "local" };
+  }
+
+  try {
+    const note = await createNoteViaApi(input, options);
+    const nextNotes = mergeApiNotesWithLocalNotes([note], getNotes());
+
+    saveNotes(nextNotes);
+
+    return { note, source: "api" };
+  } catch {
+    const note = createLocalFallbackNote(input);
+
+    return { note, source: "local" };
+  }
 }

@@ -4,15 +4,18 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { X } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
+import { useAuthSession } from "@/components/auth/useAuthSession";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
-  getNotes,
   NOTE_TYPES,
-  saveNotes,
   type Note,
   type NoteType,
 } from "@/lib/notes";
+import {
+  createNoteFromPrimarySource,
+  loadNotesFromPrimarySource,
+} from "@/lib/notes-api";
 import {
   getEntityContext,
   getLocalContextEntities,
@@ -65,6 +68,7 @@ function getTypeBadgeLabel(type: NoteType): string {
 }
 
 export default function NotesPage() {
+  const { session } = useAuthSession();
   const [notes, setNotes] = useState<Note[]>([]);
   const [noteContextById, setNoteContextById] = useState<NoteContextById>({});
   const [typeFilter, setTypeFilter] = useState<FilterValue>("all");
@@ -72,21 +76,38 @@ export default function NotesPage() {
   const [form, setForm] = useState<NoteFormState>(EMPTY_FORM);
 
   useEffect(() => {
-    const nextNotes = getNotes();
-    const entities = getLocalContextEntities();
+    let active = true;
 
-    setNotes(nextNotes);
-    setNoteContextById(
-      Object.fromEntries(
-        entities
-          .filter((entity) => entity.type === "note")
-          .map((entity) => [
-            entity.sourceId,
-            getEntityContext(entity, entities),
-          ]),
-      ),
-    );
-  }, []);
+    async function loadNotes(): Promise<void> {
+      const nextNotes = await loadNotesFromPrimarySource({
+        accessToken: session?.access_token,
+      });
+
+      if (!active) {
+        return;
+      }
+
+      const entities = getLocalContextEntities();
+
+      setNotes(nextNotes);
+      setNoteContextById(
+        Object.fromEntries(
+          entities
+            .filter((entity) => entity.type === "note")
+            .map((entity) => [
+              entity.sourceId,
+              getEntityContext(entity, entities),
+            ]),
+        ),
+      );
+    }
+
+    void loadNotes();
+
+    return () => {
+      active = false;
+    };
+  }, [session?.access_token]);
 
   const filteredNotes = useMemo(() => {
     if (typeFilter === "all") {
@@ -105,7 +126,7 @@ export default function NotesPage() {
     setForm(EMPTY_FORM);
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
 
     const title = form.title.trim();
@@ -115,17 +136,21 @@ export default function NotesPage() {
       return;
     }
 
-    const newNote: Note = {
-      id: crypto.randomUUID(),
-      title,
-      content,
-      type: form.type,
-    };
+    const result = await createNoteFromPrimarySource(
+      {
+        title,
+        content,
+        type: form.type,
+      },
+      { accessToken: session?.access_token },
+    );
 
-    const nextNotes = [newNote, ...notes];
+    const nextNotes = [
+      result.note,
+      ...notes.filter((note) => note.id !== result.note.id),
+    ];
 
     setNotes(nextNotes);
-    saveNotes(nextNotes);
     const entities = getLocalContextEntities();
     setNoteContextById(
       Object.fromEntries(
