@@ -23,6 +23,11 @@ type CreateTaskApiResponse = {
   error?: unknown;
 };
 
+type DeleteTaskApiResponse = {
+  ok?: unknown;
+  error?: unknown;
+};
+
 type ListTasksApiResponse = {
   ok?: unknown;
   tasks?: unknown;
@@ -45,6 +50,8 @@ export type CreateTaskApiInput = {
   workspaceId: string;
   dueDate?: string;
 };
+
+export type UpdateTaskApiInput = Partial<CreateTaskApiInput>;
 
 export type TasksApiRequestOptions = {
   accessToken?: string;
@@ -132,9 +139,9 @@ function mapApiTaskToTask(
   };
 }
 
-function parseCreateTaskResponse(
+function parseTaskResponse(
   value: unknown,
-  input: CreateTaskApiInput,
+  fallback: TaskMappingFallback,
 ): Task | null {
   if (!isRecord(value)) {
     return null;
@@ -146,7 +153,17 @@ function parseCreateTaskResponse(
     return null;
   }
 
-  return mapApiTaskToTask(response.task, input);
+  return mapApiTaskToTask(response.task, fallback);
+}
+
+function parseDeleteTaskResponse(value: unknown): boolean {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  const response: DeleteTaskApiResponse = value;
+
+  return response.ok === true;
 }
 
 function parseListTasksResponse(value: unknown): Task[] | null {
@@ -251,11 +268,72 @@ export async function createTaskViaApi(
     throw new Error("Task create request failed.");
   }
 
-  const task = parseCreateTaskResponse(responseBody, input);
+  const task = parseTaskResponse(responseBody, input);
 
   if (!task) {
     throw new Error("Task create response shape was invalid.");
   }
 
   return task;
+}
+
+export async function updateTaskViaApi(
+  taskId: string,
+  input: UpdateTaskApiInput,
+  options: TasksApiRequestOptions = {},
+): Promise<Task> {
+  const response = await fetch(`/api/tasks/${encodeURIComponent(taskId)}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthorizationHeaders(options),
+    },
+    body: JSON.stringify(input),
+  });
+
+  let responseBody: unknown;
+
+  try {
+    responseBody = await response.json();
+  } catch {
+    throw new Error("Task update response was not valid JSON.");
+  }
+
+  if (!response.ok) {
+    throw new Error("Task update request failed.");
+  }
+
+  const task = parseTaskResponse(responseBody, DEFAULT_TASK_MAPPING_FALLBACK);
+
+  if (!task) {
+    throw new Error("Task update response shape was invalid.");
+  }
+
+  return task;
+}
+
+export async function deleteTaskViaApi(
+  taskId: string,
+  options: TasksApiRequestOptions = {},
+): Promise<void> {
+  const response = await fetch(`/api/tasks/${encodeURIComponent(taskId)}`, {
+    method: "DELETE",
+    headers: getAuthorizationHeaders(options),
+  });
+
+  let responseBody: unknown;
+
+  try {
+    responseBody = await response.json();
+  } catch {
+    throw new Error("Task delete response was not valid JSON.");
+  }
+
+  if (!response.ok) {
+    throw new Error("Task delete request failed.");
+  }
+
+  if (!parseDeleteTaskResponse(responseBody)) {
+    throw new Error("Task delete response shape was invalid.");
+  }
 }

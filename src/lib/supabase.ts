@@ -11,6 +11,7 @@ export type SupabaseTaskRow = {
   workspace_id: string | null;
   due_date: string | null;
   created_at: string;
+  deleted_at: string | null;
   [key: string]: unknown;
 };
 
@@ -22,6 +23,7 @@ export type SupabaseTaskInsert = {
   priority?: SupabaseTaskRow["priority"];
   workspace_id?: string | null;
   due_date?: string | null;
+  deleted_at?: string | null;
 };
 
 export type SupabaseNoteRow = {
@@ -47,6 +49,7 @@ export type SupabaseNoteInsert = {
   tags?: string[];
   source?: SupabaseNoteRow["source"];
   metadata?: Record<string, unknown>;
+  deleted_at?: string | null;
 };
 
 export type SupabaseDatabase = {

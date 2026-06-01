@@ -6,7 +6,7 @@ import {
   type SupabaseNoteRow,
 } from "@/lib/supabase";
 import { NOTE_TYPES, type NoteType } from "@/lib/notes";
-import { createSupabaseServerAuthClient } from "@/server/supabase/auth";
+import { authenticateApiRequest } from "@/server/api/auth";
 
 const NOTE_TITLE_MAX_LENGTH = 240;
 const NOTE_CONTENT_MAX_LENGTH = 20000;
@@ -21,60 +21,12 @@ type CreateNoteBody = {
   metadata?: unknown;
 };
 
-type AuthenticatedUser =
-  | { ok: true; userId: string }
-  | { ok: false; response: NextResponse };
-
 type ParsedNotePayload =
   | { ok: true; payload: SupabaseNoteInsert }
   | { ok: false; error: string };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function parseBearerToken(authorizationHeader: string | null): string | null {
-  if (!authorizationHeader) {
-    return null;
-  }
-
-  const [scheme, token, ...extraParts] = authorizationHeader.trim().split(/\s+/);
-
-  if (scheme?.toLowerCase() !== "bearer" || !token || extraParts.length > 0) {
-    return null;
-  }
-
-  return token;
-}
-
-async function authenticateRequest(request: Request): Promise<AuthenticatedUser> {
-  const accessToken = parseBearerToken(request.headers.get("authorization"));
-
-  if (!accessToken) {
-    return {
-      ok: false,
-      response: NextResponse.json(
-        { ok: false, error: "Authentication is required." },
-        { status: 401 },
-      ),
-    };
-  }
-
-  const supabase = createSupabaseServerAuthClient({ accessToken });
-  const { data, error } = await supabase.auth.getUser();
-  const userId = data.user?.id;
-
-  if (error || !userId) {
-    return {
-      ok: false,
-      response: NextResponse.json(
-        { ok: false, error: "Authentication is invalid." },
-        { status: 401 },
-      ),
-    };
-  }
-
-  return { ok: true, userId };
 }
 
 function parseNoteTitle(body: CreateNoteBody): string | null {
@@ -220,7 +172,7 @@ function parseCreateNotePayload(body: CreateNoteBody): ParsedNotePayload {
 }
 
 export async function GET(request: Request) {
-  const auth = await authenticateRequest(request);
+  const auth = await authenticateApiRequest(request);
 
   if (!auth.ok) {
     return auth.response;
@@ -231,6 +183,7 @@ export async function GET(request: Request) {
     .from("notes")
     .select("*")
     .eq("user_id", auth.userId)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -246,7 +199,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await authenticateRequest(request);
+  const auth = await authenticateApiRequest(request);
 
   if (!auth.ok) {
     return auth.response;
