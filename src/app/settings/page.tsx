@@ -8,6 +8,7 @@ import { useAuthSession } from "@/components/auth/useAuthSession";
 import { useTheme, type Theme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Section } from "@/components/ui/Section";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import {
@@ -71,6 +72,10 @@ export default function SettingsPage() {
   const [importing, setImporting] = useState(false);
   const [importSummary, setImportSummary] =
     useState<LocalCloudImportSummary | null>(null);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resettingLocalData, setResettingLocalData] = useState(false);
+  const [onboardingDialogOpen, setOnboardingDialogOpen] = useState(false);
+  const [resettingOnboarding, setResettingOnboarding] = useState(false);
 
   const importDisabled = useMemo(() => {
     if (authLoading || planLoading || importing || !isAuthenticated) {
@@ -127,27 +132,21 @@ export default function SettingsPage() {
   }
 
   function resetData() {
-    const confirmed = window.confirm(
-      "Reset all local Orvia data on this browser? This cannot be undone.",
-    );
+    setResetDialogOpen(true);
+  }
 
-    if (!confirmed) {
-      return;
-    }
-
+  function confirmResetData() {
+    setResettingLocalData(true);
     resetLocalPersonalOsData();
     window.location.reload();
   }
 
   function resetOnboardingState() {
-    const confirmed = window.confirm(
-      "Show the onboarding panel on the Dashboard again?",
-    );
+    setOnboardingDialogOpen(true);
+  }
 
-    if (!confirmed) {
-      return;
-    }
-
+  function confirmResetOnboarding() {
+    setResettingOnboarding(true);
     resetOnboarding();
     window.location.href = "/";
   }
@@ -378,6 +377,38 @@ export default function SettingsPage() {
           </ul>
         </div>
       </div>
+
+      <ConfirmDialog
+        cancelLabel="Cancel"
+        confirmLabel="Reset local data"
+        confirming={resettingLocalData}
+        description="This clears Orvia data stored in this browser only. Cloud data remains safe. Local-only unsynced data will be lost."
+        onCancel={() => {
+          if (!resettingLocalData) {
+            setResetDialogOpen(false);
+          }
+        }}
+        onConfirm={confirmResetData}
+        open={resetDialogOpen}
+        title="Reset local browser data?"
+        tone="danger"
+      />
+
+      <ConfirmDialog
+        cancelLabel="Cancel"
+        confirmLabel="Reset onboarding"
+        confirming={resettingOnboarding}
+        description="This shows the Dashboard onboarding panel again on this browser. Your tasks, notes, and cloud data are not changed."
+        onCancel={() => {
+          if (!resettingOnboarding) {
+            setOnboardingDialogOpen(false);
+          }
+        }}
+        onConfirm={confirmResetOnboarding}
+        open={onboardingDialogOpen}
+        title="Show onboarding again?"
+        tone="default"
+      />
     </AppShell>
   );
 }

@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/Badge";
 import type { BadgeVariant } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
   saveTasks,
@@ -136,6 +137,7 @@ function TasksContent() {
     () => new Set(),
   );
   const [isCreatingTask, setIsCreatingTask] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -351,14 +353,14 @@ function TasksContent() {
     }
   }
 
-  async function deleteTask(task: Task): Promise<void> {
-    if (pendingTaskIds.has(task.id)) {
+  async function confirmDeleteTask(): Promise<void> {
+    const task = taskToDelete;
+
+    if (!task) {
       return;
     }
 
-    const confirmed = window.confirm(`Delete "${task.title}"?`);
-
-    if (!confirmed) {
+    if (pendingTaskIds.has(task.id)) {
       return;
     }
 
@@ -384,6 +386,7 @@ function TasksContent() {
       setTaskActionError("Cloud delete failed. Removed this task locally.");
     } finally {
       setTaskPending(task.id, false);
+      setTaskToDelete(null);
     }
   }
 
@@ -515,33 +518,42 @@ function TasksContent() {
                         {statusLabel(task.status)}
                       </Badge>
 
-                      <label className="sr-only" htmlFor={`task-status-${task.id}`}>
-                        Update task status
-                      </label>
-                      <select
+                      <span
+                        className="sr-only"
                         id={`task-status-${task.id}`}
-                        value={task.status}
-                        disabled={taskPending}
-                        onChange={(event) => {
-                          void updateTaskStatus(
-                            task,
-                            event.target.value as TaskStatus,
-                          );
-                        }}
-                        className="w-full cursor-pointer rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 transition hover:border-zinc-300 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:border-zinc-700 sm:w-36"
+                      >
+                        Update task status
+                      </span>
+                      <div
+                        aria-labelledby={`task-status-${task.id}`}
+                        className="grid w-full grid-cols-3 rounded-xl bg-zinc-100 p-1 ring-1 ring-inset ring-zinc-200/70 dark:bg-zinc-900/70 dark:ring-zinc-800/80 sm:w-64"
+                        role="group"
                       >
                         {TASK_STATUSES.map((status) => (
-                          <option key={status} value={status}>
+                          <button
+                            key={status}
+                            aria-pressed={task.status === status}
+                            className={
+                              task.status === status
+                                ? "cursor-pointer rounded-lg bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-950 shadow-sm shadow-zinc-950/[0.04] transition dark:bg-zinc-800 dark:text-white dark:shadow-none"
+                                : "cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-white/70 hover:text-zinc-950 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800/70 dark:hover:text-white"
+                            }
+                            disabled={taskPending}
+                            onClick={() => {
+                              void updateTaskStatus(task, status);
+                            }}
+                            type="button"
+                          >
                             {statusLabel(status)}
-                          </option>
+                          </button>
                         ))}
-                      </select>
+                      </div>
 
                       <Button
-                        className="w-full px-3 py-2 sm:w-auto"
+                        className="w-full px-3 py-2 text-red-700 hover:bg-red-50 hover:text-red-800 dark:text-red-300 dark:hover:bg-red-500/10 dark:hover:text-red-200 sm:w-auto"
                         disabled={taskPending}
                         onClick={() => {
-                          void deleteTask(task);
+                          setTaskToDelete(task);
                         }}
                         variant="ghost"
                       >
@@ -749,6 +761,26 @@ function TasksContent() {
           </Card>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        cancelLabel="Cancel"
+        confirmLabel="Delete task"
+        confirming={taskToDelete ? pendingTaskIds.has(taskToDelete.id) : false}
+        description={
+          taskToDelete
+            ? `This removes "${taskToDelete.title}" from your active task list.`
+            : "This task will be removed from your active task list."
+        }
+        onCancel={() => {
+          if (!taskToDelete || !pendingTaskIds.has(taskToDelete.id)) {
+            setTaskToDelete(null);
+          }
+        }}
+        onConfirm={confirmDeleteTask}
+        open={taskToDelete !== null}
+        title="Delete task?"
+        tone="danger"
+      />
     </AppShell>
   );
 }
