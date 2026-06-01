@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
+import { useAuthSession } from "@/components/auth/useAuthSession";
 import { useTheme, type Theme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -14,6 +16,12 @@ import {
   serializePersonalOsExport,
 } from "@/lib/data-export/export-data";
 import { resetLocalPersonalOsData } from "@/lib/data-export/reset-data";
+import {
+  buildLocalCloudImportPlan,
+  importLocalItemsToCloud,
+  type LocalCloudImportPlan,
+  type LocalCloudImportSummary,
+} from "@/lib/local-cloud-sync";
 import { resetOnboarding } from "@/lib/onboarding";
 
 const sections = [
@@ -54,6 +62,53 @@ const appearanceOptions: {
 
 export default function SettingsPage() {
   const { hydrated, theme, resolvedTheme, setTheme } = useTheme();
+  const { isAuthenticated, loading: authLoading, session } = useAuthSession();
+  const accessToken = session?.access_token;
+  const [importPlan, setImportPlan] = useState<LocalCloudImportPlan | null>(
+    null,
+  );
+  const [planLoading, setPlanLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importSummary, setImportSummary] =
+    useState<LocalCloudImportSummary | null>(null);
+
+  const importDisabled = useMemo(() => {
+    if (authLoading || planLoading || importing || !isAuthenticated) {
+      return true;
+    }
+
+    return (
+      !importPlan ||
+      importPlan.status !== "ready" ||
+      importPlan.taskCount + importPlan.noteCount === 0
+    );
+  }, [authLoading, importing, importPlan, isAuthenticated, planLoading]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (authLoading) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setPlanLoading(true);
+    setImportSummary(null);
+
+    void buildLocalCloudImportPlan({ accessToken }).then((plan) => {
+      if (cancelled) {
+        return;
+      }
+
+      setImportPlan(plan);
+      setPlanLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, authLoading]);
 
   function exportData() {
     const dataExport = createPersonalOsExport();
@@ -95,6 +150,22 @@ export default function SettingsPage() {
 
     resetOnboarding();
     window.location.href = "/";
+  }
+
+  async function importLocalDataToCloud() {
+    if (!accessToken) {
+      return;
+    }
+
+    setImporting(true);
+    setImportSummary(null);
+
+    const summary = await importLocalItemsToCloud({ accessToken });
+    const nextPlan = await buildLocalCloudImportPlan({ accessToken });
+
+    setImportSummary(summary);
+    setImportPlan(nextPlan);
+    setImporting(false);
   }
 
   return (
@@ -215,6 +286,80 @@ export default function SettingsPage() {
                 >
                   Reset onboarding
                 </Button>
+              </div>
+            </Card>
+          </Section>
+
+          <Section className="mt-8">
+            <Card>
+              <SectionHeader
+                title="Local data sync"
+                subtitle="Import local-only tasks and notes into your signed-in cloud account."
+              />
+              <div className="mt-5 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
+                      One-time local import
+                    </h3>
+                    <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                      {authLoading
+                        ? "Checking sign-in status..."
+                        : isAuthenticated
+                        ? "Signed in. Local items can be imported without deleting browser data."
+                        : "Sign in to import local-only tasks and notes to cloud storage."}
+                    </p>
+                    <div className="mt-3 grid gap-2 text-sm text-zinc-700 dark:text-zinc-300 sm:grid-cols-2">
+                      <div className="rounded-lg bg-white px-3 py-2 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:ring-zinc-800">
+                        <span className="block text-xs text-zinc-500 dark:text-zinc-500">
+                          Task candidates
+                        </span>
+                        <span className="font-semibold">
+                          {planLoading || !importPlan
+                            ? "Loading"
+                            : importPlan.taskCount}
+                        </span>
+                      </div>
+                      <div className="rounded-lg bg-white px-3 py-2 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:ring-zinc-800">
+                        <span className="block text-xs text-zinc-500 dark:text-zinc-500">
+                          Note candidates
+                        </span>
+                        <span className="font-semibold">
+                          {planLoading || !importPlan
+                            ? "Loading"
+                            : importPlan.noteCount}
+                        </span>
+                      </div>
+                    </div>
+                    {importPlan?.status === "error" ? (
+                      <p className="mt-3 text-sm text-red-700 dark:text-red-300">
+                        {importPlan.error}
+                      </p>
+                    ) : null}
+                    {importSummary ? (
+                      <div className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                        Imported {importSummary.importedTasks} tasks and{" "}
+                        {importSummary.importedNotes} notes. Skipped{" "}
+                        {importSummary.skippedTasks} tasks and{" "}
+                        {importSummary.skippedNotes} notes.
+                        {importSummary.errors.length > 0 ? (
+                          <p className="mt-1 text-red-700 dark:text-red-300">
+                            {importSummary.errors.length} item
+                            {importSummary.errors.length === 1 ? "" : "s"} could
+                            not be imported.
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                  <Button
+                    className="w-full shrink-0 sm:w-auto"
+                    disabled={importDisabled}
+                    onClick={importLocalDataToCloud}
+                  >
+                    {importing ? "Importing..." : "Import local data to cloud"}
+                  </Button>
+                </div>
               </div>
             </Card>
           </Section>
