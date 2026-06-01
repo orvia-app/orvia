@@ -6,15 +6,20 @@ import { X } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { useAuthSession } from "@/components/auth/useAuthSession";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
   NOTE_TYPES,
+  saveNotes,
   type Note,
   type NoteType,
 } from "@/lib/notes";
 import {
   createNoteFromPrimarySource,
+  deleteNoteViaApi,
   loadNotesFromPrimarySource,
+  updateNoteViaApi,
 } from "@/lib/notes-api";
 import {
   getEntityContext,
@@ -69,18 +74,26 @@ function getTypeBadgeLabel(type: NoteType): string {
 
 export default function NotesPage() {
   const { session } = useAuthSession();
+  const accessToken = session?.access_token;
   const [notes, setNotes] = useState<Note[]>([]);
   const [noteContextById, setNoteContextById] = useState<NoteContextById>({});
   const [typeFilter, setTypeFilter] = useState<FilterValue>("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<NoteFormState>(EMPTY_FORM);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<NoteFormState>(EMPTY_FORM);
+  const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
+  const [pendingNoteIds, setPendingNoteIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [noteActionError, setNoteActionError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
 
     async function loadNotes(): Promise<void> {
       const nextNotes = await loadNotesFromPrimarySource({
-        accessToken: session?.access_token,
+        accessToken,
       });
 
       if (!active) {
@@ -107,7 +120,7 @@ export default function NotesPage() {
     return () => {
       active = false;
     };
-  }, [session?.access_token]);
+  }, [accessToken]);
 
   const filteredNotes = useMemo(() => {
     if (typeFilter === "all") {
@@ -126,6 +139,52 @@ export default function NotesPage() {
     setForm(EMPTY_FORM);
   }
 
+  function syncNotes(nextNotes: Note[]): void {
+    saveNotes(nextNotes);
+    setNotes(nextNotes);
+
+    const entities = getLocalContextEntities();
+    setNoteContextById(
+      Object.fromEntries(
+        entities
+          .filter((entity) => entity.type === "note")
+          .map((entity) => [
+            entity.sourceId,
+            getEntityContext(entity, entities),
+          ]),
+      ),
+    );
+  }
+
+  function setNotePending(noteId: string, pending: boolean): void {
+    setPendingNoteIds((currentIds) => {
+      const nextIds = new Set(currentIds);
+
+      if (pending) {
+        nextIds.add(noteId);
+      } else {
+        nextIds.delete(noteId);
+      }
+
+      return nextIds;
+    });
+  }
+
+  function startEditingNote(note: Note): void {
+    setNoteActionError(null);
+    setEditingNoteId(note.id);
+    setEditForm({
+      title: note.title,
+      content: note.content,
+      type: note.type,
+    });
+  }
+
+  function cancelEditingNote(): void {
+    setEditingNoteId(null);
+    setEditForm(EMPTY_FORM);
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
 
@@ -142,27 +201,100 @@ export default function NotesPage() {
         content,
         type: form.type,
       },
-      { accessToken: session?.access_token },
+      { accessToken },
     );
 
-    const nextNotes = [
+    syncNotes([
       result.note,
       ...notes.filter((note) => note.id !== result.note.id),
-    ];
-
-    setNotes(nextNotes);
-    const entities = getLocalContextEntities();
-    setNoteContextById(
-      Object.fromEntries(
-        entities
-          .filter((entity) => entity.type === "note")
-          .map((entity) => [
-            entity.sourceId,
-            getEntityContext(entity, entities),
-          ]),
-      ),
-    );
+    ]);
     closeModal();
+  }
+
+  async function saveNoteEdits(note: Note): Promise<void> {
+    if (pendingNoteIds.has(note.id)) {
+      return;
+    }
+
+    const title = editForm.title.trim();
+    const content = editForm.content.trim();
+
+    if (!title || !content) {
+      return;
+    }
+
+    setNoteActionError(null);
+    setNotePending(note.id, true);
+
+    try {
+      const updatedNote = accessToken
+        ? await updateNoteViaApi(
+            note.id,
+            {
+              title,
+              content,
+              type: editForm.type,
+            },
+            { accessToken },
+          )
+        : {
+            ...note,
+            title,
+            content,
+            type: editForm.type,
+          };
+
+      const nextNotes = notes.map((currentNote) =>
+        currentNote.id === note.id ? updatedNote : currentNote,
+      );
+
+      syncNotes(nextNotes);
+      cancelEditingNote();
+    } catch {
+      const fallbackNote: Note = {
+        ...note,
+        title,
+        content,
+        type: editForm.type,
+      };
+      const nextNotes = notes.map((currentNote) =>
+        currentNote.id === note.id ? fallbackNote : currentNote,
+      );
+
+      syncNotes(nextNotes);
+      cancelEditingNote();
+      setNoteActionError("Cloud update failed. Saved this change locally.");
+    } finally {
+      setNotePending(note.id, false);
+    }
+  }
+
+  async function confirmDeleteNote(): Promise<void> {
+    const note = noteToDelete;
+
+    if (!note || pendingNoteIds.has(note.id)) {
+      return;
+    }
+
+    setNoteActionError(null);
+    setNotePending(note.id, true);
+
+    try {
+      if (accessToken) {
+        await deleteNoteViaApi(note.id, { accessToken });
+      }
+
+      syncNotes(notes.filter((currentNote) => currentNote.id !== note.id));
+    } catch {
+      syncNotes(notes.filter((currentNote) => currentNote.id !== note.id));
+      setNoteActionError("Cloud delete failed. Removed this note locally.");
+    } finally {
+      setNotePending(note.id, false);
+      setNoteToDelete(null);
+      if (editingNoteId === note.id) {
+        cancelEditingNote();
+      }
+    }
   }
 
   return (
@@ -211,65 +343,197 @@ export default function NotesPage() {
           </div>
 
           <div className="mt-8 grid gap-4 md:grid-cols-2">
+            {noteActionError ? (
+              <p
+                className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200 md:col-span-2"
+                role="status"
+              >
+                {noteActionError}
+              </p>
+            ) : null}
+
             {filteredNotes.map((note) => {
               const context = noteContextById[note.id];
+              const editing = editingNoteId === note.id;
+              const notePending = pendingNoteIds.has(note.id);
 
               return (
                 <article
                   key={note.id}
                   className="rounded-2xl bg-white p-5 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 transition hover:bg-zinc-50/70 hover:ring-zinc-300 dark:bg-zinc-950 dark:shadow-none dark:ring-zinc-800/70 dark:hover:bg-zinc-900/70 dark:hover:ring-zinc-700 sm:p-6"
                 >
-                <div className="flex items-start justify-between gap-4">
-                  <h2 className="text-lg font-semibold text-zinc-950 dark:text-white sm:text-xl">
-                    {note.title}
-                  </h2>
-
-                  <Badge className="shrink-0">
-                    {getTypeBadgeLabel(note.type)}
-                  </Badge>
-                </div>
-                {context ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {context.labels.slice(0, 2).map((label) => (
-                      <span
-                        key={label}
-                        className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600 ring-1 ring-zinc-200/80 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800"
-                      >
-                        {label}
-                      </span>
-                    ))}
-                    {context.relatedCount > 0 ? (
-                      <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-500 dark:bg-zinc-900/70 dark:text-zinc-400">
-                        Connected context
-                      </span>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-zinc-600 dark:text-zinc-400 sm:text-base">
-                  {note.content}
-                </p>
-                {context && context.relatedItems.length > 0 ? (
-                  <div className="mt-4 rounded-xl bg-zinc-100/60 px-3 py-2.5 ring-1 ring-inset ring-zinc-200/60 dark:bg-zinc-900/35 dark:ring-zinc-800/70">
-                    <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
-                      Connected to
-                    </p>
-                    <div className="mt-2 space-y-1.5">
-                      {context.relatedItems.slice(0, 2).map((item) => (
-                        <p
-                          key={item.entity.id}
-                          className="truncate text-sm text-zinc-700 dark:text-zinc-300"
+                  {editing ? (
+                    <form
+                      className="space-y-4"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        void saveNoteEdits(note);
+                      }}
+                    >
+                      <div>
+                        <label
+                          className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                          htmlFor={`edit-note-title-${note.id}`}
                         >
-                          {item.entity.title}
-                          <span className="text-zinc-400 dark:text-zinc-600">
-                            {" "}
-                            · {getRelatedContextSubtitle(item)}
-                          </span>
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
+                          Title <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                          disabled={notePending}
+                          id={`edit-note-title-${note.id}`}
+                          onChange={(event) =>
+                            setEditForm((currentForm) => ({
+                              ...currentForm,
+                              title: event.target.value,
+                            }))
+                          }
+                          required
+                          value={editForm.title}
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                          htmlFor={`edit-note-content-${note.id}`}
+                        >
+                          Content <span className="text-red-400">*</span>
+                        </label>
+                        <textarea
+                          className="mt-1.5 w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                          disabled={notePending}
+                          id={`edit-note-content-${note.id}`}
+                          onChange={(event) =>
+                            setEditForm((currentForm) => ({
+                              ...currentForm,
+                              content: event.target.value,
+                            }))
+                          }
+                          required
+                          rows={5}
+                          value={editForm.content}
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                          htmlFor={`edit-note-type-${note.id}`}
+                        >
+                          Type
+                        </label>
+                        <select
+                          className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                          disabled={notePending}
+                          id={`edit-note-type-${note.id}`}
+                          onChange={(event) =>
+                            setEditForm((currentForm) => ({
+                              ...currentForm,
+                              type: event.target.value as NoteType,
+                            }))
+                          }
+                          value={editForm.type}
+                        >
+                          {NOTE_TYPES.map((type) => (
+                            <option key={type} value={type}>
+                              {getTypeBadgeLabel(type)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
+                        <Button
+                          className="w-full sm:w-auto"
+                          disabled={notePending}
+                          onClick={cancelEditingNote}
+                          variant="secondary"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          className="w-full sm:w-auto"
+                          disabled={notePending}
+                          type="submit"
+                        >
+                          {notePending ? "Saving..." : "Save changes"}
+                        </Button>
+                      </div>
+                    </form>
+                  ) : (
+                    <>
+                      <div className="flex items-start justify-between gap-4">
+                        <h2 className="text-lg font-semibold text-zinc-950 dark:text-white sm:text-xl">
+                          {note.title}
+                        </h2>
+
+                        <Badge className="shrink-0">
+                          {getTypeBadgeLabel(note.type)}
+                        </Badge>
+                      </div>
+                      {context ? (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {context.labels.slice(0, 2).map((label) => (
+                            <span
+                              key={label}
+                              className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600 ring-1 ring-zinc-200/80 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800"
+                            >
+                              {label}
+                            </span>
+                          ))}
+                          {context.relatedCount > 0 ? (
+                            <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-500 dark:bg-zinc-900/70 dark:text-zinc-400">
+                              Connected context
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : null}
+
+                      <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-zinc-600 dark:text-zinc-400 sm:text-base">
+                        {note.content}
+                      </p>
+                      {context && context.relatedItems.length > 0 ? (
+                        <div className="mt-4 rounded-xl bg-zinc-100/60 px-3 py-2.5 ring-1 ring-inset ring-zinc-200/60 dark:bg-zinc-900/35 dark:ring-zinc-800/70">
+                          <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
+                            Connected to
+                          </p>
+                          <div className="mt-2 space-y-1.5">
+                            {context.relatedItems.slice(0, 2).map((item) => (
+                              <p
+                                key={item.entity.id}
+                                className="truncate text-sm text-zinc-700 dark:text-zinc-300"
+                              >
+                                {item.entity.title}
+                                <span className="text-zinc-400 dark:text-zinc-600">
+                                  {" "}
+                                  · {getRelatedContextSubtitle(item)}
+                                </span>
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      <div className="mt-5 flex flex-col gap-2 border-t border-zinc-200/70 pt-4 dark:border-zinc-800/70 sm:flex-row sm:justify-end">
+                        <Button
+                          className="w-full px-3 py-2 sm:w-auto"
+                          disabled={notePending}
+                          onClick={() => startEditingNote(note)}
+                          variant="secondary"
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          className="w-full px-3 py-2 text-red-700 hover:bg-red-50 hover:text-red-800 dark:text-red-300 dark:hover:bg-red-500/10 dark:hover:text-red-200 sm:w-auto"
+                          disabled={notePending}
+                          onClick={() => setNoteToDelete(note)}
+                          variant="ghost"
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </article>
               );
             })}
@@ -416,6 +680,26 @@ export default function NotesPage() {
           </div>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        cancelLabel="Cancel"
+        confirmLabel="Delete note"
+        confirming={noteToDelete ? pendingNoteIds.has(noteToDelete.id) : false}
+        description={
+          noteToDelete
+            ? `This removes "${noteToDelete.title}" from your notes.`
+            : "This note will be removed from your notes."
+        }
+        onCancel={() => {
+          if (!noteToDelete || !pendingNoteIds.has(noteToDelete.id)) {
+            setNoteToDelete(null);
+          }
+        }}
+        onConfirm={confirmDeleteNote}
+        open={noteToDelete !== null}
+        title="Delete note?"
+        tone="danger"
+      />
     </AppShell>
   );
 }
