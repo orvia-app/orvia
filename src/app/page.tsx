@@ -1,18 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
-  CalendarDays,
-  CheckSquare,
-  CircleDot,
-  FileText,
+  ArrowRight,
+  CheckCircle2,
+  Clock,
   Inbox,
+  Plus,
   Search,
+  TriangleAlert,
 } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
+import { useAuthSession } from "@/components/auth/useAuthSession";
+import { QuickCapture } from "@/components/quick-capture/QuickCapture";
+import { TimelineEventCard } from "@/components/timeline/TimelineEventCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -20,210 +23,321 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { getRecentActivityFeed } from "@/lib/activity/activity-feed";
-import type { ActivityItem } from "@/lib/activity/types";
-import {
-  getEntityTypeLabel,
-  noteToEntity,
-  quickCaptureToEntity,
-  taskToEntity,
-} from "@/lib/entities/entity-utils";
-import {
-  activitiesToMemoryCandidates,
-  entitiesToMemoryCandidates,
-  getMemoryImportanceLabel,
-  getMemorySourceTypeLabel,
-} from "@/lib/memory/memory-utils";
-import {
-  getTopRankedMemoryCandidates,
-  type RankedMemoryCandidate,
-} from "@/lib/memory/memory-ranking";
-import {
-  getEntityContextUrl,
-  getLocalActiveContext,
-  type EntityContext,
-} from "@/lib/memory/context";
-import type { MemoryCandidate } from "@/lib/memory/types";
-import { getStoredNotes } from "@/lib/notes";
+import { fetchActivitiesViaApi } from "@/lib/activities-api";
 import { completeOnboarding, hasCompletedOnboarding } from "@/lib/onboarding";
 import { getQuickCaptures } from "@/lib/quick-captures";
 import { getTasks } from "@/lib/tasks";
+import { loadTasksFromPrimarySource } from "@/lib/tasks-api";
+import {
+  createTimelineEventsFromActivities,
+  type TimelineEvent,
+} from "@/lib/timeline";
+import type { Task, TaskPriority } from "@/types";
 
-type OverviewStats = {
-  totalTasks: number;
-  activeTasks: number;
-  notesCount: number;
-  captureCount: number;
+type FocusBucket = {
+  description: string;
+  emptyDescription: string;
+  emptyTitle: string;
+  icon: typeof TriangleAlert;
+  tasks: Task[];
+  title: string;
 };
 
-function computeOverview(): OverviewStats {
-  if (typeof window === "undefined") {
-    return {
-      totalTasks: 0,
-      activeTasks: 0,
-      notesCount: 0,
-      captureCount: 0,
-    };
-  }
-  const taskList = getTasks();
-  const notes = getStoredNotes();
-  const captures = getQuickCaptures();
-  return {
-    totalTasks: taskList.length,
-    activeTasks: taskList.filter((t) => t.status !== "done").length,
-    notesCount: notes.length,
-    captureCount: captures.length,
-  };
-}
-
-const cards = [
-  {
-    title: "Today",
-    description: "Act on the priorities that matter now",
-    icon: CalendarDays,
-    href: "/today",
-  },
-  {
-    title: "Inbox",
-    description: "Capture scattered context before it disappears",
-    icon: Inbox,
-    href: "/inbox",
-  },
-  {
-    title: "Tasks",
-    description: "Turn context into priorities and actions",
-    icon: CheckSquare,
-    href: "/tasks",
-  },
-  {
-    title: "Notes",
-    description: "Organize useful context for later",
-    icon: FileText,
-    href: "/notes",
-  },
-  {
-    title: "Search",
-    description: "Find tasks, notes, captures, and timeline context",
-    icon: Search,
-    href: "/search",
-  },
-  {
-    title: "Timeline",
-    description: "Review what changed and how context is moving",
-    icon: CircleDot,
-    href: "/timeline",
-  },
-];
-
-const initialOverview: OverviewStats = {
-  totalTasks: 0,
-  activeTasks: 0,
-  notesCount: 0,
-  captureCount: 0,
+const priorityRank: Record<TaskPriority, number> = {
+  critical: 4,
+  high: 3,
+  medium: 2,
+  low: 1,
 };
 
-const overviewCardClassName =
-  "rounded-2xl bg-white px-4 py-4 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:shadow-none dark:ring-zinc-800/70";
+function getTodayDateKey(): string {
+  const now = new Date();
+  const month = `${now.getMonth() + 1}`.padStart(2, "0");
+  const day = `${now.getDate()}`.padStart(2, "0");
 
-function formatActivityDate(value: string | undefined): string {
-  if (!value) {
-    return "";
-  }
-
-  const datePart = value.split("T")[0];
-
-  return datePart || "";
+  return `${now.getFullYear()}-${month}-${day}`;
 }
 
-function getMemoryExcerpt(candidate: MemoryCandidate): string {
-  const content = candidate.content.trim();
-
-  if (content.length <= 140) {
-    return content;
-  }
-
-  return `${content.slice(0, 137).trim()}...`;
+function getTaskDueDateKey(task: Task): string | undefined {
+  return task.dueDate?.split("T")[0];
 }
 
-function getMemoryPreviewCandidates(
-  activityItems: readonly ActivityItem[],
-): RankedMemoryCandidate[] {
-  const entities = [
-    ...getTasks().map((task) => taskToEntity(task)),
-    ...getStoredNotes().map((note) => noteToEntity(note)),
-    ...getQuickCaptures().map((capture) => quickCaptureToEntity(capture)),
-  ];
-  const candidates = [
-    ...entitiesToMemoryCandidates(entities),
-    ...activitiesToMemoryCandidates(activityItems),
-  ];
+function isActiveTask(task: Task): boolean {
+  return task.status !== "done";
+}
 
-  return getTopRankedMemoryCandidates(candidates, 3, {
-    entities,
-    activities: activityItems,
+function isHighPriorityTask(task: Task): boolean {
+  return (
+    isActiveTask(task) &&
+    (task.priority === "critical" || task.priority === "high")
+  );
+}
+
+function sortByPriorityAndDate(tasks: readonly Task[]): Task[] {
+  return [...tasks].sort((a, b) => {
+    const priorityDifference = priorityRank[b.priority] - priorityRank[a.priority];
+
+    if (priorityDifference !== 0) {
+      return priorityDifference;
+    }
+
+    const aDueDate = getTaskDueDateKey(a) ?? "9999-12-31";
+    const bDueDate = getTaskDueDateKey(b) ?? "9999-12-31";
+
+    if (aDueDate !== bDueDate) {
+      return aDueDate.localeCompare(bDueDate);
+    }
+
+    return b.createdAt.localeCompare(a.createdAt);
   });
 }
 
+function getTaskFilterUrl(task: Task): string {
+  const params = new URLSearchParams({
+    filter: task.status,
+    taskId: task.id,
+  });
+
+  return `/tasks?${params.toString()}`;
+}
+
+function formatTaskStatus(status: Task["status"]): string {
+  switch (status) {
+    case "in-progress":
+      return "In progress";
+    case "done":
+      return "Done";
+    case "todo":
+      return "Todo";
+  }
+}
+
+function formatTaskPriority(priority: TaskPriority): string {
+  return priority.charAt(0).toUpperCase() + priority.slice(1);
+}
+
+function TaskSignalList({
+  emptyDescription,
+  emptyTitle,
+  tasks,
+}: {
+  emptyDescription: string;
+  emptyTitle: string;
+  tasks: Task[];
+}) {
+  if (tasks.length === 0) {
+    return (
+      <EmptyState
+        size="sm"
+        title={emptyTitle}
+        description={emptyDescription}
+        icon={CheckCircle2}
+      />
+    );
+  }
+
+  return (
+    <ul className="space-y-2">
+      {tasks.slice(0, 4).map((task) => {
+        const dueDate = getTaskDueDateKey(task);
+
+        return (
+          <li key={task.id}>
+            <Link
+              href={getTaskFilterUrl(task)}
+              className="group block cursor-pointer rounded-xl bg-zinc-50/85 px-3.5 py-3 ring-1 ring-zinc-200/70 transition hover:bg-white hover:ring-zinc-300 dark:bg-zinc-900/45 dark:ring-zinc-800/70 dark:hover:bg-zinc-900 dark:hover:ring-zinc-700"
+            >
+              <div className="flex min-w-0 items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-zinc-950 dark:text-white">
+                    {task.title}
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800">
+                      {formatTaskPriority(task.priority)}
+                    </span>
+                    <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800">
+                      {formatTaskStatus(task.status)}
+                    </span>
+                    {dueDate ? (
+                      <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800">
+                        {dueDate}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+                <ArrowRight
+                  className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400 transition group-hover:translate-x-0.5 group-hover:text-zinc-700 dark:group-hover:text-zinc-200"
+                  aria-hidden
+                />
+              </div>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export default function Home() {
-  const pathname = usePathname();
-  const [stats, setStats] = useState<OverviewStats>(initialOverview);
-  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
+  const { loading: authLoading, session } = useAuthSession();
+  const accessToken = session?.access_token;
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasksLoaded, setTasksLoaded] = useState(false);
+  const [todayDateKey, setTodayDateKey] = useState("");
+  const [inboxCount, setInboxCount] = useState(0);
+  const [activityEvents, setActivityEvents] = useState<TimelineEvent[]>([]);
   const [activityLoaded, setActivityLoaded] = useState(false);
-  const [memoryCandidates, setMemoryCandidates] = useState<
-    RankedMemoryCandidate[]
-  >([]);
-  const [activeContext, setActiveContext] = useState<EntityContext[]>([]);
-  const [memoryLoaded, setMemoryLoaded] = useState(false);
+  const [activityError, setActivityError] = useState<string | null>(null);
+  const [quickCaptureOpen, setQuickCaptureOpen] = useState(false);
   const [onboardingLoaded, setOnboardingLoaded] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
-  useEffect(() => {
-    function refresh() {
-      if (typeof window === "undefined") return;
-      const activityItems = getRecentActivityFeed(5).items;
-      setStats(computeOverview());
-      setRecentActivity(activityItems);
-      setMemoryCandidates(getMemoryPreviewCandidates(activityItems));
-      setActiveContext(getLocalActiveContext(4));
+  const refreshDashboardData = useCallback(async () => {
+    setTasksLoaded(false);
+    setActivityLoaded(false);
+    setActivityError(null);
+
+    const nextTasks = accessToken
+      ? await loadTasksFromPrimarySource({ accessToken })
+      : getTasks();
+
+    setTasks(nextTasks);
+    setInboxCount(getQuickCaptures().length);
+    setTasksLoaded(true);
+
+    if (!accessToken) {
+      setActivityEvents([]);
       setActivityLoaded(true);
-      setMemoryLoaded(true);
-      setShowOnboarding(!hasCompletedOnboarding());
-      setOnboardingLoaded(true);
+      return;
     }
-    refresh();
-    window.addEventListener("focus", refresh);
-    window.addEventListener("storage", refresh);
-    return () => {
-      window.removeEventListener("focus", refresh);
-      window.removeEventListener("storage", refresh);
-    };
+
+    try {
+      const activities = await fetchActivitiesViaApi({ accessToken });
+      setActivityEvents(
+        createTimelineEventsFromActivities(activities).slice(0, 5),
+      );
+    } catch {
+      setActivityEvents([]);
+      setActivityError("Recent activity could not be loaded.");
+    } finally {
+      setActivityLoaded(true);
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
+    setTodayDateKey(getTodayDateKey());
+    setShowOnboarding(!hasCompletedOnboarding());
+    setOnboardingLoaded(true);
   }, []);
 
   useEffect(() => {
-    if (pathname === "/" && typeof window !== "undefined") {
-      const activityItems = getRecentActivityFeed(5).items;
-      setStats(computeOverview());
-      setRecentActivity(activityItems);
-      setMemoryCandidates(getMemoryPreviewCandidates(activityItems));
-      setActiveContext(getLocalActiveContext(4));
+    if (authLoading) {
+      return;
     }
-  }, [pathname]);
+
+    void refreshDashboardData();
+
+    function handleRefresh(): void {
+      void refreshDashboardData();
+    }
+
+    window.addEventListener("focus", handleRefresh);
+    window.addEventListener("storage", handleRefresh);
+
+    return () => {
+      window.removeEventListener("focus", handleRefresh);
+      window.removeEventListener("storage", handleRefresh);
+    };
+  }, [authLoading, refreshDashboardData]);
+
+  const focusBuckets = useMemo<FocusBucket[]>(() => {
+    const activeTasks = tasks.filter(isActiveTask);
+    const overdueTasks = todayDateKey
+      ? activeTasks.filter((task) => {
+          const dueDate = getTaskDueDateKey(task);
+
+          return dueDate ? dueDate < todayDateKey : false;
+        })
+      : [];
+    const todayTasks = todayDateKey
+      ? activeTasks.filter((task) => getTaskDueDateKey(task) === todayDateKey)
+      : [];
+
+    return [
+      {
+        title: "High priority",
+        description: "Critical or high-priority work that is still open.",
+        emptyTitle: "No urgent tasks today.",
+        emptyDescription: "High-priority work will surface here when it exists.",
+        icon: TriangleAlert,
+        tasks: sortByPriorityAndDate(activeTasks.filter(isHighPriorityTask)),
+      },
+      {
+        title: "Overdue",
+        description: "Open tasks with due dates before today.",
+        emptyTitle: "Nothing overdue.",
+        emptyDescription: "No past-due tasks need attention right now.",
+        icon: Clock,
+        tasks: sortByPriorityAndDate(overdueTasks),
+      },
+      {
+        title: "Due today",
+        description: "Tasks scheduled for today.",
+        emptyTitle: "Nothing due today.",
+        emptyDescription: "Your dated task lane is clear for today.",
+        icon: CheckCircle2,
+        tasks: sortByPriorityAndDate(todayTasks),
+      },
+    ];
+  }, [tasks, todayDateKey]);
 
   function dismissOnboarding(): void {
     completeOnboarding();
     setShowOnboarding(false);
   }
 
+  function handleQuickCaptureOpenChange(open: boolean): void {
+    setQuickCaptureOpen(open);
+
+    if (!open && !authLoading) {
+      void refreshDashboardData();
+    }
+  }
+
   return (
     <AppShell>
       <div className="px-4 py-6 sm:p-10">
-        <div className="mx-auto max-w-5xl">
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
-            Daily focus
-          </h1>
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">
-            Priorities, context, and recent signals for deciding what to do next.
-          </p>
+        <div className="mx-auto max-w-6xl">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <Badge>Daily focus</Badge>
+              <h1 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
+                Priorities, context, and what changed.
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-500 sm:text-base">
+                Start here to see what needs attention, clear captured context,
+                review recent activity, and decide the next action.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setQuickCaptureOpen(true)}
+              >
+                <Plus className="mr-2 h-4 w-4" aria-hidden />
+                Quick Capture
+              </Button>
+              <Link
+                href="/search"
+                className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-zinc-950/10 transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none dark:hover:bg-white dark:focus-visible:ring-zinc-600 dark:focus-visible:ring-offset-black"
+              >
+                <Search className="mr-2 h-4 w-4" aria-hidden />
+                Search context
+              </Link>
+            </div>
+          </div>
 
           {onboardingLoaded && showOnboarding ? (
             <Card className="mt-8 overflow-hidden p-0">
@@ -235,8 +349,9 @@ export default function Home() {
                       Drop anything into Orvia.
                     </h2>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                      It helps organize captures into tasks, notes, memory, and
-                      timeline so you can find and act on them later.
+                      Capture scattered thoughts, turn them into tasks or
+                      notes, then find the context later through Search and
+                      Timeline.
                     </p>
                   </div>
                   <Button
@@ -254,21 +369,21 @@ export default function Home() {
                 {[
                   {
                     step: "1",
-                    title: "Capture anything in Inbox",
+                    title: "Capture anything",
                     description:
-                      "Start with a thought, reminder, idea, car note, or research lead.",
+                      "Send a thought, reminder, idea, or research lead into Inbox.",
                   },
                   {
                     step: "2",
-                    title: "Turn it into a task or note",
+                    title: "Organize into action",
                     description:
-                      "Review the local preview and choose what gets created.",
+                      "Convert captures into tasks or notes when you are ready.",
                   },
                   {
                     step: "3",
-                    title: "Find it later",
+                    title: "Recall the context",
                     description:
-                      "Search, Timeline, and Memory Preview keep the context visible.",
+                      "Use Search and Timeline to understand what changed.",
                   },
                 ].map((item) => (
                   <div key={item.step} className="p-5 sm:p-6">
@@ -287,8 +402,8 @@ export default function Home() {
 
               <div className="flex flex-col gap-3 border-t border-zinc-200/80 bg-zinc-50/80 p-5 dark:border-zinc-800/80 dark:bg-zinc-900/40 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Local-first onboarding. No account, backend, or AI call is
-                  required.
+                  Local-first onboarding. Cloud sync only runs when explicitly
+                  supported by signed-in workflows.
                 </p>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Button
@@ -300,7 +415,7 @@ export default function Home() {
                   </Button>
                   <Link
                     href="/inbox"
-                    className="inline-flex items-center justify-center rounded-xl bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-zinc-950/10 transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none dark:hover:bg-white dark:focus-visible:ring-zinc-600 dark:focus-visible:ring-offset-black"
+                    className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-zinc-950/10 transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none dark:hover:bg-white dark:focus-visible:ring-zinc-600 dark:focus-visible:ring-offset-black"
                   >
                     Go to Inbox
                   </Link>
@@ -311,54 +426,126 @@ export default function Home() {
 
           <Section className="mt-10">
             <SectionHeader
-              title="Priorities and context"
-              subtitle="A quick read on what needs attention."
+              title="What matters today"
+              subtitle="High-priority, overdue, and due-today tasks from the current task source."
             />
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <div className={overviewCardClassName}>
-                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">Total tasks</p>
-                <p className="mt-1 text-2xl font-semibold text-zinc-950 dark:text-white">
-                  {stats.totalTasks}
-                </p>
-                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-600">
-                  Local workspace data
-                </p>
+            {!tasksLoaded ? (
+              <div className="grid gap-3 lg:grid-cols-3">
+                {[0, 1, 2].map((item) => (
+                  <Card key={item} className="p-4 sm:p-5">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="mt-3 h-4 w-full" />
+                    <Skeleton className="mt-5 h-16 w-full rounded-xl" />
+                    <Skeleton className="mt-2 h-16 w-full rounded-xl" />
+                  </Card>
+                ))}
               </div>
-              <div className={overviewCardClassName}>
-                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">Active tasks</p>
-                <p className="mt-1 text-2xl font-semibold text-violet-700 dark:text-violet-300">
-                  {stats.activeTasks}
-                </p>
-                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-600">
-                  Not marked done
-                </p>
+            ) : (
+              <div className="grid gap-3 lg:grid-cols-3">
+                {focusBuckets.map((bucket) => {
+                  const Icon = bucket.icon;
+
+                  return (
+                    <Card key={bucket.title} className="p-4 sm:p-5">
+                      <div className="flex items-start gap-3">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200/70 dark:bg-zinc-900/70 dark:text-zinc-300 dark:ring-zinc-800">
+                          <Icon className="h-4 w-4" aria-hidden />
+                        </span>
+                        <div>
+                          <h2 className="text-sm font-semibold text-zinc-950 dark:text-white">
+                            {bucket.title}
+                          </h2>
+                          <p className="mt-1 text-sm leading-6 text-zinc-500 dark:text-zinc-500">
+                            {bucket.description}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-4">
+                        <TaskSignalList
+                          tasks={bucket.tasks}
+                          emptyTitle={bucket.emptyTitle}
+                          emptyDescription={bucket.emptyDescription}
+                        />
+                      </div>
+                    </Card>
+                  );
+                })}
               </div>
-              <div className={overviewCardClassName}>
-                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">Notes</p>
-                <p className="mt-1 text-2xl font-semibold text-zinc-950 dark:text-white">
-                  {stats.notesCount}
-                </p>
-                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-600">
-                  Saved in browser
-                </p>
-              </div>
-              <div className={overviewCardClassName}>
-                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">Inbox captures</p>
-                <p className="mt-1 text-2xl font-semibold text-zinc-950 dark:text-white">
-                  {stats.captureCount}
-                </p>
-                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-600">Awaiting review</p>
-              </div>
-            </div>
+            )}
           </Section>
+
+          <div className="mt-10 grid gap-3 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+            <Section>
+              <SectionHeader
+                title="Inbox"
+                subtitle="Captured context waiting to be processed."
+              />
+              <Card className="p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                      {inboxCount}
+                    </p>
+                    <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
+                      {inboxCount === 0
+                        ? "Nothing waiting in Inbox."
+                        : "Captures ready for review."}
+                    </p>
+                  </div>
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200/70 dark:bg-zinc-900/70 dark:text-zinc-300 dark:ring-zinc-800">
+                    <Inbox className="h-5 w-5" aria-hidden />
+                  </span>
+                </div>
+                <Link
+                  href="/inbox"
+                  className="mt-5 inline-flex cursor-pointer items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-zinc-50 hover:ring-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-950 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:ring-zinc-700 dark:focus-visible:ring-zinc-600 dark:focus-visible:ring-offset-black"
+                >
+                  Open Inbox
+                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
+                </Link>
+              </Card>
+            </Section>
+
+            <Section>
+              <SectionHeader
+                title="Find context"
+                subtitle="Search across notes, tasks, captures, and timeline context."
+              />
+              <Card className="p-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-base font-semibold text-zinc-950 dark:text-white">
+                      Search notes, tasks, and context.
+                    </h2>
+                    <p className="mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-500">
+                      Use Search when the next action depends on remembered
+                      details, older notes, or recent activity.
+                    </p>
+                  </div>
+                  <Link
+                    href="/search"
+                    className="inline-flex shrink-0 cursor-pointer items-center justify-center rounded-xl bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-zinc-950/10 transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none dark:hover:bg-white dark:focus-visible:ring-zinc-600 dark:focus-visible:ring-offset-black"
+                  >
+                    Open Search
+                    <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
+                  </Link>
+                </div>
+              </Card>
+            </Section>
+          </div>
 
           <Section className="mt-10">
             <SectionHeader
-              title="Recent Activity"
-              subtitle="Latest local changes across your workspace."
+              title="Recent activity"
+              subtitle="The latest recorded task, note, and import events."
             />
             <Card className="p-4 sm:p-5">
-              {!activityLoaded ? (
+              {!accessToken && !authLoading ? (
+                <EmptyState
+                  title="Sign in to see recent activity."
+                  description="Timeline events are recorded for authenticated workflows."
+                />
+              ) : !activityLoaded ? (
                 <div className="space-y-3" aria-label="Loading recent activity">
                   {[0, 1, 2].map((item) => (
                     <div
@@ -366,108 +553,27 @@ export default function Home() {
                       className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-4 py-3 dark:border-zinc-800/80 dark:bg-zinc-900/40"
                     >
                       <div className="flex items-center gap-2">
-                        <Skeleton className="h-5 w-16 rounded-full" />
-                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-5 w-24 rounded-full" />
+                        <Skeleton className="h-4 w-24" />
                       </div>
-                      <Skeleton className="mt-3 h-4 w-40" />
+                      <Skeleton className="mt-3 h-4 w-48" />
                       <Skeleton className="mt-2 h-4 w-full max-w-md" />
                     </div>
                   ))}
                 </div>
-              ) : recentActivity.length === 0 ? (
+              ) : activityEvents.length === 0 ? (
                 <EmptyState
-                  title="No activity yet"
-                  description="Create a task, note, capture, transaction, or car to see it here."
+                  title="No recent activity yet."
+                  description={
+                    activityError ??
+                    "Create or update a task or note to start the activity feed."
+                  }
                 />
               ) : (
                 <ul className="space-y-2">
-                  {recentActivity.map((item) => {
-                    const occurredAt = formatActivityDate(item.occurredAt);
-
-                    return (
-                      <li
-                        key={item.id}
-                        className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-4 py-3 transition hover:border-zinc-300 hover:bg-white dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/70"
-                      >
-                        <div className="flex min-w-0 flex-col gap-2">
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                            <Badge className="px-2.5 py-0.5">
-                              {getEntityTypeLabel(item.entity.type)}
-                            </Badge>
-                            {occurredAt ? (
-                              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
-                                {occurredAt}
-                              </span>
-                            ) : null}
-                          </div>
-                          <p className="truncate text-sm font-medium text-zinc-950 dark:text-white">
-                            {item.title}
-                          </p>
-                          <p className="text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                            {item.subtitle}
-                          </p>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </Card>
-          </Section>
-
-          <Section className="mt-10">
-            <SectionHeader
-              title="Active Context"
-              subtitle="Deterministic local signals that are currently connected."
-            />
-            <Card className="p-4 sm:p-5">
-              {!memoryLoaded ? (
-                <div className="space-y-3" aria-label="Loading active context">
-                  {[0, 1, 2].map((item) => (
-                    <div
-                      key={item}
-                      className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-4 py-3 dark:border-zinc-800/80 dark:bg-zinc-900/40"
-                    >
-                      <Skeleton className="h-4 w-36" />
-                      <Skeleton className="mt-2 h-4 w-full max-w-lg" />
-                    </div>
-                  ))}
-                </div>
-              ) : activeContext.length === 0 ? (
-                <EmptyState
-                  title="No active context yet"
-                  description="Create tasks and notes to build connected local context."
-                />
-              ) : (
-                <ul className="grid gap-2 md:grid-cols-2">
-                  {activeContext.map((context) => (
-                    <li key={context.entity.id}>
-                      <Link
-                        href={getEntityContextUrl(context)}
-                        className="block cursor-pointer rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-4 py-3 transition hover:border-zinc-300 hover:bg-white dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/70"
-                      >
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge className="px-2.5 py-0.5">
-                            {getEntityTypeLabel(context.entity.type)}
-                          </Badge>
-                          {context.labels.slice(0, 2).map((label) => (
-                            <span
-                              key={label}
-                              className="rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-zinc-500 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800"
-                            >
-                              {label}
-                            </span>
-                          ))}
-                        </div>
-                        <p className="mt-2 truncate text-sm font-medium text-zinc-950 dark:text-white">
-                          {context.entity.title}
-                        </p>
-                        <p className="mt-1 text-xs font-medium text-zinc-500 dark:text-zinc-500">
-                          {context.relatedCount > 0
-                            ? "Connected context"
-                            : "Local context"}
-                        </p>
-                      </Link>
+                  {activityEvents.map((event) => (
+                    <li key={event.id}>
+                      <TimelineEventCard event={event} />
                     </li>
                   ))}
                 </ul>
@@ -477,101 +583,39 @@ export default function Home() {
 
           <Section className="mt-10">
             <SectionHeader
-              title="Memory Preview"
-              subtitle="Source-linked context prepared for future recall."
+              title="What should I do next?"
+              subtitle="A fast capture point for thoughts that should not wait."
             />
-            <Card className="p-4 sm:p-5">
-              {!memoryLoaded ? (
-                <div className="space-y-3" aria-label="Loading memory preview">
-                  {[0, 1, 2].map((item) => (
-                    <div
-                      key={item}
-                      className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-4 py-3 dark:border-zinc-800/80 dark:bg-zinc-900/40"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Skeleton className="h-5 w-16 rounded-full" />
-                        <Skeleton className="h-5 w-20 rounded-full" />
-                      </div>
-                      <Skeleton className="mt-3 h-4 w-48" />
-                      <Skeleton className="mt-2 h-4 w-full max-w-lg" />
-                    </div>
-                  ))}
+            <Card className="p-5 sm:p-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-base font-semibold text-zinc-950 dark:text-white">
+                    Capture the next task or note before it disappears.
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500 dark:text-zinc-500">
+                    Quick Capture keeps the dashboard action-oriented without
+                    forcing you to switch modules.
+                  </p>
                 </div>
-              ) : memoryCandidates.length === 0 ? (
-                <EmptyState
-                  title="No memory candidates yet"
-                  description="Create a task, note, or inbox capture to seed future recall."
-                />
-              ) : (
-                <ul className="space-y-2">
-                  {memoryCandidates.map((rankedCandidate) => {
-                    const candidate = rankedCandidate.candidate;
-                    const reasons = rankedCandidate.reasons.slice(0, 2);
-
-                    return (
-                      <li
-                        key={candidate.id}
-                        className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-4 py-3 dark:border-zinc-800/80 dark:bg-zinc-900/40"
-                      >
-                        <div className="flex min-w-0 flex-col gap-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge className="px-2.5 py-0.5">
-                              {getMemorySourceTypeLabel(candidate.sourceType)}
-                            </Badge>
-                            <Badge variant="info" className="px-2.5 py-0.5">
-                              {getMemoryImportanceLabel(candidate.importance)}
-                            </Badge>
-                            {reasons.map((reason) => (
-                              <span
-                                key={reason}
-                                className="rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-zinc-500 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800"
-                              >
-                                {reason}
-                              </span>
-                            ))}
-                          </div>
-                          <p className="truncate text-sm font-medium text-zinc-950 dark:text-white">
-                            {candidate.title}
-                          </p>
-                          {candidate.content ? (
-                            <p className="text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                              {getMemoryExcerpt(candidate)}
-                            </p>
-                          ) : null}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
+                <Button
+                  type="button"
+                  onClick={() => setQuickCaptureOpen(true)}
+                  className="shrink-0"
+                >
+                  <Plus className="mr-2 h-4 w-4" aria-hidden />
+                  Capture now
+                </Button>
+              </div>
             </Card>
           </Section>
-
-          <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {cards.map((card) => {
-              const Icon = card.icon;
-
-              return (
-                <Link
-                  key={card.title}
-                  href={card.href}
-                  className="group rounded-2xl bg-white p-5 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 transition hover:bg-zinc-50 hover:ring-zinc-300 dark:bg-zinc-950 dark:shadow-none dark:ring-zinc-800/70 dark:hover:bg-zinc-900/80 dark:hover:ring-zinc-700 sm:p-6"
-                >
-                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-100 ring-1 ring-zinc-200/70 transition group-hover:bg-white group-hover:ring-zinc-300 dark:bg-zinc-900 dark:ring-zinc-800 dark:group-hover:bg-zinc-800 dark:group-hover:ring-zinc-700">
-                    <Icon className="h-6 w-6 text-zinc-800 dark:text-zinc-100" aria-hidden />
-                  </div>
-                  <h2 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-2xl">
-                    {card.title}
-                  </h2>
-                  <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400 sm:text-base">
-                    {card.description}
-                  </p>
-                </Link>
-              );
-            })}
-          </div>
         </div>
       </div>
+
+      <QuickCapture
+        accessToken={accessToken}
+        open={quickCaptureOpen}
+        onOpenChange={handleQuickCaptureOpenChange}
+      />
     </AppShell>
   );
 }
