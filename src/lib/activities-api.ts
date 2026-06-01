@@ -1,12 +1,9 @@
-import type {
-  SupabaseActivityEntityType,
-  SupabaseActivityType,
-} from "@/lib/supabase";
+import type { SupabaseActivityEntityType } from "@/lib/supabase";
 
 export type Activity = {
   id: string;
-  type: SupabaseActivityType;
-  entityType: SupabaseActivityEntityType;
+  type: string;
+  entityType: string;
   entityId?: string;
   title: string;
   description?: string;
@@ -16,7 +13,17 @@ export type Activity = {
 };
 
 export type CreateActivityApiInput = {
-  type: SupabaseActivityType;
+  type:
+    | "task_created"
+    | "task_updated"
+    | "task_deleted"
+    | "note_created"
+    | "note_updated"
+    | "note_deleted"
+    | "inbox_processed"
+    | "quick_capture_created"
+    | "local_import_completed"
+    | "system_event";
   entityType: SupabaseActivityEntityType;
   entityId?: string | null;
   title: string;
@@ -53,27 +60,6 @@ type CreateActivityApiResponse = {
   error?: unknown;
 };
 
-const ACTIVITY_TYPES = [
-  "task_created",
-  "task_updated",
-  "task_deleted",
-  "note_created",
-  "note_updated",
-  "note_deleted",
-  "inbox_processed",
-  "quick_capture_created",
-  "local_import_completed",
-  "system_event",
-] as const satisfies readonly SupabaseActivityType[];
-const ACTIVITY_ENTITY_TYPES = [
-  "task",
-  "note",
-  "inbox",
-  "quick_capture",
-  "sync",
-  "system",
-] as const satisfies readonly SupabaseActivityEntityType[];
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -82,22 +68,6 @@ function optionalString(value: unknown): string | undefined {
   return typeof value === "string" && value.trim().length > 0
     ? value.trim()
     : undefined;
-}
-
-function isActivityType(value: unknown): value is SupabaseActivityType {
-  return (
-    typeof value === "string" &&
-    ACTIVITY_TYPES.includes(value as SupabaseActivityType)
-  );
-}
-
-function isActivityEntityType(
-  value: unknown,
-): value is SupabaseActivityEntityType {
-  return (
-    typeof value === "string" &&
-    ACTIVITY_ENTITY_TYPES.includes(value as SupabaseActivityEntityType)
-  );
 }
 
 function getAuthorizationHeaders(
@@ -125,8 +95,8 @@ function mapApiActivityToActivity(row: ApiActivityRow): Activity | null {
     !title ||
     !occurredAt ||
     !createdAt ||
-    !isActivityType(row.type) ||
-    !isActivityEntityType(row.entity_type)
+    typeof row.type !== "string" ||
+    typeof row.entity_type !== "string"
   ) {
     return null;
   }

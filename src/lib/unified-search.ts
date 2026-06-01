@@ -1,10 +1,14 @@
+import { fetchActivitiesViaApi } from "@/lib/activities-api";
 import { getNotes, type Note } from "@/lib/notes";
 import { getQuickCaptures, type QuickCapture } from "@/lib/quick-captures";
 import {
   loadTasksFromPrimarySource,
   type TasksApiRequestOptions,
 } from "@/lib/tasks-api";
-import { createTimelineEventsFromTasks, type TimelineEvent } from "@/lib/timeline";
+import {
+  createTimelineEventsFromActivities,
+  type TimelineEvent,
+} from "@/lib/timeline";
 import type { Task } from "@/types";
 
 export type UnifiedSearchResultType = "task" | "note" | "inbox" | "timeline";
@@ -57,11 +61,15 @@ function taskHref(task: Task): string {
 }
 
 function timelineEventDescription(event: TimelineEvent): string {
-  if (event.type === "task-completed") {
-    return "Task completed";
+  if (event.description) {
+    return event.description;
   }
 
-  return "Task created";
+  return event.type
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ") || "Activity";
 }
 
 function taskToSearchResult(task: Task): UnifiedSearchResult {
@@ -156,12 +164,17 @@ export async function loadUnifiedSearchDataset(
   options: TasksApiRequestOptions = {},
 ): Promise<UnifiedSearchDataset> {
   const tasks = await loadTasksFromPrimarySource(options);
+  const timelineEvents = options.accessToken
+    ? createTimelineEventsFromActivities(
+        await fetchActivitiesViaApi(options).catch(() => []),
+      )
+    : [];
 
   return {
     tasks,
     notes: getNotes(),
     inboxCaptures: getQuickCaptures(),
-    timelineEvents: createTimelineEventsFromTasks(tasks),
+    timelineEvents,
   };
 }
 
