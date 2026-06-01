@@ -24,6 +24,31 @@ export type SupabaseTaskInsert = {
   due_date?: string | null;
 };
 
+export type SupabaseNoteRow = {
+  id: string;
+  user_id: string | null;
+  title: string;
+  content: string | null;
+  type: "note" | "idea" | "book" | "course" | "link";
+  tags: string[];
+  source: "local" | "api" | "import" | "telegram" | "system";
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  [key: string]: unknown;
+};
+
+export type SupabaseNoteInsert = {
+  user_id?: string | null;
+  title: string;
+  content?: string | null;
+  type?: SupabaseNoteRow["type"];
+  tags?: string[];
+  source?: SupabaseNoteRow["source"];
+  metadata?: Record<string, unknown>;
+};
+
 export type SupabaseDatabase = {
   public: {
     Tables: {
@@ -31,6 +56,12 @@ export type SupabaseDatabase = {
         Row: SupabaseTaskRow;
         Insert: SupabaseTaskInsert;
         Update: Partial<SupabaseTaskInsert>;
+        Relationships: [];
+      };
+      notes: {
+        Row: SupabaseNoteRow;
+        Insert: SupabaseNoteInsert;
+        Update: Partial<SupabaseNoteInsert>;
         Relationships: [];
       };
     };
