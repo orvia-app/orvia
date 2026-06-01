@@ -19,6 +19,11 @@ import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
+  recordTaskCreatedActivity,
+  recordTaskDeletedActivity,
+  recordTaskUpdatedActivity,
+} from "@/lib/activity-recording";
+import {
   saveTasks,
   TASK_PRIORITIES,
   TASK_STATUSES,
@@ -290,6 +295,10 @@ function TasksContent() {
 
       syncTasks(nextTasks);
       closeModal();
+
+      if (accessToken) {
+        void recordTaskCreatedActivity(newTask, { accessToken });
+      }
     } catch {
       if (!accessToken) {
         setCreateError("Could not create task. Please try again.");
@@ -336,6 +345,14 @@ function TasksContent() {
       );
 
       syncTasks(nextTasks);
+
+      if (accessToken) {
+        void recordTaskUpdatedActivity(
+          updatedTask,
+          { previousStatus: task.status },
+          { accessToken },
+        );
+      }
     } catch {
       const nextTasks = tasks.map((currentTask) =>
         currentTask.id === task.id
@@ -377,6 +394,10 @@ function TasksContent() {
       );
 
       syncTasks(nextTasks);
+
+      if (accessToken) {
+        void recordTaskDeletedActivity(task, { accessToken });
+      }
     } catch {
       const nextTasks = tasks.filter(
         (currentTask) => currentTask.id !== task.id,

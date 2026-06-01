@@ -10,6 +10,11 @@ import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
+  recordNoteCreatedActivity,
+  recordNoteDeletedActivity,
+  recordNoteUpdatedActivity,
+} from "@/lib/activity-recording";
+import {
   NOTE_TYPES,
   saveNotes,
   type Note,
@@ -209,6 +214,10 @@ export default function NotesPage() {
       ...notes.filter((note) => note.id !== result.note.id),
     ]);
     closeModal();
+
+    if (accessToken && result.source === "api") {
+      void recordNoteCreatedActivity(result.note, { accessToken });
+    }
   }
 
   async function saveNoteEdits(note: Note): Promise<void> {
@@ -250,6 +259,10 @@ export default function NotesPage() {
 
       syncNotes(nextNotes);
       cancelEditingNote();
+
+      if (accessToken) {
+        void recordNoteUpdatedActivity(updatedNote, { accessToken });
+      }
     } catch {
       const fallbackNote: Note = {
         ...note,
@@ -285,6 +298,10 @@ export default function NotesPage() {
       }
 
       syncNotes(notes.filter((currentNote) => currentNote.id !== note.id));
+
+      if (accessToken) {
+        void recordNoteDeletedActivity(note, { accessToken });
+      }
     } catch {
       syncNotes(notes.filter((currentNote) => currentNote.id !== note.id));
       setNoteActionError("Cloud delete failed. Removed this note locally.");
