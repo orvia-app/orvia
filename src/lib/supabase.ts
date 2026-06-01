@@ -52,6 +52,53 @@ export type SupabaseNoteInsert = {
   deleted_at?: string | null;
 };
 
+export type SupabaseActivityType =
+  | "task_created"
+  | "task_updated"
+  | "task_deleted"
+  | "note_created"
+  | "note_updated"
+  | "note_deleted"
+  | "inbox_processed"
+  | "quick_capture_created"
+  | "local_import_completed"
+  | "system_event";
+
+export type SupabaseActivityEntityType =
+  | "task"
+  | "note"
+  | "inbox"
+  | "quick_capture"
+  | "sync"
+  | "system";
+
+export type SupabaseActivityRow = {
+  id: string;
+  user_id: string;
+  type: SupabaseActivityType;
+  entity_type: SupabaseActivityEntityType;
+  entity_id: string | null;
+  title: string;
+  description: string | null;
+  metadata: Record<string, unknown>;
+  occurred_at: string;
+  created_at: string;
+  deleted_at: string | null;
+  [key: string]: unknown;
+};
+
+export type SupabaseActivityInsert = {
+  user_id?: string;
+  type: SupabaseActivityType;
+  entity_type: SupabaseActivityEntityType;
+  entity_id?: string | null;
+  title: string;
+  description?: string | null;
+  metadata?: Record<string, unknown>;
+  occurred_at?: string;
+  deleted_at?: string | null;
+};
+
 export type SupabaseDatabase = {
   public: {
     Tables: {
@@ -65,6 +112,12 @@ export type SupabaseDatabase = {
         Row: SupabaseNoteRow;
         Insert: SupabaseNoteInsert;
         Update: Partial<SupabaseNoteInsert>;
+        Relationships: [];
+      };
+      activities: {
+        Row: SupabaseActivityRow;
+        Insert: SupabaseActivityInsert;
+        Update: Partial<SupabaseActivityInsert>;
         Relationships: [];
       };
     };
