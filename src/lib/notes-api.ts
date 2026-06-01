@@ -20,6 +20,11 @@ type CreateNoteApiResponse = {
   error?: unknown;
 };
 
+type DeleteNoteApiResponse = {
+  ok?: unknown;
+  error?: unknown;
+};
+
 type ListNotesApiResponse = {
   ok?: unknown;
   notes?: unknown;
@@ -33,6 +38,8 @@ export type CreateNoteApiInput = {
   tags?: string[];
   metadata?: Record<string, unknown>;
 };
+
+export type UpdateNoteApiInput = Partial<CreateNoteApiInput>;
 
 export type NotesApiRequestOptions = {
   accessToken?: string;
@@ -110,7 +117,7 @@ function mapApiNoteToNote(row: ApiNoteRow): Note | null {
   };
 }
 
-function parseCreateNoteResponse(value: unknown): Note | null {
+function parseNoteResponse(value: unknown): Note | null {
   if (!isRecord(value)) {
     return null;
   }
@@ -122,6 +129,16 @@ function parseCreateNoteResponse(value: unknown): Note | null {
   }
 
   return mapApiNoteToNote(response.note);
+}
+
+function parseDeleteNoteResponse(value: unknown): boolean {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  const response: DeleteNoteApiResponse = value;
+
+  return response.ok === true;
 }
 
 function parseListNotesResponse(value: unknown): Note[] | null {
@@ -228,13 +245,74 @@ export async function createNoteViaApi(
     throw new Error("Note create request failed.");
   }
 
-  const note = parseCreateNoteResponse(responseBody);
+  const note = parseNoteResponse(responseBody);
 
   if (!note) {
     throw new Error("Note create response shape was invalid.");
   }
 
   return note;
+}
+
+export async function updateNoteViaApi(
+  noteId: string,
+  input: UpdateNoteApiInput,
+  options: NotesApiRequestOptions = {},
+): Promise<Note> {
+  const response = await fetch(`/api/notes/${encodeURIComponent(noteId)}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthorizationHeaders(options),
+    },
+    body: JSON.stringify(input),
+  });
+
+  let responseBody: unknown;
+
+  try {
+    responseBody = await response.json();
+  } catch {
+    throw new Error("Note update response was not valid JSON.");
+  }
+
+  if (!response.ok) {
+    throw new Error("Note update request failed.");
+  }
+
+  const note = parseNoteResponse(responseBody);
+
+  if (!note) {
+    throw new Error("Note update response shape was invalid.");
+  }
+
+  return note;
+}
+
+export async function deleteNoteViaApi(
+  noteId: string,
+  options: NotesApiRequestOptions = {},
+): Promise<void> {
+  const response = await fetch(`/api/notes/${encodeURIComponent(noteId)}`, {
+    method: "DELETE",
+    headers: getAuthorizationHeaders(options),
+  });
+
+  let responseBody: unknown;
+
+  try {
+    responseBody = await response.json();
+  } catch {
+    throw new Error("Note delete response was not valid JSON.");
+  }
+
+  if (!response.ok) {
+    throw new Error("Note delete request failed.");
+  }
+
+  if (!parseDeleteNoteResponse(responseBody)) {
+    throw new Error("Note delete response shape was invalid.");
+  }
 }
 
 export async function createNoteFromPrimarySource(
