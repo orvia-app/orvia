@@ -280,7 +280,7 @@ export default function TodayPage() {
     <AppShell>
       <div className="px-4 py-5 sm:px-8 sm:py-8 lg:px-10">
         <div className="mx-auto max-w-6xl">
-          <div className="rounded-2xl bg-white px-5 py-5 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:shadow-none dark:ring-zinc-800/70 sm:px-6">
+          <div className="rounded-2xl bg-white/85 px-5 py-5 shadow-sm shadow-zinc-950/[0.035] ring-1 ring-zinc-200/75 dark:bg-zinc-900/70 dark:shadow-none dark:ring-zinc-800/75 sm:px-6">
             <Badge>Today</Badge>
             <h1 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-3xl">
               Today&apos;s plan
@@ -310,7 +310,7 @@ export default function TodayPage() {
                       className="group block cursor-pointer"
                     >
                       <div className="flex items-start gap-3">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200/70 dark:bg-zinc-900/70 dark:text-zinc-300 dark:ring-zinc-800">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
                           <Target className="h-4 w-4" aria-hidden />
                         </span>
                         <div className="min-w-0 flex-1">
@@ -372,9 +372,9 @@ export default function TodayPage() {
                         <li key={task.id}>
                           <Link
                             href={getTaskUrl(task)}
-                            className="group flex cursor-pointer items-start gap-3 px-4 py-3 transition hover:bg-zinc-50 dark:hover:bg-zinc-900/45"
+                            className="group flex cursor-pointer items-start gap-3 px-4 py-3 transition hover:bg-violet-50/60 dark:hover:bg-violet-500/5"
                           >
-                            <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-xs font-semibold text-zinc-600 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800">
+                            <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-xs font-semibold text-violet-700 ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
                               {index + 1}
                             </span>
                             <div className="min-w-0 flex-1">
@@ -427,7 +427,7 @@ export default function TodayPage() {
                         </>
                       )}
                     </div>
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200/70 dark:bg-zinc-900/70 dark:text-zinc-300 dark:ring-zinc-800">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-700 ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
                       {inboxCount === 0 ? (
                         <CheckCircle2 className="h-4 w-4" aria-hidden />
                       ) : (
@@ -437,7 +437,7 @@ export default function TodayPage() {
                   </div>
                   <Link
                     href="/inbox"
-                    className="mt-4 inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-zinc-50 hover:ring-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-950 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:ring-zinc-700 dark:focus-visible:ring-zinc-600 dark:focus-visible:ring-offset-black"
+                    className="mt-4 inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50 hover:text-violet-800 hover:ring-violet-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-zinc-950/60 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/25 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
                   >
                     Open Inbox
                     <ArrowRight className="ml-2 h-4 w-4" aria-hidden />

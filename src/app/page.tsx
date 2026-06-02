@@ -337,7 +337,7 @@ export default function Home() {
     <AppShell>
       <div className="px-4 py-5 sm:px-8 sm:py-8 lg:px-10">
         <div className="mx-auto max-w-6xl">
-          <div className="rounded-2xl bg-white px-5 py-5 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:shadow-none dark:ring-zinc-800/70 sm:px-6">
+          <div className="rounded-2xl bg-white/85 px-5 py-5 shadow-sm shadow-zinc-950/[0.035] ring-1 ring-zinc-200/75 dark:bg-zinc-900/70 dark:shadow-none dark:ring-zinc-800/75 sm:px-6">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <Badge>Daily focus</Badge>
@@ -360,7 +360,7 @@ export default function Home() {
                 </Button>
                 <Link
                   href="/search"
-                  className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-zinc-950/10 transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none dark:hover:bg-white dark:focus-visible:ring-zinc-600 dark:focus-visible:ring-offset-black"
+                  className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-violet-500 dark:text-white dark:shadow-none dark:hover:bg-violet-400 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
                 >
                   <Search className="mr-2 h-4 w-4" aria-hidden />
                   Search context
@@ -417,7 +417,7 @@ export default function Home() {
                   },
                 ].map((item) => (
                   <div key={item.step} className="p-5 sm:p-6">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-100 text-sm font-semibold text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-violet-200/70 bg-violet-50 text-sm font-semibold text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300">
                       {item.step}
                     </span>
                     <h3 className="mt-4 text-sm font-semibold text-zinc-950 dark:text-white">
@@ -430,7 +430,7 @@ export default function Home() {
                 ))}
               </div>
 
-              <div className="flex flex-col gap-3 border-t border-zinc-200/80 bg-zinc-50/80 p-5 dark:border-zinc-800/80 dark:bg-zinc-900/40 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+              <div className="flex flex-col gap-3 border-t border-zinc-200/80 bg-zinc-50/80 p-5 dark:border-zinc-800/80 dark:bg-zinc-950/35 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
                   Local-first onboarding. Cloud sync only runs when explicitly
                   supported by signed-in workflows.
@@ -445,7 +445,7 @@ export default function Home() {
                   </Button>
                   <Link
                     href="/inbox"
-                    className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-zinc-950/10 transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none dark:hover:bg-white dark:focus-visible:ring-zinc-600 dark:focus-visible:ring-offset-black"
+                    className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-violet-500 dark:text-white dark:shadow-none dark:hover:bg-violet-400 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
                   >
                     Go to Inbox
                   </Link>
@@ -481,7 +481,7 @@ export default function Home() {
                       className="flex min-h-48 flex-col p-4"
                     >
                       <div className="flex items-start gap-3">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200/70 dark:bg-zinc-900/70 dark:text-zinc-300 dark:ring-zinc-800">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-700 ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
                           <Icon className="h-4 w-4" aria-hidden />
                         </span>
                         <div>
@@ -518,7 +518,7 @@ export default function Home() {
                     Captured context waiting for review.
                   </p>
                 </div>
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200/70 dark:bg-zinc-900/70 dark:text-zinc-300 dark:ring-zinc-800">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 text-violet-700 ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
                   {inboxCount === 0 ? (
                     <CheckCircle2 className="h-4 w-4" aria-hidden />
                   ) : (
@@ -549,7 +549,7 @@ export default function Home() {
               </div>
               <Link
                 href="/inbox"
-                className="mt-4 inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-zinc-50 hover:ring-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-950 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:ring-zinc-700 dark:focus-visible:ring-zinc-600 dark:focus-visible:ring-offset-black"
+                className="mt-4 inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50 hover:text-violet-800 hover:ring-violet-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-zinc-950/60 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/25 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
               >
                 Open Inbox
                 <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
@@ -568,7 +568,7 @@ export default function Home() {
                 </div>
                 <Link
                   href="/search"
-                  className="inline-flex w-fit shrink-0 cursor-pointer items-center justify-center rounded-lg bg-zinc-950 px-3 py-2 text-sm font-medium text-white shadow-sm shadow-zinc-950/10 transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none dark:hover:bg-white dark:focus-visible:ring-zinc-600 dark:focus-visible:ring-offset-black"
+                  className="inline-flex w-fit shrink-0 cursor-pointer items-center justify-center rounded-lg bg-violet-700 px-3 py-2 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-violet-500 dark:text-white dark:shadow-none dark:hover:bg-violet-400 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
                 >
                   Open Search
                   <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
@@ -612,7 +612,7 @@ export default function Home() {
                   {[0, 1, 2].map((item) => (
                     <div
                       key={item}
-                      className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-4 py-3 dark:border-zinc-800/80 dark:bg-zinc-900/40"
+                      className="rounded-xl border border-zinc-200/80 bg-white/70 px-4 py-3 dark:border-zinc-800/80 dark:bg-zinc-900/45"
                     >
                       <div className="flex items-center gap-2">
                         <Skeleton className="h-5 w-24 rounded-full" />

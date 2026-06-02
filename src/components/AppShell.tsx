@@ -98,8 +98,8 @@ function ThemeSwitcher() {
               onClick={() => setTheme(value)}
               className={
                 active
-                  ? "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-zinc-200 bg-zinc-100 px-2 py-2 text-center text-[11px] font-medium text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
-                  : "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-transparent px-2 py-2 text-center text-[11px] font-medium text-zinc-600 transition hover:border-zinc-200 hover:bg-zinc-50 hover:text-zinc-950 dark:text-zinc-400 dark:hover:border-zinc-800 dark:hover:bg-zinc-900/70 dark:hover:text-white"
+                  ? "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-violet-200/80 bg-violet-50 px-2 py-2 text-center text-[11px] font-medium text-violet-800 shadow-sm shadow-violet-950/[0.025] dark:border-violet-500/25 dark:bg-violet-500/10 dark:text-violet-200 dark:shadow-none"
+                  : "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-transparent px-2 py-2 text-center text-[11px] font-medium text-zinc-600 transition hover:border-violet-200/70 hover:bg-white hover:text-violet-800 dark:text-zinc-400 dark:hover:border-violet-500/20 dark:hover:bg-zinc-900/70 dark:hover:text-violet-200"
               }
             >
               <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -132,23 +132,26 @@ function NavLinkItem({
   minHeight?: boolean;
   refCallback?: (element: HTMLAnchorElement | null) => void;
 }) {
+  const linkClassName = active
+    ? [
+        "group flex cursor-pointer items-center gap-3 rounded-xl border border-violet-200/80 bg-violet-50 px-3 text-sm font-medium text-violet-950 shadow-sm shadow-violet-950/[0.025] dark:border-violet-500/25 dark:bg-violet-500/10 dark:text-violet-100 dark:shadow-none",
+        minHeight ? "min-h-11" : "py-2",
+      ].join(" ")
+    : [
+        "group flex cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 text-sm font-medium text-zinc-600 transition hover:border-violet-200/70 hover:bg-white hover:text-zinc-950 dark:text-zinc-400 dark:hover:border-violet-500/20 dark:hover:bg-zinc-900/70 dark:hover:text-white",
+        minHeight ? "min-h-11" : "py-2",
+      ].join(" ");
+  const iconClassName = active
+    ? "h-4 w-4 shrink-0 text-violet-700 dark:text-violet-300"
+    : "h-4 w-4 shrink-0 text-zinc-500 transition group-hover:text-violet-700 dark:text-zinc-500 dark:group-hover:text-violet-300";
+
   return (
     <Link
       href={href}
       ref={refCallback}
-      className={
-        active
-          ? [
-              "flex cursor-pointer items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-100 px-3 text-sm font-medium text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white",
-              minHeight ? "min-h-11" : "py-2",
-            ].join(" ")
-          : [
-              "flex cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 text-sm font-medium text-zinc-600 transition hover:border-zinc-200 hover:bg-zinc-50 hover:text-zinc-950 dark:text-zinc-400 dark:hover:border-zinc-800 dark:hover:bg-zinc-900/70 dark:hover:text-white",
-              minHeight ? "min-h-11" : "py-2",
-            ].join(" ")
-      }
+      className={linkClassName}
     >
-      <Icon className="h-4 w-4 shrink-0" aria-hidden />
+      <Icon className={iconClassName} aria-hidden />
       <span>{label}</span>
     </Link>
   );
@@ -175,8 +178,8 @@ function LabsNavSection({
         onClick={() => setOpen(!open)}
         className={
           mobile
-            ? "flex min-h-11 w-full cursor-pointer items-center justify-between rounded-xl px-3 text-left text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900/70 dark:hover:text-white"
-            : "flex w-full cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-950 dark:text-zinc-500 dark:hover:bg-zinc-900/70 dark:hover:text-white"
+            ? "flex min-h-11 w-full cursor-pointer items-center justify-between rounded-xl px-3 text-left text-sm font-medium text-zinc-600 hover:bg-white hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900/70 dark:hover:text-white"
+            : "flex w-full cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium text-zinc-500 hover:bg-white hover:text-zinc-950 dark:text-zinc-500 dark:hover:bg-zinc-900/70 dark:hover:text-white"
         }
       >
         <span>
@@ -231,7 +234,7 @@ function AuthStatus() {
 
   if (loading) {
     return (
-      <div className="rounded-lg bg-zinc-100/60 px-2.5 py-2 text-[11px] text-zinc-500 ring-1 ring-zinc-200/60 dark:bg-zinc-900/35 dark:text-zinc-500 dark:ring-zinc-800/60">
+      <div className="rounded-lg bg-white/65 px-2.5 py-2 text-[11px] text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-900/45 dark:text-zinc-500 dark:ring-zinc-800/70">
         Checking account...
       </div>
     );
@@ -239,7 +242,7 @@ function AuthStatus() {
 
   if (isAuthenticated) {
     return (
-      <div className="rounded-lg bg-zinc-100/55 px-2.5 py-2 ring-1 ring-zinc-200/60 dark:bg-zinc-900/35 dark:ring-zinc-800/60">
+      <div className="rounded-lg bg-white/65 px-2.5 py-2 ring-1 ring-zinc-200/70 dark:bg-zinc-900/45 dark:ring-zinc-800/70">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <p className="truncate text-[11px] font-medium text-zinc-800 dark:text-zinc-200">
@@ -252,7 +255,7 @@ function AuthStatus() {
           <button
             type="button"
             onClick={handleSignOut}
-            className="shrink-0 text-[11px] font-medium text-zinc-500 hover:text-zinc-950 dark:text-zinc-500 dark:hover:text-white"
+            className="shrink-0 text-[11px] font-medium text-zinc-500 hover:text-violet-700 dark:text-zinc-500 dark:hover:text-violet-300"
           >
             Sign out
           </button>
@@ -267,7 +270,7 @@ function AuthStatus() {
   }
 
   return (
-    <div className="rounded-lg bg-zinc-100/55 px-2.5 py-2 ring-1 ring-zinc-200/60 dark:bg-zinc-900/35 dark:ring-zinc-800/60">
+    <div className="rounded-lg bg-white/65 px-2.5 py-2 ring-1 ring-zinc-200/70 dark:bg-zinc-900/45 dark:ring-zinc-800/70">
       <p className="text-[11px] font-medium text-zinc-800 dark:text-zinc-200">
         Local-first mode
       </p>
@@ -277,13 +280,13 @@ function AuthStatus() {
       <div className="mt-1.5 flex gap-2">
         <Link
           href="/login"
-          className="text-[11px] font-medium text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white"
+          className="text-[11px] font-medium text-violet-700 hover:text-violet-900 dark:text-violet-300 dark:hover:text-violet-200"
         >
           Log in
         </Link>
         <Link
           href="/register"
-          className="text-[11px] font-medium text-zinc-500 hover:text-zinc-950 dark:text-zinc-500 dark:hover:text-white"
+          className="text-[11px] font-medium text-zinc-500 hover:text-violet-700 dark:text-zinc-500 dark:hover:text-violet-300"
         >
           Register
         </Link>
@@ -376,7 +379,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [openQuickCapture]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-zinc-50 text-zinc-950 dark:bg-black dark:text-white">
+    <div className="flex h-screen overflow-hidden bg-zinc-100 text-zinc-950 dark:bg-zinc-950 dark:text-white">
       <CommandCenter />
       <QuickCapture
         accessToken={session?.access_token}
@@ -384,9 +387,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         open={quickCaptureOpen}
       />
 
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-zinc-200/80 bg-white/95 dark:border-zinc-800/80 dark:bg-zinc-950 lg:flex">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-zinc-200/80 bg-zinc-50/95 dark:border-zinc-800/80 dark:bg-zinc-950 lg:flex">
         <div className="flex shrink-0 items-center gap-3 px-5 pt-5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-100 text-zinc-900 shadow-sm shadow-zinc-950/[0.03] dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:shadow-none">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-violet-200/70 bg-violet-50 text-violet-800 shadow-sm shadow-violet-950/[0.03] dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-200 dark:shadow-none">
             <BrandMark className="h-5 w-5" />
           </div>
           <div>
@@ -454,11 +457,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           />
         </nav>
 
-        <div className="shrink-0 border-t border-zinc-200/80 bg-white/95 px-5 pb-5 pt-4 dark:border-zinc-800/80 dark:bg-zinc-950">
+        <div className="shrink-0 border-t border-zinc-200/80 bg-zinc-50/95 px-5 pb-5 pt-4 dark:border-zinc-800/80 dark:bg-zinc-950">
           <button
             type="button"
             onClick={openQuickCapture}
-            className="mb-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-950 px-3 py-2.5 text-sm font-medium text-white shadow-sm shadow-zinc-950/10 transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none dark:hover:bg-white dark:focus-visible:ring-zinc-600"
+            className="mb-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-700 px-3 py-2.5 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 dark:bg-violet-500 dark:text-white dark:shadow-none dark:hover:bg-violet-400 dark:focus-visible:ring-violet-400"
           >
             <Plus className="h-4 w-4" aria-hidden />
             Capture
@@ -470,11 +473,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <div className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden bg-zinc-50 dark:bg-black">
-        <header className="sticky top-0 z-30 border-b border-zinc-200/70 bg-white/90 px-4 py-3 backdrop-blur dark:border-zinc-800/70 dark:bg-black/85 lg:hidden">
+      <div className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden bg-zinc-100 dark:bg-zinc-950">
+        <header className="sticky top-0 z-30 border-b border-zinc-200/70 bg-zinc-50/90 px-4 py-3 backdrop-blur dark:border-zinc-800/70 dark:bg-zinc-950/90 lg:hidden">
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2.5">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-900 ring-1 ring-zinc-200/80 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-800">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-800 ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-200 dark:ring-violet-500/20">
                 <BrandMark className="h-4.5 w-4.5" />
               </span>
               <p className="truncate text-sm font-semibold text-zinc-950 dark:text-white">
@@ -486,7 +489,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               aria-label="Open navigation menu"
               aria-expanded={mobileMenuOpen}
               onClick={() => setMobileMenuOpen(true)}
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-zinc-700 ring-1 ring-zinc-200/80 hover:bg-zinc-50 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:bg-zinc-950 dark:text-zinc-300 dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:text-white dark:focus-visible:ring-zinc-600"
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/80 text-zinc-700 ring-1 ring-zinc-200/80 hover:bg-white hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 dark:bg-zinc-900/70 dark:text-zinc-300 dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:text-violet-300 dark:focus-visible:ring-violet-400"
             >
               <Menu className="h-5 w-5" aria-hidden />
             </button>
@@ -507,12 +510,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               role="dialog"
               aria-modal="true"
               aria-label="Navigation menu"
-              className="app-scrollbar ml-auto flex h-full w-full max-w-sm flex-col overflow-y-auto bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] shadow-2xl shadow-zinc-950/20 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:shadow-black/40 dark:ring-zinc-800"
+              className="app-scrollbar ml-auto flex h-full w-full max-w-sm flex-col overflow-y-auto bg-zinc-50 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] shadow-2xl shadow-zinc-950/20 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:shadow-black/40 dark:ring-zinc-800"
               onMouseDown={(event) => event.stopPropagation()}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-100 text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-violet-200/70 bg-violet-50 text-violet-800 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-200">
                     <BrandMark className="h-5 w-5" />
                   </span>
                   <div className="min-w-0">
@@ -528,7 +531,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   type="button"
                   aria-label="Close"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-zinc-600 ring-1 ring-zinc-200/80 hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:text-zinc-300 dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:text-white dark:focus-visible:ring-zinc-600"
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-zinc-600 ring-1 ring-zinc-200/80 hover:bg-white hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 dark:text-zinc-300 dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:text-violet-300 dark:focus-visible:ring-violet-400"
                 >
                   <X className="h-5 w-5" aria-hidden />
                 </button>
@@ -582,7 +585,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <button
                   type="button"
                   onClick={openQuickCapture}
-                  className="mb-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-zinc-950 px-3 text-sm font-medium text-white shadow-sm shadow-zinc-950/10 transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none dark:hover:bg-white dark:focus-visible:ring-zinc-600"
+                  className="mb-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-violet-700 px-3 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 dark:bg-violet-500 dark:text-white dark:shadow-none dark:hover:bg-violet-400 dark:focus-visible:ring-violet-400"
                 >
                   <Plus className="h-4 w-4" aria-hidden />
                   Capture
@@ -602,7 +605,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <button
           type="button"
           onClick={openQuickCapture}
-          className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-40 inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-zinc-950 px-4 text-sm font-medium text-white shadow-lg shadow-zinc-950/20 transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-black/30 dark:hover:bg-white dark:focus-visible:ring-zinc-600 lg:hidden"
+          className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-40 inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-violet-700 px-4 text-sm font-medium text-white shadow-lg shadow-violet-950/20 transition hover:bg-violet-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 dark:bg-violet-500 dark:text-white dark:shadow-black/30 dark:hover:bg-violet-400 dark:focus-visible:ring-violet-400 lg:hidden"
           aria-label="Open quick capture"
         >
           <Plus className="h-5 w-5" aria-hidden />
