@@ -56,7 +56,7 @@ export function CommandPalette({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-zinc-950/45 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-[calc(3rem+env(safe-area-inset-top))] backdrop-blur-sm dark:bg-black/65 sm:items-start sm:px-4 sm:py-20"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-zinc-950/45 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-[calc(3rem+env(safe-area-inset-top))] backdrop-blur-sm dark:bg-zinc-950/70 sm:items-start sm:px-4 sm:py-20"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
@@ -67,13 +67,13 @@ export function CommandPalette({
       <div
         aria-labelledby="command-palette-title"
         aria-modal="true"
-        className="flex max-h-[calc(100dvh-4rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl shadow-zinc-950/15 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:shadow-black/40 dark:ring-zinc-800 sm:max-h-[min(40rem,84vh)]"
+        className="flex max-h-[calc(100dvh-4rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white/95 shadow-2xl shadow-zinc-950/15 ring-1 ring-zinc-200/80 dark:bg-zinc-900/95 dark:shadow-black/40 dark:ring-zinc-800 sm:max-h-[min(40rem,84vh)]"
         role="dialog"
       >
-        <div className="shrink-0 border-b border-zinc-200/70 px-4 py-3 dark:border-zinc-800/80 sm:px-5 sm:py-4">
+        <div className="shrink-0 border-b border-zinc-200/75 bg-zinc-50/65 px-4 py-3 dark:border-zinc-800/80 dark:bg-zinc-950/35 sm:px-5 sm:py-4">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+              <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300">
                 Orvia Command Center
               </p>
               <p className="mt-1 truncate text-sm text-zinc-600 dark:text-zinc-400">
@@ -81,23 +81,23 @@ export function CommandPalette({
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
-              <kbd className="hidden h-8 items-center rounded-lg border border-zinc-200 bg-zinc-100 px-2.5 text-[11px] font-semibold text-zinc-500 shadow-sm shadow-zinc-950/[0.02] dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-500 sm:inline-flex">
+              <kbd className="hidden h-7 items-center rounded-md border border-zinc-200/70 bg-zinc-50/80 px-2 text-[10px] font-medium text-zinc-500 shadow-sm shadow-zinc-950/[0.015] dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-500 sm:inline-flex">
                 Esc
               </kbd>
               <button
                 type="button"
                 aria-label="Close"
                 onClick={() => onOpenChange(false)}
-                className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-zinc-200 bg-zinc-100 text-zinc-600 shadow-sm shadow-zinc-950/[0.02] transition-colors hover:bg-zinc-200/70 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white dark:focus-visible:ring-zinc-600"
+                className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md border border-zinc-200/70 bg-white/75 text-zinc-500 shadow-sm shadow-zinc-950/[0.015] transition-colors hover:border-violet-200 hover:bg-violet-50/80 hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400 dark:hover:border-violet-500/25 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:focus-visible:ring-violet-400"
               >
-                <X className="h-4 w-4 shrink-0" aria-hidden strokeWidth={2.25} />
+                <X className="h-3.5 w-3.5 shrink-0" aria-hidden strokeWidth={2.25} />
               </button>
             </div>
           </div>
-          <div className="mt-4 flex h-11 items-center gap-3 rounded-xl bg-zinc-100/70 px-3 ring-1 ring-zinc-200/70 dark:bg-zinc-900/45 dark:ring-zinc-800/80">
+          <div className="mt-4 flex h-11 items-center gap-3 rounded-xl bg-white px-3 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/80 dark:bg-zinc-900/70 dark:shadow-none dark:ring-zinc-800/80">
             <Search
               aria-hidden
-              className="h-4.5 w-4.5 shrink-0 text-zinc-500 dark:text-zinc-500"
+              className="h-4.5 w-4.5 shrink-0 text-violet-600 dark:text-violet-300"
             />
             <label id="command-palette-title" className="sr-only">
               Command palette
@@ -120,7 +120,7 @@ export function CommandPalette({
 
         <div
           id="command-palette-results"
-          className="app-scrollbar min-h-0 flex-1 overscroll-contain scroll-py-4 overflow-y-auto px-2 py-3 sm:px-3"
+          className="app-scrollbar min-h-0 flex-1 overscroll-contain scroll-py-4 overflow-y-auto bg-white/75 px-2 py-3 dark:bg-zinc-900/75 sm:px-3"
           role="listbox"
         >
           {commands.length > 0 ? (
@@ -157,10 +157,10 @@ export function CommandPalette({
                           aria-selected={active}
                           className={
                             active
-                              ? "flex w-full cursor-pointer items-center gap-3 rounded-xl bg-zinc-950 px-3 py-2.5 text-left text-white transition-colors dark:bg-zinc-100 dark:text-zinc-950"
+                              ? "flex w-full cursor-pointer items-center gap-3 rounded-xl border border-violet-200/80 bg-violet-50 px-3 py-2.5 text-left text-violet-950 shadow-sm shadow-violet-950/[0.025] transition-colors dark:border-violet-500/25 dark:bg-violet-500/10 dark:text-violet-100 dark:shadow-none"
                               : primary
-                                ? "flex w-full cursor-pointer items-center gap-3 rounded-xl bg-zinc-100/70 px-3 py-2.5 text-left text-zinc-800 ring-1 ring-zinc-200/60 transition-colors hover:bg-white hover:text-zinc-950 hover:ring-zinc-300 dark:bg-zinc-900/45 dark:text-zinc-200 dark:ring-zinc-800/70 dark:hover:bg-zinc-900 dark:hover:text-white dark:hover:ring-zinc-700"
-                                : "flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left text-zinc-700 transition-colors hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white"
+                                ? "flex w-full cursor-pointer items-center gap-3 rounded-xl bg-zinc-50/90 px-3 py-2.5 text-left text-zinc-800 ring-1 ring-zinc-200/70 transition-colors hover:bg-white hover:text-violet-800 hover:ring-violet-200/80 dark:bg-zinc-950/35 dark:text-zinc-200 dark:ring-zinc-800/70 dark:hover:bg-violet-500/10 dark:hover:text-violet-100 dark:hover:ring-violet-500/25"
+                                : "flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left text-zinc-700 transition-colors hover:bg-violet-50 hover:text-violet-800 dark:text-zinc-300 dark:hover:bg-violet-500/10 dark:hover:text-violet-100"
                           }
                           onClick={() => onCommandSelect(command)}
                           onMouseEnter={() => onActiveIndexChange(index)}
@@ -169,10 +169,10 @@ export function CommandPalette({
                           <span
                             className={
                               active
-                                ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white dark:bg-zinc-950/10 dark:text-zinc-950"
+                                ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-violet-700 shadow-sm shadow-violet-950/[0.025] ring-1 ring-violet-200/75 dark:bg-violet-500/15 dark:text-violet-200 dark:shadow-none dark:ring-violet-500/20"
                                 : primary
-                                  ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-zinc-800 shadow-sm shadow-zinc-950/[0.03] dark:bg-zinc-950 dark:text-zinc-200 dark:shadow-none"
-                                  : "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400"
+                                  ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-violet-700 shadow-sm shadow-zinc-950/[0.03] dark:bg-zinc-950/60 dark:text-violet-300 dark:shadow-none"
+                                  : "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-600 dark:bg-zinc-950/60 dark:text-zinc-400"
                             }
                           >
                             <Icon className="h-4 w-4" aria-hidden />
@@ -185,7 +185,7 @@ export function CommandPalette({
                               <span
                                 className={
                                   active
-                                    ? "mt-0.5 block truncate text-xs text-zinc-300 dark:text-zinc-600"
+                                    ? "mt-0.5 block truncate text-xs text-violet-700/80 dark:text-violet-200/70"
                                     : "mt-0.5 block truncate text-xs text-zinc-500 dark:text-zinc-500"
                                 }
                               >

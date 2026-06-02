@@ -235,8 +235,8 @@ export default function InboxPage() {
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 placeholder="Remind me to call John tomorrow"
-                rows={7}
-                className="w-full resize-y rounded-2xl bg-zinc-50 p-4 text-base leading-7 text-zinc-950 outline-none ring-1 ring-zinc-200/80 transition placeholder:text-zinc-400 focus:bg-white focus:ring-2 focus:ring-zinc-300 dark:bg-black/70 dark:text-white dark:ring-zinc-800 dark:placeholder:text-zinc-600 dark:focus:ring-zinc-700"
+                rows={4}
+                className="min-h-32 w-full resize-y rounded-2xl bg-zinc-50 p-4 text-base leading-7 text-zinc-950 outline-none ring-1 ring-zinc-200/80 transition placeholder:text-zinc-400 focus:bg-white focus:ring-2 focus:ring-zinc-300 dark:bg-black/70 dark:text-white dark:ring-zinc-800 dark:placeholder:text-zinc-600 dark:focus:ring-zinc-700"
               />
 
               <div className="mt-4 flex flex-wrap gap-2">
@@ -411,6 +411,7 @@ export default function InboxPage() {
             {queuedCaptures.length === 0 ? (
               <EmptyState
                 icon={Inbox}
+                size="sm"
                 title="Inbox zero"
                 description="No captures are waiting. Drop a thought here or use + Capture when something needs a home."
               />
