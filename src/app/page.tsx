@@ -126,16 +126,17 @@ function CompactEmptyState({
   title: string;
 }) {
   return (
-    <div className="rounded-xl bg-zinc-50/75 px-3.5 py-4 ring-1 ring-inset ring-zinc-200/70 dark:bg-zinc-900/35 dark:ring-zinc-800/70">
-      <div className="flex items-start gap-3">
-        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800">
-          <Icon className="h-3.5 w-3.5" aria-hidden />
-        </span>
-        <div>
-          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+    <div className="border-t border-zinc-200/70 pt-3 dark:border-zinc-800/70">
+      <div className="flex items-start gap-2.5">
+        <Icon
+          className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+          aria-hidden
+        />
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
             {title}
           </p>
-          <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
+          <p className="mt-0.5 text-xs leading-5 text-zinc-500 dark:text-zinc-500">
             {description}
           </p>
         </div>
@@ -294,17 +295,17 @@ export default function Home() {
     return [
       {
         title: "High priority",
-        description: "Critical or high-priority work that is still open.",
+        description: "Open high-priority tasks.",
         emptyTitle: "No urgent tasks today.",
-        emptyDescription: "High-priority work will surface here when it exists.",
+        emptyDescription: "High-priority work will appear here.",
         icon: TriangleAlert,
         tasks: sortByPriorityAndDate(activeTasks.filter(isHighPriorityTask)),
       },
       {
         title: "Overdue",
-        description: "Open tasks with due dates before today.",
+        description: "Tasks with past due dates.",
         emptyTitle: "Nothing overdue.",
-        emptyDescription: "No past-due tasks need attention right now.",
+        emptyDescription: "No past-due work needs attention.",
         icon: Clock,
         tasks: sortByPriorityAndDate(overdueTasks),
       },
@@ -312,7 +313,7 @@ export default function Home() {
         title: "Due today",
         description: "Tasks scheduled for today.",
         emptyTitle: "Nothing due today.",
-        emptyDescription: "Your dated task lane is clear for today.",
+        emptyDescription: "Your dated task lane is clear.",
         icon: CheckCircle2,
         tasks: sortByPriorityAndDate(todayTasks),
       },
@@ -334,18 +335,18 @@ export default function Home() {
 
   return (
     <AppShell>
-      <div className="px-4 py-6 sm:px-8 sm:py-9 lg:px-10">
-        <div className="mx-auto max-w-5xl">
-          <div className="rounded-3xl bg-white px-5 py-5 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:shadow-none dark:ring-zinc-800/70 sm:px-6 sm:py-6">
+      <div className="px-4 py-5 sm:px-8 sm:py-8 lg:px-10">
+        <div className="mx-auto max-w-6xl">
+          <div className="rounded-2xl bg-white px-5 py-5 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:shadow-none dark:ring-zinc-800/70 sm:px-6">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <Badge>Daily focus</Badge>
-                <h1 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
+                <h1 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-3xl">
                   Priorities, context, and what changed.
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-500 sm:text-base">
-                  Start here to see what needs attention, clear captured context,
-                  review recent activity, and decide the next action.
+                <p className="mt-2 max-w-xl text-sm leading-6 text-zinc-600 dark:text-zinc-500">
+                  See what needs attention, clear captured context, and decide
+                  the next action.
                 </p>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row">
@@ -369,7 +370,7 @@ export default function Home() {
           </div>
 
           {onboardingLoaded && showOnboarding ? (
-            <Card className="mt-6 overflow-hidden p-0">
+            <Card className="mt-5 overflow-hidden p-0">
               <div className="border-b border-zinc-200/80 p-5 dark:border-zinc-800/80 sm:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
@@ -453,15 +454,15 @@ export default function Home() {
             </Card>
           ) : null}
 
-          <Section className="mt-8">
+          <Section className="mt-7">
             <SectionHeader
               title="What matters today"
-              subtitle="High-priority, overdue, and due-today tasks."
+              subtitle="Priority, overdue, and due-today work."
             />
             {!tasksLoaded ? (
               <div className="grid gap-3 lg:grid-cols-3">
                 {[0, 1, 2].map((item) => (
-                  <Card key={item} className="min-h-64 p-4 sm:p-5">
+                  <Card key={item} className="min-h-48 p-4">
                     <Skeleton className="h-5 w-32" />
                     <Skeleton className="mt-3 h-4 w-full" />
                     <Skeleton className="mt-5 h-16 w-full rounded-xl" />
@@ -477,22 +478,22 @@ export default function Home() {
                   return (
                     <Card
                       key={bucket.title}
-                      className="flex min-h-64 flex-col p-4 sm:p-5"
+                      className="flex min-h-48 flex-col p-4"
                     >
                       <div className="flex items-start gap-3">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200/70 dark:bg-zinc-900/70 dark:text-zinc-300 dark:ring-zinc-800">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200/70 dark:bg-zinc-900/70 dark:text-zinc-300 dark:ring-zinc-800">
                           <Icon className="h-4 w-4" aria-hidden />
                         </span>
                         <div>
                           <h2 className="text-sm font-semibold text-zinc-950 dark:text-white">
                             {bucket.title}
                           </h2>
-                          <p className="mt-1 text-sm leading-6 text-zinc-500 dark:text-zinc-500">
+                          <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-500">
                             {bucket.description}
                           </p>
                         </div>
                       </div>
-                      <div className="mt-4 flex-1">
+                      <div className="mt-3 flex-1">
                         <TaskSignalList
                           tasks={bucket.tasks}
                           emptyTitle={bucket.emptyTitle}
@@ -506,31 +507,46 @@ export default function Home() {
             )}
           </Section>
 
-          <div className="mt-8 grid gap-3 lg:grid-cols-2">
+          <div className="mt-7 grid gap-3 lg:grid-cols-2">
             <Section className="h-full">
               <SectionHeader
                 title="Inbox"
-                subtitle="Captured context waiting to be processed."
+                subtitle="Captured context waiting for review."
               />
-              <Card className="flex h-full flex-col p-5">
+              <Card className="flex h-full flex-col p-4">
                 <div className="flex flex-1 items-start justify-between gap-4">
                   <div>
-                    <p className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-                      {inboxCount}
-                    </p>
-                    <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
-                      {inboxCount === 0
-                        ? "Nothing waiting in Inbox."
-                        : "Captures ready for review."}
-                    </p>
+                    {inboxCount === 0 ? (
+                      <>
+                        <p className="text-sm font-semibold text-zinc-950 dark:text-white">
+                          Inbox clear
+                        </p>
+                        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
+                          Nothing waiting for review.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                          {inboxCount}
+                        </p>
+                        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
+                          Captures ready for review.
+                        </p>
+                      </>
+                    )}
                   </div>
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200/70 dark:bg-zinc-900/70 dark:text-zinc-300 dark:ring-zinc-800">
-                    <Inbox className="h-5 w-5" aria-hidden />
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200/70 dark:bg-zinc-900/70 dark:text-zinc-300 dark:ring-zinc-800">
+                    {inboxCount === 0 ? (
+                      <CheckCircle2 className="h-4 w-4" aria-hidden />
+                    ) : (
+                      <Inbox className="h-4 w-4" aria-hidden />
+                    )}
                   </span>
                 </div>
                 <Link
                   href="/inbox"
-                  className="mt-5 inline-flex w-fit cursor-pointer items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-zinc-50 hover:ring-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-950 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:ring-zinc-700 dark:focus-visible:ring-zinc-600 dark:focus-visible:ring-offset-black"
+                  className="mt-4 inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-zinc-50 hover:ring-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-950 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:ring-zinc-700 dark:focus-visible:ring-zinc-600 dark:focus-visible:ring-offset-black"
                 >
                   Open Inbox
                   <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
@@ -541,22 +557,22 @@ export default function Home() {
             <Section className="h-full">
               <SectionHeader
                 title="Find context"
-                subtitle="Search across notes, tasks, captures, and timeline context."
+                subtitle="Search notes, tasks, captures, and activity."
               />
-              <Card className="flex h-full flex-col p-5">
+              <Card className="flex h-full flex-col p-4">
                 <div className="flex flex-1 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <h2 className="text-base font-semibold text-zinc-950 dark:text-white">
-                      Search notes, tasks, and context.
+                      Find the thing you half-remember.
                     </h2>
-                    <p className="mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-500">
-                      Use Search when the next action depends on remembered
-                      details, older notes, or recent activity.
+                    <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
+                      Jump into saved notes, tasks, captures, and recent
+                      changes.
                     </p>
                   </div>
                   <Link
                     href="/search"
-                    className="inline-flex w-fit shrink-0 cursor-pointer items-center justify-center rounded-xl bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-zinc-950/10 transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none dark:hover:bg-white dark:focus-visible:ring-zinc-600 dark:focus-visible:ring-offset-black"
+                    className="inline-flex w-fit shrink-0 cursor-pointer items-center justify-center rounded-lg bg-zinc-950 px-3 py-2 text-sm font-medium text-white shadow-sm shadow-zinc-950/10 transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none dark:hover:bg-white dark:focus-visible:ring-zinc-600 dark:focus-visible:ring-offset-black"
                   >
                     Open Search
                     <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
@@ -566,21 +582,27 @@ export default function Home() {
             </Section>
           </div>
 
-          <Section className="mt-8">
+          <Section className="mt-7">
             <SectionHeader
               title="Recent activity"
-              subtitle="The latest recorded task, note, and import events."
+              subtitle="Latest recorded task, note, and import events."
             />
-            <Card className="p-4 sm:p-5">
+            <Card className="p-4">
               {!accessToken && !authLoading ? (
-                <div className="rounded-2xl bg-zinc-50/75 p-5 ring-1 ring-inset ring-zinc-200/70 dark:bg-zinc-900/35 dark:ring-zinc-800/70">
-                  <p className="text-sm font-semibold text-zinc-950 dark:text-white">
-                    Activity appears after sign in.
-                  </p>
-                  <p className="mt-1 max-w-xl text-sm leading-6 text-zinc-500 dark:text-zinc-500">
-                    Once authenticated, task and note changes are recorded here
-                    so the dashboard can show what changed recently.
-                  </p>
+                <div className="flex items-start gap-2.5">
+                  <Clock
+                    className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400"
+                    aria-hidden
+                  />
+                  <div>
+                    <p className="text-sm font-semibold text-zinc-950 dark:text-white">
+                      Activity appears after sign in.
+                    </p>
+                    <p className="mt-1 max-w-xl text-sm leading-5 text-zinc-500 dark:text-zinc-500">
+                      Once authenticated, task and note changes are recorded
+                      here so the dashboard can show recent changes.
+                    </p>
+                  </div>
                 </div>
               ) : !activityLoaded ? (
                 <div className="space-y-3" aria-label="Loading recent activity">
@@ -599,14 +621,20 @@ export default function Home() {
                   ))}
                 </div>
               ) : activityEvents.length === 0 ? (
-                <div className="rounded-2xl bg-zinc-50/75 p-5 ring-1 ring-inset ring-zinc-200/70 dark:bg-zinc-900/35 dark:ring-zinc-800/70">
-                  <p className="text-sm font-semibold text-zinc-950 dark:text-white">
-                    No recent activity yet.
-                  </p>
-                  <p className="mt-1 max-w-xl text-sm leading-6 text-zinc-500 dark:text-zinc-500">
-                    {activityError ??
-                      "Create or update a task or note, then this feed will show the latest changes."}
-                  </p>
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2
+                    className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400"
+                    aria-hidden
+                  />
+                  <div>
+                    <p className="text-sm font-semibold text-zinc-950 dark:text-white">
+                      No recent activity yet.
+                    </p>
+                    <p className="mt-1 max-w-xl text-sm leading-5 text-zinc-500 dark:text-zinc-500">
+                      {activityError ??
+                        "Create or update a task or note to start your activity feed."}
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <ul className="space-y-2">
@@ -620,20 +648,19 @@ export default function Home() {
             </Card>
           </Section>
 
-          <Section className="mt-8">
+          <Section className="mt-7">
             <SectionHeader
-              title="What should I do next?"
-              subtitle="A fast capture point for thoughts that should not wait."
+              title="Next action"
+              subtitle="Capture something before it turns into overhead."
             />
-            <Card className="p-5 sm:p-6">
+            <Card className="p-4 sm:p-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-base font-semibold text-zinc-950 dark:text-white">
                     Add the next piece of context.
                   </h2>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500 dark:text-zinc-500">
-                    Use this when something needs to become a task or note, but
-                    does not need a full workflow yet.
+                  <p className="mt-1 max-w-2xl text-sm leading-5 text-zinc-500 dark:text-zinc-500">
+                    Create a task or note without leaving the dashboard.
                   </p>
                 </div>
                 <Button
