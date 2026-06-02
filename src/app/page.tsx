@@ -508,78 +508,81 @@ export default function Home() {
           </Section>
 
           <div className="mt-7 grid gap-3 lg:grid-cols-2">
-            <Section className="h-full">
-              <SectionHeader
-                title="Inbox"
-                subtitle="Captured context waiting for review."
-              />
-              <Card className="flex h-full flex-col p-4">
-                <div className="flex flex-1 items-start justify-between gap-4">
-                  <div>
-                    {inboxCount === 0 ? (
-                      <>
-                        <p className="text-sm font-semibold text-zinc-950 dark:text-white">
-                          Inbox clear
-                        </p>
-                        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
-                          Nothing waiting for review.
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-                          {inboxCount}
-                        </p>
-                        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
-                          Captures ready for review.
-                        </p>
-                      </>
-                    )}
-                  </div>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200/70 dark:bg-zinc-900/70 dark:text-zinc-300 dark:ring-zinc-800">
-                    {inboxCount === 0 ? (
-                      <CheckCircle2 className="h-4 w-4" aria-hidden />
-                    ) : (
-                      <Inbox className="h-4 w-4" aria-hidden />
-                    )}
-                  </span>
+            <Card className="p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-semibold tracking-tight text-zinc-950 dark:text-white">
+                    Inbox
+                  </h2>
+                  <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
+                    Captured context waiting for review.
+                  </p>
+                </div>
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200/70 dark:bg-zinc-900/70 dark:text-zinc-300 dark:ring-zinc-800">
+                  {inboxCount === 0 ? (
+                    <CheckCircle2 className="h-4 w-4" aria-hidden />
+                  ) : (
+                    <Inbox className="h-4 w-4" aria-hidden />
+                  )}
+                </span>
+              </div>
+              <div className="mt-4 border-t border-zinc-200/70 pt-3 dark:border-zinc-800/70">
+                {inboxCount === 0 ? (
+                  <>
+                    <p className="text-sm font-semibold text-zinc-950 dark:text-white">
+                      Inbox clear
+                    </p>
+                    <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
+                      Nothing waiting for review.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                      {inboxCount}
+                    </p>
+                    <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
+                      Captures ready for review.
+                    </p>
+                  </>
+                )}
+              </div>
+              <Link
+                href="/inbox"
+                className="mt-4 inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-zinc-50 hover:ring-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-950 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:ring-zinc-700 dark:focus-visible:ring-zinc-600 dark:focus-visible:ring-offset-black"
+              >
+                Open Inbox
+                <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
+              </Link>
+            </Card>
+
+            <Card className="p-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold tracking-tight text-zinc-950 dark:text-white">
+                    Find context
+                  </h2>
+                  <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
+                    Search notes, tasks, captures, and activity.
+                  </p>
                 </div>
                 <Link
-                  href="/inbox"
-                  className="mt-4 inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-zinc-50 hover:ring-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-950 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:ring-zinc-700 dark:focus-visible:ring-zinc-600 dark:focus-visible:ring-offset-black"
+                  href="/search"
+                  className="inline-flex w-fit shrink-0 cursor-pointer items-center justify-center rounded-lg bg-zinc-950 px-3 py-2 text-sm font-medium text-white shadow-sm shadow-zinc-950/10 transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none dark:hover:bg-white dark:focus-visible:ring-zinc-600 dark:focus-visible:ring-offset-black"
                 >
-                  Open Inbox
+                  Open Search
                   <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
                 </Link>
-              </Card>
-            </Section>
-
-            <Section className="h-full">
-              <SectionHeader
-                title="Find context"
-                subtitle="Search notes, tasks, captures, and activity."
-              />
-              <Card className="flex h-full flex-col p-4">
-                <div className="flex flex-1 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <h2 className="text-base font-semibold text-zinc-950 dark:text-white">
-                      Find the thing you half-remember.
-                    </h2>
-                    <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
-                      Jump into saved notes, tasks, captures, and recent
-                      changes.
-                    </p>
-                  </div>
-                  <Link
-                    href="/search"
-                    className="inline-flex w-fit shrink-0 cursor-pointer items-center justify-center rounded-lg bg-zinc-950 px-3 py-2 text-sm font-medium text-white shadow-sm shadow-zinc-950/10 transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-none dark:hover:bg-white dark:focus-visible:ring-zinc-600 dark:focus-visible:ring-offset-black"
-                  >
-                    Open Search
-                    <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
-                  </Link>
-                </div>
-              </Card>
-            </Section>
+              </div>
+              <div className="mt-4 border-t border-zinc-200/70 pt-3 dark:border-zinc-800/70">
+                <p className="text-sm font-semibold text-zinc-950 dark:text-white">
+                  Find the thing you half-remember.
+                </p>
+                <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
+                  Jump into saved notes, tasks, captures, and recent changes.
+                </p>
+              </div>
+            </Card>
           </div>
 
           <Section className="mt-7">
