@@ -24,11 +24,11 @@ export function EmptyState({
   return (
     <div
       className={[
-        "rounded-2xl bg-zinc-100/60 text-center ring-1 ring-inset ring-zinc-200/70 dark:bg-zinc-900/35 dark:ring-zinc-800/70",
+        "rounded-2xl bg-white/75 text-center shadow-sm shadow-zinc-950/[0.025] ring-1 ring-inset ring-zinc-200/75 dark:bg-zinc-900/45 dark:shadow-none dark:ring-zinc-800/75",
         sizeClassNames[size],
       ].join(" ")}
     >
-      <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-white text-zinc-500 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:shadow-none dark:ring-zinc-800/80">
+      <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-violet-50 text-violet-600 shadow-sm shadow-violet-950/[0.03] ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-300 dark:shadow-none dark:ring-violet-500/20">
         <Icon className="h-4 w-4" aria-hidden />
       </div>
       <h3 className="mt-3 text-sm font-medium text-zinc-800 dark:text-zinc-200">
