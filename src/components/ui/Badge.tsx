@@ -14,7 +14,7 @@ type BadgeProps = HTMLAttributes<HTMLSpanElement> & {
 
 const variantClassNames: Record<BadgeVariant, string> = {
   default:
-    "bg-violet-50 text-violet-700 ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20",
+    "bg-violet-50/80 text-violet-700 ring-1 ring-violet-200/65 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20",
   success:
     "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/70 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20",
   warning:

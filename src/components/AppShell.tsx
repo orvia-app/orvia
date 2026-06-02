@@ -461,7 +461,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <button
             type="button"
             onClick={openQuickCapture}
-            className="mb-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-700 px-3 py-2.5 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 dark:bg-violet-500 dark:text-white dark:shadow-none dark:hover:bg-violet-400 dark:focus-visible:ring-violet-400"
+            className="mb-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-800 px-3 py-2.5 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 dark:bg-violet-600/85 dark:text-white dark:shadow-none dark:hover:bg-violet-600 dark:focus-visible:ring-violet-400"
           >
             <Plus className="h-4 w-4" aria-hidden />
             Capture
@@ -585,7 +585,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <button
                   type="button"
                   onClick={openQuickCapture}
-                  className="mb-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-violet-700 px-3 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 dark:bg-violet-500 dark:text-white dark:shadow-none dark:hover:bg-violet-400 dark:focus-visible:ring-violet-400"
+                  className="mb-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-violet-800 px-3 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 dark:bg-violet-600/85 dark:text-white dark:shadow-none dark:hover:bg-violet-600 dark:focus-visible:ring-violet-400"
                 >
                   <Plus className="h-4 w-4" aria-hidden />
                   Capture
@@ -605,7 +605,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <button
           type="button"
           onClick={openQuickCapture}
-          className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-40 inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-violet-700 px-4 text-sm font-medium text-white shadow-lg shadow-violet-950/20 transition hover:bg-violet-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 dark:bg-violet-500 dark:text-white dark:shadow-black/30 dark:hover:bg-violet-400 dark:focus-visible:ring-violet-400 lg:hidden"
+          className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-40 inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-violet-800 px-4 text-sm font-medium text-white shadow-lg shadow-violet-950/20 transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 dark:bg-violet-600/85 dark:text-white dark:shadow-black/30 dark:hover:bg-violet-600 dark:focus-visible:ring-violet-400 lg:hidden"
           aria-label="Open quick capture"
         >
           <Plus className="h-5 w-5" aria-hidden />

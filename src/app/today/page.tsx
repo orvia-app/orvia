@@ -13,10 +13,13 @@ import {
 
 import { AppShell } from "@/components/AppShell";
 import { useAuthSession } from "@/components/auth/useAuthSession";
-import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
-import { Section } from "@/components/ui/Section";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import {
+  Page,
+  PageHeader,
+  PageSection,
+  PageSectionHeader,
+} from "@/components/ui/Page";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { fetchActivitiesViaApi } from "@/lib/activities-api";
 import { getQuickCaptures } from "@/lib/quick-captures";
@@ -278,24 +281,19 @@ export default function TodayPage() {
 
   return (
     <AppShell>
-      <div className="px-4 py-5 sm:px-8 sm:py-8 lg:px-10">
-        <div className="mx-auto max-w-6xl">
-          <div className="rounded-2xl bg-white/85 px-5 py-5 shadow-sm shadow-zinc-950/[0.035] ring-1 ring-zinc-200/75 dark:bg-zinc-900/70 dark:shadow-none dark:ring-zinc-800/75 sm:px-6">
-            <Badge>Today</Badge>
-            <h1 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-3xl">
-              Today&apos;s plan
-            </h1>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-zinc-600 dark:text-zinc-500">
-              Focus on the highest-impact work first.
-            </p>
-          </div>
+      <Page>
+        <PageHeader
+          eyebrow="Today"
+          title="Today's plan"
+          description="Focus on the highest-impact work first."
+        />
 
-          <div className="mt-7 grid gap-3 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)]">
+          <div className="mt-7 grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(260px,1fr)]">
             <div className="space-y-7">
-              <Section>
-                <SectionHeader
+              <PageSection className="mt-0">
+                <PageSectionHeader
                   title="Top priority"
-                  subtitle="Start here before pulling in more work."
+                  description="Start here before pulling in more work."
                 />
                 <Card className="p-4 sm:p-5">
                   {!tasksLoaded ? (
@@ -339,12 +337,12 @@ export default function TodayPage() {
                     />
                   )}
                 </Card>
-              </Section>
+              </PageSection>
 
-              <Section>
-                <SectionHeader
+              <PageSection className="mt-0">
+                <PageSectionHeader
                   title="Focus queue"
-                  subtitle="Up to five actionable tasks for today."
+                  description="Up to five actionable tasks for today."
                 />
                 <Card className="p-0">
                   {!tasksLoaded ? (
@@ -395,17 +393,17 @@ export default function TodayPage() {
                     </ul>
                   )}
                 </Card>
-              </Section>
+              </PageSection>
             </div>
 
-            <div className="space-y-7">
-              <Section>
-                <SectionHeader
+            <div className="space-y-5">
+              <PageSection className="mt-0">
+                <PageSectionHeader
                   title="Inbox waiting"
-                  subtitle="Captured items ready for review."
+                  description="Captured items ready for review."
                 />
-                <Card className="p-4">
-                  <div className="flex items-start justify-between gap-4">
+                <Card variant="secondary" className="p-3.5">
+                  <div className="flex items-start justify-between gap-3">
                     <div>
                       {inboxCount === 0 ? (
                         <>
@@ -418,7 +416,7 @@ export default function TodayPage() {
                         </>
                       ) : (
                         <>
-                          <p className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                          <p className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white">
                             {inboxCount}
                           </p>
                           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
@@ -427,7 +425,7 @@ export default function TodayPage() {
                         </>
                       )}
                     </div>
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-700 ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-700 ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
                       {inboxCount === 0 ? (
                         <CheckCircle2 className="h-4 w-4" aria-hidden />
                       ) : (
@@ -437,20 +435,20 @@ export default function TodayPage() {
                   </div>
                   <Link
                     href="/inbox"
-                    className="mt-4 inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50 hover:text-violet-800 hover:ring-violet-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-zinc-950/60 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/25 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
+                    className="mt-3 inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50 hover:text-violet-800 hover:ring-violet-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-zinc-950/60 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/25 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
                   >
                     Open Inbox
                     <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
                   </Link>
                 </Card>
-              </Section>
+              </PageSection>
 
-              <Section>
-                <SectionHeader
+              <PageSection className="mt-0">
+                <PageSectionHeader
                   title="Recent changes"
-                  subtitle="Latest recorded activity."
+                  description="Latest recorded activity."
                 />
-                <Card className="p-4">
+                <Card variant="secondary" className="p-3.5">
                   {!accessToken && !authLoading ? (
                     <div className="flex items-start gap-2.5">
                       <Clock
@@ -495,7 +493,7 @@ export default function TodayPage() {
                       </div>
                     </div>
                   ) : (
-                    <ul className="space-y-3">
+                    <ul className="space-y-2.5">
                       {activityEvents.map((event) => (
                         <li key={event.id}>
                           <p className="truncate text-sm font-semibold text-zinc-950 dark:text-white">
@@ -514,14 +512,14 @@ export default function TodayPage() {
                     </ul>
                   )}
                 </Card>
-              </Section>
+              </PageSection>
 
-              <Section>
-                <SectionHeader
+              <PageSection className="mt-0">
+                <PageSectionHeader
                   title="End of day"
-                  subtitle="A simple closeout placeholder."
+                  description="A simple closeout placeholder."
                 />
-                <Card className="p-4">
+                <Card variant="secondary" className="p-3.5">
                   <div className="flex items-start gap-2.5">
                     <ListChecks
                       className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400"
@@ -537,11 +535,10 @@ export default function TodayPage() {
                     </div>
                   </div>
                 </Card>
-              </Section>
+              </PageSection>
             </div>
           </div>
-        </div>
-      </div>
+      </Page>
     </AppShell>
   );
 }

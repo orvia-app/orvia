@@ -8,7 +8,7 @@ import {
   type FormEvent,
 } from "react";
 import { useSearchParams } from "next/navigation";
-import { X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { useAuthSession } from "@/components/auth/useAuthSession";
@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Page, PageHeader } from "@/components/ui/Page";
 import {
   recordTaskCreatedActivity,
   recordTaskDeletedActivity,
@@ -413,25 +414,19 @@ function TasksContent() {
 
   return (
     <AppShell>
-      <div className="px-4 py-6 sm:p-10">
-        <div className="mx-auto max-w-6xl">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
-                Tasks
-              </h1>
-
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">
-                Prioritized work with connected local context.
-              </p>
-            </div>
-
+      <Page>
+        <PageHeader
+          eyebrow="Organize"
+          title="Tasks"
+          description="Prioritized work with connected local context."
+          actions={
             <Button variant="secondary" onClick={openModal}>
               + New Task
             </Button>
-          </div>
+          }
+        />
 
-          <div className="app-scrollbar -mx-4 mt-8 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
+          <div className="app-scrollbar -mx-4 mt-7 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
             {filters.map(({ label, value }) => {
               const active = statusFilter === value;
 
@@ -451,7 +446,7 @@ function TasksContent() {
             })}
           </div>
 
-          <div className="mt-8 space-y-4">
+          <div className="mt-7 space-y-4">
             {taskActionError ? (
               <p
                 className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200"
@@ -472,12 +467,12 @@ function TasksContent() {
                   id={`task-${task.id}`}
                   className={
                     selected
-                      ? "scroll-mt-24 ring-2 ring-zinc-300 dark:ring-zinc-700"
+                      ? "scroll-mt-24 ring-2 ring-violet-300/80 dark:ring-violet-500/35"
                       : ""
                   }
                 >
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
+                  <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+                    <div className="min-w-0">
                       {task.status === "in-progress" ? (
                         <div className="mb-2 flex items-center gap-2 text-xs font-medium text-blue-700 dark:text-blue-300">
                           <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
@@ -531,55 +526,53 @@ function TasksContent() {
                       ) : null}
                     </div>
 
-                    <div className="flex shrink-0 flex-col gap-2 sm:items-end">
-                      <Badge
-                        variant={statusVariant(task.status)}
-                        className="px-3 py-1.5 sm:text-sm"
-                      >
-                        {statusLabel(task.status)}
-                      </Badge>
-
+                    <div className="flex flex-wrap items-center justify-start gap-1.5 sm:justify-end">
                       <span
                         className="sr-only"
                         id={`task-status-${task.id}`}
                       >
                         Update task status
                       </span>
-                      <div
-                        aria-labelledby={`task-status-${task.id}`}
-                        className="grid w-full grid-cols-3 rounded-xl bg-zinc-100 p-1 ring-1 ring-inset ring-zinc-200/70 dark:bg-zinc-900/70 dark:ring-zinc-800/80 sm:w-64"
-                        role="group"
-                      >
-                        {TASK_STATUSES.map((status) => (
-                          <button
-                            key={status}
-                            aria-pressed={task.status === status}
-                            className={
-                              task.status === status
-                                ? "cursor-pointer rounded-lg bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-950 shadow-sm shadow-zinc-950/[0.04] transition dark:bg-zinc-800 dark:text-white dark:shadow-none"
-                                : "cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-white/70 hover:text-zinc-950 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800/70 dark:hover:text-white"
-                            }
-                            disabled={taskPending}
-                            onClick={() => {
-                              void updateTaskStatus(task, status);
-                            }}
-                            type="button"
-                          >
-                            {statusLabel(status)}
-                          </button>
-                        ))}
+                      <div className="relative inline-flex">
+                        <select
+                          aria-labelledby={`task-status-${task.id}`}
+                          className="h-7 cursor-pointer appearance-none rounded-full bg-violet-50/80 py-0 pl-2.5 pr-7 text-[11px] font-semibold text-violet-800 outline-none ring-1 ring-violet-200/70 transition hover:bg-violet-50 hover:ring-violet-300 focus-visible:ring-2 focus-visible:ring-violet-300/80 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-violet-500/10 dark:text-violet-200 dark:ring-violet-500/20 dark:hover:bg-violet-500/15 dark:focus-visible:ring-violet-500/35"
+                          disabled={taskPending}
+                          onChange={(event) => {
+                            void updateTaskStatus(
+                              task,
+                              event.target.value as TaskStatus,
+                            );
+                          }}
+                          value={task.status}
+                        >
+                          {TASK_STATUSES.map((status) => (
+                            <option
+                              key={status}
+                              value={status}
+                            >
+                              {status === "in-progress"
+                                ? "Progress"
+                                : statusLabel(status)}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown
+                          className="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-violet-700/70 dark:text-violet-200/70"
+                          aria-hidden
+                        />
                       </div>
 
-                      <Button
-                        className="w-full px-3 py-2 text-red-700 hover:bg-red-50 hover:text-red-800 dark:text-red-300 dark:hover:bg-red-500/10 dark:hover:text-red-200 sm:w-auto"
+                      <button
+                        className="inline-flex h-7 w-fit cursor-pointer items-center justify-center rounded-full px-2 text-[11px] font-medium text-red-600 transition hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300/70 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-300 dark:hover:bg-red-500/10 dark:hover:text-red-200 dark:focus-visible:ring-red-500/30"
                         disabled={taskPending}
                         onClick={() => {
                           setTaskToDelete(task);
                         }}
-                        variant="ghost"
+                        type="button"
                       >
                         Delete
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 </Card>
@@ -593,8 +586,7 @@ function TasksContent() {
               />
             ) : null}
           </div>
-        </div>
-      </div>
+      </Page>
 
       {modalOpen ? (
         <div

@@ -19,8 +19,13 @@ import { TimelineEventCard } from "@/components/timeline/TimelineEventCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Section } from "@/components/ui/Section";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { EmptyState } from "@/components/ui/EmptyState";
+import {
+  Page,
+  PageHeader,
+  PageSection,
+  PageSectionHeader,
+} from "@/components/ui/Page";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { fetchActivitiesViaApi } from "@/lib/activities-api";
 import { completeOnboarding, hasCompletedOnboarding } from "@/lib/onboarding";
@@ -335,39 +340,31 @@ export default function Home() {
 
   return (
     <AppShell>
-      <div className="px-4 py-5 sm:px-8 sm:py-8 lg:px-10">
-        <div className="mx-auto max-w-6xl">
-          <div className="rounded-2xl bg-white/85 px-5 py-5 shadow-sm shadow-zinc-950/[0.035] ring-1 ring-zinc-200/75 dark:bg-zinc-900/70 dark:shadow-none dark:ring-zinc-800/75 sm:px-6">
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <Badge>Daily focus</Badge>
-                <h1 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-3xl">
-                  Priorities, context, and what changed.
-                </h1>
-                <p className="mt-2 max-w-xl text-sm leading-6 text-zinc-600 dark:text-zinc-500">
-                  See what needs attention, clear captured context, and decide
-                  the next action.
-                </p>
-              </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setQuickCaptureOpen(true)}
-                >
-                  <Plus className="mr-2 h-4 w-4" aria-hidden />
-                  Capture
-                </Button>
-                <Link
-                  href="/search"
-                  className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-violet-500 dark:text-white dark:shadow-none dark:hover:bg-violet-400 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
-                >
-                  <Search className="mr-2 h-4 w-4" aria-hidden />
-                  Search context
-                </Link>
-              </div>
-            </div>
-          </div>
+      <Page>
+        <PageHeader
+          eyebrow="Daily focus"
+          title="Priorities, context, and what changed."
+          description="See what needs attention, clear captured context, and decide the next action."
+          actions={
+            <>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setQuickCaptureOpen(true)}
+              >
+                <Plus className="mr-2 h-4 w-4" aria-hidden />
+                Capture
+              </Button>
+              <Link
+                href="/search"
+                className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-violet-800 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-violet-600/85 dark:text-white dark:shadow-none dark:hover:bg-violet-600 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
+              >
+                <Search className="mr-2 h-4 w-4" aria-hidden />
+                Search context
+              </Link>
+            </>
+          }
+        />
 
           {onboardingLoaded && showOnboarding ? (
             <Card className="mt-5 overflow-hidden p-0">
@@ -445,7 +442,7 @@ export default function Home() {
                   </Button>
                   <Link
                     href="/inbox"
-                    className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-violet-500 dark:text-white dark:shadow-none dark:hover:bg-violet-400 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
+                    className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-violet-800 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-violet-600/85 dark:text-white dark:shadow-none dark:hover:bg-violet-600 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
                   >
                     Go to Inbox
                   </Link>
@@ -454,10 +451,10 @@ export default function Home() {
             </Card>
           ) : null}
 
-          <Section className="mt-7">
-            <SectionHeader
+          <PageSection>
+            <PageSectionHeader
               title="What matters today"
-              subtitle="Priority, overdue, and due-today work."
+              description="Priority, overdue, and due-today work."
             />
             {!tasksLoaded ? (
               <div className="grid gap-3 lg:grid-cols-3">
@@ -505,7 +502,7 @@ export default function Home() {
                 })}
               </div>
             )}
-          </Section>
+          </PageSection>
 
           <div className="mt-7 grid gap-3 lg:grid-cols-2">
             <Card className="p-4">
@@ -568,7 +565,7 @@ export default function Home() {
                 </div>
                 <Link
                   href="/search"
-                  className="inline-flex w-fit shrink-0 cursor-pointer items-center justify-center rounded-lg bg-violet-700 px-3 py-2 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-violet-500 dark:text-white dark:shadow-none dark:hover:bg-violet-400 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
+                  className="inline-flex w-fit shrink-0 cursor-pointer items-center justify-center rounded-lg bg-violet-800 px-3 py-2 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-violet-600/85 dark:text-white dark:shadow-none dark:hover:bg-violet-600 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
                 >
                   Open Search
                   <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
@@ -585,28 +582,19 @@ export default function Home() {
             </Card>
           </div>
 
-          <Section className="mt-7">
-            <SectionHeader
+          <PageSection>
+            <PageSectionHeader
               title="Recent activity"
-              subtitle="Latest recorded task, note, and import events."
+              description="Latest recorded task, note, and import events."
             />
             <Card className="p-4">
               {!accessToken && !authLoading ? (
-                <div className="flex items-start gap-2.5">
-                  <Clock
-                    className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400"
-                    aria-hidden
-                  />
-                  <div>
-                    <p className="text-sm font-semibold text-zinc-950 dark:text-white">
-                      Activity appears after sign in.
-                    </p>
-                    <p className="mt-1 max-w-xl text-sm leading-5 text-zinc-500 dark:text-zinc-500">
-                      Once authenticated, task and note changes are recorded
-                      here so the dashboard can show recent changes.
-                    </p>
-                  </div>
-                </div>
+                <EmptyState
+                  icon={Clock}
+                  size="sm"
+                  title="Activity appears after sign in."
+                  description="Once authenticated, task and note changes are recorded here so the dashboard can show recent changes."
+                />
               ) : !activityLoaded ? (
                 <div className="space-y-3" aria-label="Loading recent activity">
                   {[0, 1, 2].map((item) => (
@@ -624,21 +612,15 @@ export default function Home() {
                   ))}
                 </div>
               ) : activityEvents.length === 0 ? (
-                <div className="flex items-start gap-2.5">
-                  <CheckCircle2
-                    className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400"
-                    aria-hidden
-                  />
-                  <div>
-                    <p className="text-sm font-semibold text-zinc-950 dark:text-white">
-                      No recent activity yet.
-                    </p>
-                    <p className="mt-1 max-w-xl text-sm leading-5 text-zinc-500 dark:text-zinc-500">
-                      {activityError ??
-                        "Create or update a task or note to start your activity feed."}
-                    </p>
-                  </div>
-                </div>
+                <EmptyState
+                  icon={CheckCircle2}
+                  size="sm"
+                  title="No recent activity yet."
+                  description={
+                    activityError ??
+                    "Create or update a task or note to start your activity feed."
+                  }
+                />
               ) : (
                 <ul className="space-y-2">
                   {activityEvents.map((event) => (
@@ -649,12 +631,12 @@ export default function Home() {
                 </ul>
               )}
             </Card>
-          </Section>
+          </PageSection>
 
-          <Section className="mt-7">
-            <SectionHeader
+          <PageSection>
+            <PageSectionHeader
               title="Next action"
-              subtitle="Capture something before it turns into overhead."
+              description="Capture something before it turns into overhead."
             />
             <Card className="p-4 sm:p-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -676,9 +658,8 @@ export default function Home() {
                 </Button>
               </div>
             </Card>
-          </Section>
-        </div>
-      </div>
+          </PageSection>
+      </Page>
 
       <QuickCapture
         accessToken={accessToken}

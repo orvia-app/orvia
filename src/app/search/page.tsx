@@ -9,8 +9,12 @@ import { useAuthSession } from "@/components/auth/useAuthSession";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Section } from "@/components/ui/Section";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import {
+  Page,
+  PageHeader,
+  PageSection,
+  PageSectionHeader,
+} from "@/components/ui/Page";
 import {
   createUnifiedSearchResults,
   getUnifiedSearchCounts,
@@ -137,31 +141,28 @@ export default function SearchPage() {
 
   return (
     <AppShell>
-      <main className="px-4 py-6 sm:p-10">
-        <div className="mx-auto max-w-5xl">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
-              Search
-            </h1>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">
-              Search tasks, notes, inbox captures, and timeline events.
-            </p>
-          </div>
+      <Page width="narrow">
+        <PageHeader
+          eyebrow="Find"
+          title="Search"
+          description="Search tasks, notes, inbox captures, and timeline events."
+          icon={Search}
+        />
 
-          <div className="relative mt-8">
+          <div className="relative mt-7">
             <Search
-              className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-500"
+              className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-violet-600 dark:text-violet-300"
               aria-hidden
             />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search tasks, notes, inbox, timeline..."
-              className="w-full rounded-2xl bg-white py-4 pl-12 pr-4 text-base text-zinc-950 shadow-sm shadow-zinc-950/[0.03] outline-none ring-1 ring-zinc-200/80 transition placeholder:text-zinc-500 focus:ring-2 focus:ring-zinc-300 dark:bg-zinc-950 dark:text-white dark:shadow-none dark:ring-zinc-800 dark:focus:ring-zinc-700"
+              className="w-full rounded-2xl bg-white/90 py-4 pl-12 pr-4 text-base text-zinc-950 shadow-sm shadow-zinc-950/[0.035] outline-none ring-1 ring-zinc-200/80 transition placeholder:text-zinc-500 focus:ring-2 focus:ring-violet-300 dark:bg-zinc-900/70 dark:text-white dark:shadow-none dark:ring-zinc-800 dark:focus:ring-violet-500/40"
             />
           </div>
 
-          <div className="mt-8">
+          <div className="mt-7">
             {!loaded ? (
               <Card className="text-sm text-zinc-500 dark:text-zinc-400">
                 Preparing local search index...
@@ -183,10 +184,10 @@ export default function SearchPage() {
                   }
 
                   return (
-                    <Section key={group.key}>
-                      <SectionHeader
+                    <PageSection key={group.key} className="mt-0">
+                      <PageSectionHeader
                         title={group.label}
-                        subtitle={`${groupItems.length} result${
+                        description={`${groupItems.length} result${
                           groupItems.length === 1 ? "" : "s"
                         }`}
                       />
@@ -195,14 +196,13 @@ export default function SearchPage() {
                           <SearchResultCard key={result.id} result={result} />
                         ))}
                       </div>
-                    </Section>
+                    </PageSection>
                   );
                 })}
               </div>
             )}
           </div>
-        </div>
-      </main>
+      </Page>
     </AppShell>
   );
 }

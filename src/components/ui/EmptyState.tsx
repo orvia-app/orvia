@@ -1,9 +1,11 @@
 import { CircleDashed } from "lucide-react";
+import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 
 type EmptyStateSize = "default" | "sm";
 
 type EmptyStateProps = {
+  action?: ReactNode;
   description?: string;
   icon?: LucideIcon;
   size?: EmptyStateSize;
@@ -11,11 +13,12 @@ type EmptyStateProps = {
 };
 
 const sizeClassNames: Record<EmptyStateSize, string> = {
-  default: "p-10",
+  default: "px-6 py-8",
   sm: "px-4 py-5",
 };
 
 export function EmptyState({
+  action,
   description,
   icon: Icon = CircleDashed,
   size = "default",
@@ -40,6 +43,8 @@ export function EmptyState({
           {description}
         </p>
       ) : null}
+
+      {action ? <div className="mt-4 flex justify-center">{action}</div> : null}
     </div>
   );
 }

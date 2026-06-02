@@ -5,8 +5,12 @@ import { CircleDot } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Section } from "@/components/ui/Section";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import {
+  Page,
+  PageHeader,
+  PageSection,
+  PageSectionHeader,
+} from "@/components/ui/Page";
 import { TimelineEventCard } from "@/components/timeline/TimelineEventCard";
 import { useAuthSession } from "@/components/auth/useAuthSession";
 import { fetchActivitiesViaApi } from "@/lib/activities-api";
@@ -73,30 +77,22 @@ export default function TimelinePage() {
 
   return (
     <AppShell>
-      <main className="px-4 py-6 sm:p-10">
-        <div className="mx-auto max-w-5xl">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-zinc-200 bg-white text-zinc-800 shadow-sm shadow-zinc-950/[0.03] dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:shadow-none">
-              <CircleDot className="h-6 w-6" aria-hidden />
-            </div>
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
-                Timeline
-              </h1>
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">
-                Activity feed from your recorded task, note, and import events.
-              </p>
-            </div>
-          </div>
+      <Page width="narrow">
+        <PageHeader
+          eyebrow="Recall"
+          title="Timeline"
+          description="Activity feed from your recorded task, note, and import events."
+          icon={CircleDot}
+        />
 
-          <div className="mt-10">
+          <div className="mt-7">
             {!loaded ? (
-              <Section>
-                <SectionHeader
+              <PageSection className="mt-0">
+                <PageSectionHeader
                   title="Activity"
-                  subtitle="Loading your activity timeline."
+                  description="Loading your activity timeline."
                 />
-              </Section>
+              </PageSection>
             ) : !accessToken ? (
               <EmptyState
                 title="Timeline is available after sign in"
@@ -113,10 +109,10 @@ export default function TimelinePage() {
                 description="Create, update, or delete tasks and notes to add activity here."
               />
             ) : (
-              <Section>
-                <SectionHeader
+              <PageSection className="mt-0">
+                <PageSectionHeader
                   title="Activity"
-                  subtitle={`${events.length} event${
+                  description={`${events.length} event${
                     events.length === 1 ? "" : "s"
                   }`}
                 />
@@ -125,11 +121,10 @@ export default function TimelinePage() {
                     <TimelineEventCard key={event.id} event={event} />
                   ))}
                 </div>
-              </Section>
+              </PageSection>
             )}
           </div>
-        </div>
-      </main>
+      </Page>
     </AppShell>
   );
 }

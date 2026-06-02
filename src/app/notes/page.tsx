@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Page, PageHeader } from "@/components/ui/Page";
 import {
   recordNoteCreatedActivity,
   recordNoteDeletedActivity,
@@ -316,29 +317,19 @@ export default function NotesPage() {
 
   return (
     <AppShell>
-      <main className="px-4 py-6 sm:p-10">
-        <div className="mx-auto max-w-6xl">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
-                Notes
-              </h1>
-
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">
-                Capture ideas, books, courses, and useful knowledge.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={openModal}
-              className="shrink-0 rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-zinc-50 hover:ring-zinc-300 dark:bg-zinc-950 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:ring-zinc-700"
-            >
+      <Page>
+        <PageHeader
+          eyebrow="Recall"
+          title="Notes"
+          description="Capture ideas, books, courses, and useful knowledge."
+          actions={
+            <Button type="button" onClick={openModal} variant="secondary">
               + New Note
-            </button>
-          </div>
+            </Button>
+          }
+        />
 
-          <div className="app-scrollbar -mx-4 mt-8 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
+          <div className="app-scrollbar -mx-4 mt-7 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
             {FILTERS.map(({ label, value }) => {
               const active = typeFilter === value;
 
@@ -349,8 +340,8 @@ export default function NotesPage() {
                   onClick={() => setTypeFilter(value)}
                   className={
                     active
-                      ? "rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-950"
-                      : "rounded-xl bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-200 hover:text-zinc-950 dark:bg-zinc-900/60 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                      ? "rounded-xl bg-violet-800 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-violet-950/10 dark:bg-violet-600/85"
+                      : "rounded-xl bg-white px-4 py-2 text-sm font-medium text-zinc-600 shadow-sm shadow-zinc-950/[0.02] ring-1 ring-zinc-200/80 transition hover:bg-violet-50/70 hover:text-violet-800 hover:ring-violet-200/70 dark:bg-zinc-900/60 dark:text-zinc-400 dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/20"
                   }
                 >
                   {label}
@@ -359,7 +350,7 @@ export default function NotesPage() {
             })}
           </div>
 
-          <div className="mt-8 grid gap-4 md:grid-cols-2">
+          <div className="mt-7 grid gap-4 md:grid-cols-2">
             {noteActionError ? (
               <p
                 className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200 md:col-span-2"
@@ -377,7 +368,7 @@ export default function NotesPage() {
               return (
                 <article
                   key={note.id}
-                  className="rounded-2xl bg-white p-5 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 transition hover:bg-zinc-50/70 hover:ring-zinc-300 dark:bg-zinc-950 dark:shadow-none dark:ring-zinc-800/70 dark:hover:bg-zinc-900/70 dark:hover:ring-zinc-700 sm:p-6"
+                  className="rounded-2xl bg-white/90 p-5 shadow-sm shadow-zinc-950/[0.035] ring-1 ring-zinc-200/75 transition hover:bg-white hover:ring-violet-200/65 dark:bg-zinc-900/70 dark:shadow-none dark:ring-zinc-800/75 dark:hover:bg-zinc-900 dark:hover:ring-violet-500/20 sm:p-5"
                 >
                   {editing ? (
                     <form
@@ -531,9 +522,9 @@ export default function NotesPage() {
                         </div>
                       ) : null}
 
-                      <div className="mt-5 flex flex-col gap-2 border-t border-zinc-200/70 pt-4 dark:border-zinc-800/70 sm:flex-row sm:justify-end">
+                      <div className="mt-5 flex flex-col gap-2 border-t border-zinc-200/70 pt-3.5 dark:border-zinc-800/70 sm:flex-row sm:justify-end">
                         <Button
-                          className="w-full px-3 py-2 sm:w-auto"
+                          className="w-full px-3 py-1.5 text-xs sm:w-auto"
                           disabled={notePending}
                           onClick={() => startEditingNote(note)}
                           variant="secondary"
@@ -541,7 +532,7 @@ export default function NotesPage() {
                           Edit
                         </Button>
                         <Button
-                          className="w-full px-3 py-2 text-red-700 hover:bg-red-50 hover:text-red-800 dark:text-red-300 dark:hover:bg-red-500/10 dark:hover:text-red-200 sm:w-auto"
+                          className="w-full border border-red-200/70 px-3 py-1.5 text-xs text-red-700 shadow-none hover:bg-red-50 hover:text-red-800 hover:ring-red-200/70 dark:border-red-500/20 dark:text-red-300 dark:hover:bg-red-500/10 dark:hover:text-red-200 dark:hover:ring-red-500/25 sm:w-auto"
                           disabled={notePending}
                           onClick={() => setNoteToDelete(note)}
                           variant="ghost"
@@ -564,8 +555,7 @@ export default function NotesPage() {
               />
             </div>
           ) : null}
-        </div>
-      </main>
+      </Page>
 
       {modalOpen ? (
         <div
