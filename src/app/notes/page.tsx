@@ -7,6 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { useAuthSession } from "@/components/auth/useAuthSession";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Page, PageHeader } from "@/components/ui/Page";
@@ -24,7 +25,9 @@ import {
 import {
   createNoteFromPrimarySource,
   deleteNoteViaApi,
-  loadNotesFromPrimarySource,
+  loadNotesFromPrimarySourceWithBoundary,
+  type NoteSourceById,
+  type PrimaryNoteSource,
   updateNoteViaApi,
 } from "@/lib/notes-api";
 import {
@@ -78,10 +81,24 @@ function getTypeBadgeLabel(type: NoteType): string {
   }
 }
 
+function noteSourceLabel(source: PrimaryNoteSource): string {
+  if (source === "cloud") {
+    return "Cloud";
+  }
+
+  if (source === "local-fallback") {
+    return "Local fallback";
+  }
+
+  return "Local only";
+}
+
 export default function NotesPage() {
   const { session } = useAuthSession();
   const accessToken = session?.access_token;
   const [notes, setNotes] = useState<Note[]>([]);
+  const [noteSource, setNoteSource] = useState<PrimaryNoteSource>("local-only");
+  const [noteSourcesById, setNoteSourcesById] = useState<NoteSourceById>({});
   const [noteContextById, setNoteContextById] = useState<NoteContextById>({});
   const [typeFilter, setTypeFilter] = useState<FilterValue>("all");
   const [modalOpen, setModalOpen] = useState(false);
@@ -98,7 +115,7 @@ export default function NotesPage() {
     let active = true;
 
     async function loadNotes(): Promise<void> {
-      const nextNotes = await loadNotesFromPrimarySource({
+      const result = await loadNotesFromPrimarySourceWithBoundary({
         accessToken,
       });
 
@@ -108,7 +125,9 @@ export default function NotesPage() {
 
       const entities = getLocalContextEntities();
 
-      setNotes(nextNotes);
+      setNotes(result.notes);
+      setNoteSource(result.source);
+      setNoteSourcesById(result.noteSources);
       setNoteContextById(
         Object.fromEntries(
           entities
@@ -135,6 +154,11 @@ export default function NotesPage() {
 
     return notes.filter((note) => note.type === typeFilter);
   }, [notes, typeFilter]);
+  const noteBoundaryMessage = accessToken
+    ? noteSource === "local-fallback"
+      ? "Showing local fallback because cloud notes could not load. Edits may stay on this browser until cloud access recovers."
+      : "Cloud notes are primary. Local-only browser notes may also appear here until you import them from Settings."
+    : "Local-only on this browser. Sign in to use cloud-backed notes.";
 
   function openModal(): void {
     setModalOpen(true);
@@ -145,9 +169,27 @@ export default function NotesPage() {
     setForm(EMPTY_FORM);
   }
 
-  function syncNotes(nextNotes: Note[]): void {
+  function syncNotes(
+    nextNotes: Note[],
+    sourceOverrides: NoteSourceById = {},
+  ): void {
     saveNotes(nextNotes);
     setNotes(nextNotes);
+    setNoteSourcesById((currentSources) => {
+      const nextSources: NoteSourceById = {};
+      const defaultSource: PrimaryNoteSource = accessToken
+        ? noteSource === "local-fallback"
+          ? "local-fallback"
+          : "cloud"
+        : "local-only";
+
+      for (const note of nextNotes) {
+        nextSources[note.id] =
+          sourceOverrides[note.id] ?? currentSources[note.id] ?? defaultSource;
+      }
+
+      return nextSources;
+    });
 
     const entities = getLocalContextEntities();
     setNoteContextById(
@@ -210,14 +252,23 @@ export default function NotesPage() {
       { accessToken },
     );
 
-    syncNotes([
-      result.note,
-      ...notes.filter((note) => note.id !== result.note.id),
-    ]);
+    syncNotes(
+      [result.note, ...notes.filter((note) => note.id !== result.note.id)],
+      {
+        [result.note.id]:
+          result.source === "api"
+            ? "cloud"
+            : accessToken
+              ? "local-fallback"
+              : "local-only",
+      },
+    );
     closeModal();
 
     if (accessToken && result.source === "api") {
       void recordNoteCreatedActivity(result.note, { accessToken });
+    } else if (accessToken && result.source === "local") {
+      setNoteActionError("Cloud create failed. Saved this note locally.");
     }
   }
 
@@ -275,7 +326,7 @@ export default function NotesPage() {
         currentNote.id === note.id ? fallbackNote : currentNote,
       );
 
-      syncNotes(nextNotes);
+      syncNotes(nextNotes, { [note.id]: "local-fallback" });
       cancelEditingNote();
       setNoteActionError("Cloud update failed. Saved this change locally.");
     } finally {
@@ -328,6 +379,13 @@ export default function NotesPage() {
             </Button>
           }
         />
+
+          <Card
+            variant={noteSource === "local-fallback" ? "secondary" : "ghost"}
+            className="mt-5 p-3 text-sm text-zinc-600 dark:text-zinc-400"
+          >
+            {noteBoundaryMessage}
+          </Card>
 
           <div className="app-scrollbar -mx-4 mt-7 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
             {FILTERS.map(({ label, value }) => {
@@ -475,9 +533,14 @@ export default function NotesPage() {
                           {note.title}
                         </h2>
 
-                        <Badge className="shrink-0">
-                          {getTypeBadgeLabel(note.type)}
-                        </Badge>
+                        <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+                          <Badge>{getTypeBadgeLabel(note.type)}</Badge>
+                          <Badge className="bg-zinc-100/80 text-zinc-500 ring-zinc-200/70 dark:bg-zinc-900/75 dark:text-zinc-400 dark:ring-zinc-800/80">
+                            {noteSourceLabel(
+                              noteSourcesById[note.id] ?? noteSource,
+                            )}
+                          </Badge>
+                        </div>
                       </div>
                       {context ? (
                         <div className="mt-3 flex flex-wrap gap-2">

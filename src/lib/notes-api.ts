@@ -45,6 +45,16 @@ export type NotesApiRequestOptions = {
   accessToken?: string;
 };
 
+export type PrimaryNoteSource = "cloud" | "local-fallback" | "local-only";
+
+export type NoteSourceById = Record<string, PrimaryNoteSource>;
+
+export type LoadNotesResult = {
+  noteSources: NoteSourceById;
+  notes: Note[];
+  source: PrimaryNoteSource;
+};
+
 export type CreateNoteFromPrimarySourceResult = {
   note: Note;
   source: "api" | "local";
@@ -58,6 +68,33 @@ export function mergeApiNotesWithLocalNotes(
   const localOnlyNotes = localNotes.filter((note) => !apiNoteIds.has(note.id));
 
   return [...apiNotes, ...localOnlyNotes];
+}
+
+function createNoteSourceMap(
+  notes: readonly Note[],
+  source: PrimaryNoteSource,
+): NoteSourceById {
+  const sources: NoteSourceById = {};
+
+  for (const note of notes) {
+    sources[note.id] = source;
+  }
+
+  return sources;
+}
+
+function createMergedNoteSourceMap(
+  apiNotes: readonly Note[],
+  mergedNotes: readonly Note[],
+): NoteSourceById {
+  const apiNoteIds = new Set(apiNotes.map((note) => note.id));
+  const sources: NoteSourceById = {};
+
+  for (const note of mergedNotes) {
+    sources[note.id] = apiNoteIds.has(note.id) ? "cloud" : "local-only";
+  }
+
+  return sources;
 }
 
 function createLocalFallbackNote(input: CreateNoteApiInput): Note {
@@ -204,8 +241,22 @@ export async function fetchNotesViaApi(
 export async function loadNotesFromPrimarySource(
   options: NotesApiRequestOptions = {},
 ): Promise<Note[]> {
+  const result = await loadNotesFromPrimarySourceWithBoundary(options);
+
+  return result.notes;
+}
+
+export async function loadNotesFromPrimarySourceWithBoundary(
+  options: NotesApiRequestOptions = {},
+): Promise<LoadNotesResult> {
   if (!options.accessToken?.trim()) {
-    return getNotes();
+    const notes = getNotes();
+
+    return {
+      noteSources: createNoteSourceMap(notes, "local-only"),
+      notes,
+      source: "local-only",
+    };
   }
 
   try {
@@ -214,9 +265,19 @@ export async function loadNotesFromPrimarySource(
 
     saveNotes(mergedNotes);
 
-    return mergedNotes;
+    return {
+      noteSources: createMergedNoteSourceMap(apiNotes, mergedNotes),
+      notes: mergedNotes,
+      source: "cloud",
+    };
   } catch {
-    return getNotes();
+    const notes = getNotes();
+
+    return {
+      noteSources: createNoteSourceMap(notes, "local-fallback"),
+      notes,
+      source: "local-fallback",
+    };
   }
 }
 

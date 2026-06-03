@@ -57,6 +57,16 @@ export type TasksApiRequestOptions = {
   accessToken?: string;
 };
 
+export type PrimaryTaskSource = "cloud" | "local-fallback" | "local-only";
+
+export type TaskSourceById = Record<string, PrimaryTaskSource>;
+
+export type LoadTasksResult = {
+  source: PrimaryTaskSource;
+  taskSources: TaskSourceById;
+  tasks: Task[];
+};
+
 const DEFAULT_TASK_MAPPING_FALLBACK: TaskMappingFallback = {
   status: "todo",
   priority: "medium",
@@ -71,6 +81,33 @@ export function mergeApiTasksWithLocalTasks(
   const localOnlyTasks = localTasks.filter((task) => !apiTaskIds.has(task.id));
 
   return [...apiTasks, ...localOnlyTasks];
+}
+
+function createTaskSourceMap(
+  tasks: readonly Task[],
+  source: PrimaryTaskSource,
+): TaskSourceById {
+  const sources: TaskSourceById = {};
+
+  for (const task of tasks) {
+    sources[task.id] = source;
+  }
+
+  return sources;
+}
+
+function createMergedTaskSourceMap(
+  apiTasks: readonly Task[],
+  mergedTasks: readonly Task[],
+): TaskSourceById {
+  const apiTaskIds = new Set(apiTasks.map((task) => task.id));
+  const sources: TaskSourceById = {};
+
+  for (const task of mergedTasks) {
+    sources[task.id] = apiTaskIds.has(task.id) ? "cloud" : "local-only";
+  }
+
+  return sources;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -231,15 +268,43 @@ export async function fetchTasksViaApi(
 export async function loadTasksFromPrimarySource(
   options: TasksApiRequestOptions = {},
 ): Promise<Task[]> {
+  const result = await loadTasksFromPrimarySourceWithBoundary(options);
+
+  return result.tasks;
+}
+
+export async function loadTasksFromPrimarySourceWithBoundary(
+  options: TasksApiRequestOptions = {},
+): Promise<LoadTasksResult> {
+  if (!options.accessToken?.trim()) {
+    const tasks = getTasks();
+
+    return {
+      source: "local-only",
+      taskSources: createTaskSourceMap(tasks, "local-only"),
+      tasks,
+    };
+  }
+
   try {
     const apiTasks = await fetchTasksViaApi(options);
     const mergedTasks = mergeApiTasksWithLocalTasks(apiTasks, getTasks());
 
     saveTasks(mergedTasks);
 
-    return mergedTasks;
+    return {
+      source: "cloud",
+      taskSources: createMergedTaskSourceMap(apiTasks, mergedTasks),
+      tasks: mergedTasks,
+    };
   } catch {
-    return getTasks();
+    const tasks = getTasks();
+
+    return {
+      source: "local-fallback",
+      taskSources: createTaskSourceMap(tasks, "local-fallback"),
+      tasks,
+    };
   }
 }
 

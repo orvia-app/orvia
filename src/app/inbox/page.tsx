@@ -58,6 +58,7 @@ function confidenceBadgeVariant(confidence: InboxParseResult["confidence"]) {
 
 export default function InboxPage() {
   const { session } = useAuthSession();
+  const signedIn = Boolean(session?.access_token);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<InboxParseResult | null>(null);
@@ -209,8 +210,19 @@ export default function InboxPage() {
               </p>
             </div>
 
-            <Badge>Local parser</Badge>
+            <Badge>Local-only queue</Badge>
           </div>
+
+          <Card
+            variant="ghost"
+            className="mb-6 p-3 text-sm text-zinc-600 dark:text-zinc-400"
+          >
+            Inbox captures are local-only on this browser. Cloud sync is not
+            enabled for Inbox yet.
+            {signedIn
+              ? " Converting to a task can use your cloud account; notes and the queue remain local for now."
+              : " Sign in before converting captures you want saved as cloud tasks."}
+          </Card>
 
           <Card className="p-0">
             <div className="p-5 sm:p-6">
@@ -384,7 +396,7 @@ export default function InboxPage() {
                 </h2>
                 <p className="mt-1 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
                   Convert captured thoughts into tasks or notes, or archive
-                  what no longer needs action.
+                  what no longer needs action. Queue storage is local-only.
                 </p>
               </div>
               <Badge>{queuedCaptures.length} waiting</Badge>

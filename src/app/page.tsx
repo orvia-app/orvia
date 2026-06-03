@@ -30,8 +30,11 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { fetchActivitiesViaApi } from "@/lib/activities-api";
 import { completeOnboarding, hasCompletedOnboarding } from "@/lib/onboarding";
 import { getQuickCaptures } from "@/lib/quick-captures";
-import { getTasks } from "@/lib/tasks";
-import { loadTasksFromPrimarySource } from "@/lib/tasks-api";
+import {
+  loadTasksFromPrimarySourceWithBoundary,
+  type PrimaryTaskSource,
+  type TaskSourceById,
+} from "@/lib/tasks-api";
 import {
   createTimelineEventsFromActivities,
   type TimelineEvent,
@@ -121,6 +124,18 @@ function formatTaskPriority(priority: TaskPriority): string {
   return priority.charAt(0).toUpperCase() + priority.slice(1);
 }
 
+function taskSourceLabel(source: PrimaryTaskSource): string {
+  if (source === "cloud") {
+    return "Cloud";
+  }
+
+  if (source === "local-fallback") {
+    return "Local fallback";
+  }
+
+  return "Local only";
+}
+
 function CompactEmptyState({
   description,
   icon: Icon,
@@ -153,10 +168,12 @@ function CompactEmptyState({
 function TaskSignalList({
   emptyDescription,
   emptyTitle,
+  taskSources,
   tasks,
 }: {
   emptyDescription: string;
   emptyTitle: string;
+  taskSources: TaskSourceById;
   tasks: Task[];
 }) {
   if (tasks.length === 0) {
@@ -192,6 +209,9 @@ function TaskSignalList({
                     <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800">
                       {formatTaskStatus(task.status)}
                     </span>
+                    <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800">
+                      {taskSourceLabel(taskSources[task.id] ?? "local-only")}
+                    </span>
                     {dueDate ? (
                       <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800">
                         {dueDate}
@@ -216,6 +236,8 @@ export default function Home() {
   const { loading: authLoading, session } = useAuthSession();
   const accessToken = session?.access_token;
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [taskSource, setTaskSource] = useState<PrimaryTaskSource>("local-only");
+  const [taskSourcesById, setTaskSourcesById] = useState<TaskSourceById>({});
   const [tasksLoaded, setTasksLoaded] = useState(false);
   const [todayDateKey, setTodayDateKey] = useState("");
   const [inboxCount, setInboxCount] = useState(0);
@@ -231,11 +253,13 @@ export default function Home() {
     setActivityLoaded(false);
     setActivityError(null);
 
-    const nextTasks = accessToken
-      ? await loadTasksFromPrimarySource({ accessToken })
-      : getTasks();
+    const taskResult = await loadTasksFromPrimarySourceWithBoundary({
+      accessToken,
+    });
 
-    setTasks(nextTasks);
+    setTasks(taskResult.tasks);
+    setTaskSource(taskResult.source);
+    setTaskSourcesById(taskResult.taskSources);
     setInboxCount(getQuickCaptures().length);
     setTasksLoaded(true);
 
@@ -338,6 +362,12 @@ export default function Home() {
     }
   }
 
+  const dashboardBoundaryMessage = accessToken
+    ? taskSource === "local-fallback"
+      ? "Cloud tasks could not load, so Dashboard is showing local fallback data from this browser."
+      : "Tasks are cloud-primary. Inbox count is still local-only on this browser."
+    : "Local-only mode. Dashboard uses browser data until you sign in.";
+
   return (
     <AppShell>
       <Page>
@@ -365,6 +395,13 @@ export default function Home() {
             </>
           }
         />
+
+          <Card
+            variant={taskSource === "local-fallback" ? "secondary" : "ghost"}
+            className="mt-5 p-3 text-sm text-zinc-600 dark:text-zinc-400"
+          >
+            {dashboardBoundaryMessage}
+          </Card>
 
           {onboardingLoaded && showOnboarding ? (
             <Card className="mt-5 overflow-hidden p-0">
@@ -493,6 +530,7 @@ export default function Home() {
                       <div className="mt-3 flex-1">
                         <TaskSignalList
                           tasks={bucket.tasks}
+                          taskSources={taskSourcesById}
                           emptyTitle={bucket.emptyTitle}
                           emptyDescription={bucket.emptyDescription}
                         />
@@ -512,7 +550,7 @@ export default function Home() {
                     Inbox
                   </h2>
                   <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
-                    Captured context waiting for review.
+                    Local-only captures waiting for review.
                   </p>
                 </div>
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 text-violet-700 ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
@@ -560,7 +598,7 @@ export default function Home() {
                     Find context
                   </h2>
                   <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
-                    Search notes, tasks, captures, and activity.
+                    Search cloud tasks/activity plus local notes and captures.
                   </p>
                 </div>
                 <Link
