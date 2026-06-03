@@ -30,7 +30,7 @@ export const actionCommands: readonly CommandItem[] = [
     keywords: ["inbox", "capture", "process"],
     group: "Actions",
     icon: Inbox,
-    action: { type: "navigate", href: "/inbox" },
+    action: { type: "navigate", href: "/app/inbox" },
     metadata: { priority: "normal", recentLabel: "Open Inbox" },
   },
 ];

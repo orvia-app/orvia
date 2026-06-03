@@ -20,7 +20,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
-      router.replace("/");
+      router.replace("/app");
     }
   }, [isAuthenticated, loading, router]);
 
@@ -47,7 +47,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.replace("/");
+      router.replace("/app");
     } catch {
       setError("Auth is not configured for this environment.");
     } finally {

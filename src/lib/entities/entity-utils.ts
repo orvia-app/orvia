@@ -38,7 +38,7 @@ function getTaskUrl(task: Task): string {
     taskId: task.id,
   });
 
-  return `/tasks?${params.toString()}`;
+  return `/app/tasks?${params.toString()}`;
 }
 
 export function getEntityTypeLabel(type: EntityType): string {
@@ -71,15 +71,15 @@ export function getEntityUrl(entity: PersonalEntity): string {
 
   switch (entity.type) {
     case "task":
-      return "/tasks";
+      return "/app/tasks";
     case "note":
-      return "/notes";
+      return "/app/notes";
     case "finance_transaction":
-      return "/finance";
+      return "/app/finance";
     case "car":
-      return "/cars";
+      return "/app/cars";
     case "inbox_item":
-      return "/inbox";
+      return "/app/inbox";
   }
 }
 
@@ -140,7 +140,7 @@ export function noteToEntity(note: Note): NoteEntity {
       workspaceId: workspaceKey,
       workspaceLabel,
       source: "local",
-      url: "/notes",
+      url: "/app/notes",
       searchableText: compactText([
         note.title,
         note.content,
@@ -178,7 +178,7 @@ export function transactionToEntity(
       workspaceId: workspaceKey,
       workspaceLabel,
       source: "local",
-      url: "/finance",
+      url: "/app/finance",
       tags: [transaction.type, transaction.category, workspaceKey],
       searchableText: compactText([
         transaction.category,
@@ -208,7 +208,7 @@ export function carToEntity(car: CarRecord): CarEntity {
       workspaceId: workspaceKey,
       workspaceLabel,
       source: "local",
-      url: "/cars",
+      url: "/app/cars",
       tags: ["car", workspaceKey],
       searchableText: compactText([
         car.name,
@@ -238,7 +238,7 @@ export function quickCaptureToEntity(capture: QuickCapture): InboxItemEntity {
       workspaceId: workspaceKey,
       workspaceLabel,
       source: "local",
-      url: "/inbox",
+      url: "/app/inbox",
       tags: ["capture", workspaceKey],
       memoryTags: ["capture", workspaceKey],
       searchableText: compactText([

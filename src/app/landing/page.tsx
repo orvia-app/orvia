@@ -88,7 +88,7 @@ export default function LandingPage() {
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-5 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-2.5">
           <Link
-            href="/landing"
+            href="/"
             className="flex items-center gap-2 text-sm font-semibold tracking-tight text-zinc-950 dark:text-white"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-violet-800 shadow-sm shadow-zinc-950/[0.04] ring-1 ring-zinc-200/80 dark:bg-zinc-900 dark:text-violet-200 dark:ring-zinc-800">
