@@ -28,8 +28,11 @@ import {
 } from "@/components/ui/Page";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { fetchActivitiesViaApi } from "@/lib/activities-api";
+import {
+  loadCapturesFromPrimarySourceWithBoundary,
+  type PrimaryCaptureSource,
+} from "@/lib/captures-api";
 import { completeOnboarding, hasCompletedOnboarding } from "@/lib/onboarding";
-import { getQuickCaptures } from "@/lib/quick-captures";
 import {
   loadTasksFromPrimarySourceWithBoundary,
   type PrimaryTaskSource,
@@ -241,6 +244,8 @@ export default function Home() {
   const [tasksLoaded, setTasksLoaded] = useState(false);
   const [todayDateKey, setTodayDateKey] = useState("");
   const [inboxCount, setInboxCount] = useState(0);
+  const [inboxSource, setInboxSource] =
+    useState<PrimaryCaptureSource>("local-only");
   const [activityEvents, setActivityEvents] = useState<TimelineEvent[]>([]);
   const [activityLoaded, setActivityLoaded] = useState(false);
   const [activityError, setActivityError] = useState<string | null>(null);
@@ -256,11 +261,15 @@ export default function Home() {
     const taskResult = await loadTasksFromPrimarySourceWithBoundary({
       accessToken,
     });
+    const captureResult = await loadCapturesFromPrimarySourceWithBoundary({
+      accessToken,
+    });
 
     setTasks(taskResult.tasks);
     setTaskSource(taskResult.source);
     setTaskSourcesById(taskResult.taskSources);
-    setInboxCount(getQuickCaptures().length);
+    setInboxCount(captureResult.captures.length);
+    setInboxSource(captureResult.source);
     setTasksLoaded(true);
 
     if (!accessToken) {
@@ -365,7 +374,9 @@ export default function Home() {
   const dashboardBoundaryMessage = accessToken
     ? taskSource === "local-fallback"
       ? "Cloud tasks could not load, so Dashboard is showing local fallback data from this browser."
-      : "Tasks are cloud-primary. Inbox count is still local-only on this browser."
+      : inboxSource === "local-fallback"
+        ? "Tasks are cloud-primary. Inbox count is showing local fallback captures because cloud Inbox could not load."
+        : "Tasks and Inbox are cloud-primary when available. Local-only items may appear during the transition."
     : "Local-only mode. Dashboard uses browser data until you sign in.";
 
   return (
@@ -550,7 +561,11 @@ export default function Home() {
                     Inbox
                   </h2>
                   <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
-                    Local-only captures waiting for review.
+                    {inboxSource === "cloud"
+                      ? "Cloud-primary captures waiting for review."
+                      : inboxSource === "local-fallback"
+                        ? "Local fallback captures waiting for review."
+                        : "Local-only captures waiting for review."}
                   </p>
                 </div>
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 text-violet-700 ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
@@ -598,7 +613,7 @@ export default function Home() {
                     Find context
                   </h2>
                   <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
-                    Search cloud tasks/activity plus local notes and captures.
+                    Search tasks, Inbox captures, notes, and activity.
                   </p>
                 </div>
                 <Link
@@ -683,7 +698,7 @@ export default function Home() {
                     Add the next piece of context.
                   </h2>
                   <p className="mt-1 max-w-2xl text-sm leading-5 text-zinc-500 dark:text-zinc-500">
-                    Create a task or note without leaving the dashboard.
+                    Capture a thought into Inbox without leaving the dashboard.
                   </p>
                 </div>
                 <Button

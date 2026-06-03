@@ -10,10 +10,11 @@ import { CheckSquare, FileText, X } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import {
-  createQuickCaptureNote,
-  createQuickCaptureTask,
-  type QuickCaptureType,
-} from "@/lib/quick-capture";
+  createCaptureFromPrimarySource,
+  type PrimaryCaptureSource,
+} from "@/lib/captures-api";
+
+type QuickCaptureIntent = "task" | "note";
 
 type QuickCaptureProps = {
   accessToken?: string;
@@ -23,18 +24,18 @@ type QuickCaptureProps = {
 
 const captureTypes: {
   label: string;
-  value: QuickCaptureType;
+  value: QuickCaptureIntent;
   description: string;
 }[] = [
   {
     label: "Task",
     value: "task",
-    description: "Create a task from a quick thought.",
+    description: "Capture something likely to become a task.",
   },
   {
     label: "Note",
     value: "note",
-    description: "Save a note for later recall.",
+    description: "Capture something likely to become a note.",
   },
 ];
 
@@ -44,7 +45,7 @@ export function QuickCapture({
   open,
 }: QuickCaptureProps) {
   const titleInputRef = useRef<HTMLInputElement>(null);
-  const [captureType, setCaptureType] = useState<QuickCaptureType>("task");
+  const [captureType, setCaptureType] = useState<QuickCaptureIntent>("task");
   const [title, setTitle] = useState("");
   const [details, setDetails] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -91,6 +92,18 @@ export function QuickCapture({
     return null;
   }
 
+  function captureStatusMessage(source: PrimaryCaptureSource): string {
+    if (source === "cloud") {
+      return "Capture saved to cloud Inbox.";
+    }
+
+    if (source === "local-fallback") {
+      return "Cloud capture failed. Saved as local fallback.";
+    }
+
+    return "Capture saved locally.";
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
 
@@ -111,25 +124,23 @@ export function QuickCapture({
     setSubmitting(true);
 
     try {
-      if (captureType === "task") {
-        const result = await createQuickCaptureTask({
-          title: trimmedTitle,
-          description: trimmedDetails || undefined,
-          accessToken,
-        });
+      const content = trimmedDetails
+        ? `${trimmedTitle}\n\n${trimmedDetails}`
+        : trimmedTitle;
+      const result = await createCaptureFromPrimarySource(
+        {
+          content,
+          source: "quick_capture",
+          status: "inbox",
+          metadata: {
+            intent: captureType,
+            title: trimmedTitle,
+          },
+        },
+        { accessToken },
+      );
 
-        setStatus(
-          result.source === "api"
-            ? "Task captured."
-            : "Task captured locally.",
-        );
-      } else {
-        createQuickCaptureNote({
-          title: trimmedTitle,
-          content: trimmedDetails || trimmedTitle,
-        });
-        setStatus("Note captured.");
-      }
+      setStatus(captureStatusMessage(result.source));
 
       window.setTimeout(() => onOpenChange(false), 350);
     } catch {
@@ -168,7 +179,7 @@ export function QuickCapture({
             </h2>
             <p className="mt-1 max-w-sm text-sm leading-5 text-zinc-500 dark:text-zinc-500">
               {accessToken
-                ? "Tasks can save to your cloud account. Notes are local-only on this browser for now."
+                ? "Captures save to your cloud Inbox when available, with local fallback if cloud is unreachable."
                 : "Local-only on this browser until you sign in."}
             </p>
           </div>

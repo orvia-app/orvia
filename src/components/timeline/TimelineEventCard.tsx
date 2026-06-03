@@ -1,4 +1,11 @@
-import { CheckSquare, CircleDot, FileText, RefreshCw, Trash2 } from "lucide-react";
+import {
+  CheckSquare,
+  CircleDot,
+  FileText,
+  Inbox,
+  RefreshCw,
+  Trash2,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
@@ -23,6 +30,10 @@ function getEventLabel(event: TimelineEvent): string {
       return "Note updated";
     case "note_deleted":
       return "Note deleted";
+    case "quick_capture_created":
+      return "Capture created";
+    case "inbox_processed":
+      return "Inbox processed";
     case "local_import_completed":
       return "Local import";
     default:
@@ -42,6 +53,9 @@ function getEventIcon(event: TimelineEvent): LucideIcon {
     case "note_created":
     case "note_updated":
       return FileText;
+    case "quick_capture_created":
+    case "inbox_processed":
+      return Inbox;
     case "task_deleted":
     case "note_deleted":
       return Trash2;

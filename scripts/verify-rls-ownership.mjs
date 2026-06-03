@@ -145,6 +145,13 @@ verifyApiRoute("src/app/api/captures/route.ts", [
   ".insert({ ...parsedPayload.payload, user_id: auth.userId })",
 ]);
 
+verifyApiRoute("src/app/api/captures/[id]/route.ts", [
+  "authenticateApiRequest(request)",
+  '.eq("id", captureId)',
+  '.eq("user_id", auth.userId)',
+  '.is("deleted_at", null)',
+]);
+
 if (existsSync(join(root, "src/app/api/test/route.ts"))) {
   fail("Unsafe service-role test endpoint still exists.");
 }

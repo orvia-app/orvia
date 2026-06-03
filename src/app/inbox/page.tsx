@@ -18,6 +18,11 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
+  loadCapturesFromPrimarySourceWithBoundary,
+  type CaptureSourceById,
+  type PrimaryCaptureSource,
+} from "@/lib/captures-api";
+import {
   noteTypeFromInboxType,
   parseInboxInput,
   workspaceIdFromLabel,
@@ -29,10 +34,7 @@ import {
   convertInboxItemToTask,
   type InboxProcessingResult,
 } from "@/lib/inbox-processing";
-import {
-  getQuickCaptures,
-  type QuickCapture,
-} from "@/lib/quick-captures";
+import type { QuickCapture } from "@/lib/quick-captures";
 import {
   createQuickCaptureNote,
   createQuickCaptureTask,
@@ -56,14 +58,31 @@ function confidenceBadgeVariant(confidence: InboxParseResult["confidence"]) {
   return "default";
 }
 
+function captureSourceLabel(source: PrimaryCaptureSource): string {
+  if (source === "cloud") {
+    return "Cloud";
+  }
+
+  if (source === "local-fallback") {
+    return "Local fallback";
+  }
+
+  return "Local only";
+}
+
 export default function InboxPage() {
-  const { session } = useAuthSession();
-  const signedIn = Boolean(session?.access_token);
+  const { loading: authLoading, session } = useAuthSession();
+  const accessToken = session?.access_token;
+  const signedIn = Boolean(accessToken);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<InboxParseResult | null>(null);
   const [itemCreated, setItemCreated] = useState(false);
   const [captures, setCaptures] = useState<QuickCapture[]>([]);
+  const [captureSource, setCaptureSource] =
+    useState<PrimaryCaptureSource>("local-only");
+  const [captureSourcesById, setCaptureSourcesById] =
+    useState<CaptureSourceById>({});
   const [processingCaptureId, setProcessingCaptureId] = useState<string | null>(
     null,
   );
@@ -78,9 +97,30 @@ export default function InboxPage() {
       captures.map((capture) => ({
         capture,
         preview: parseInboxInput(capture.text),
+        source: captureSourcesById[capture.id] ?? captureSource,
       })),
-    [captures],
+    [captureSource, captureSourcesById, captures],
   );
+
+  const inboxBoundaryMessage = signedIn
+    ? captureSource === "local-fallback"
+      ? "Cloud Inbox could not load, so this queue is showing local fallback captures from this browser."
+      : "Inbox is cloud-primary when signed in. Local-only captures may appear until you import or process them."
+    : "Local-only Inbox on this browser until you sign in.";
+
+  const queueDescription =
+    captureSource === "local-fallback"
+      ? "Cloud Inbox is unavailable. Process local fallback captures carefully."
+      : signedIn
+        ? "Convert cloud-primary captures into tasks or notes, or archive what no longer needs action."
+        : "Convert local captures into tasks or notes, or archive what no longer needs action.";
+
+  const queueBadge =
+    captureSource === "local-fallback"
+      ? "Local fallback queue"
+      : signedIn
+        ? "Cloud-primary queue"
+        : "Local-only queue";
 
   const handleProcess = useCallback(() => {
     const trimmedInput = input.trim();
@@ -117,10 +157,11 @@ export default function InboxPage() {
           priority: result.priority,
           status: "todo",
           workspaceId: workspaceIdFromLabel(result.suggestedWorkspace),
-          accessToken: session?.access_token,
+          accessToken,
         });
       } else {
-        createQuickCaptureNote({
+        await createQuickCaptureNote({
+          accessToken,
           title: result.suggestedTitle,
           content: result.summary,
           type: noteTypeFromInboxType(result.type),
@@ -148,15 +189,24 @@ export default function InboxPage() {
 
     try {
       let processingResult: InboxProcessingResult;
+      const selectedCaptureSource =
+        captureSourcesById[capture.id] ?? captureSource;
 
       if (action === "task") {
         processingResult = await convertInboxItemToTask(capture, {
-          accessToken: session?.access_token,
+          accessToken,
+          captureSource: selectedCaptureSource,
         });
       } else if (action === "note") {
-        processingResult = convertInboxItemToNote(capture);
+        processingResult = await convertInboxItemToNote(capture, {
+          accessToken,
+          captureSource: selectedCaptureSource,
+        });
       } else {
-        processingResult = archiveInboxItem(capture);
+        processingResult = await archiveInboxItem(capture, {
+          accessToken,
+          captureSource: selectedCaptureSource,
+        });
       }
 
       setCaptures(processingResult.remainingCaptures);
@@ -165,10 +215,18 @@ export default function InboxPage() {
         setQueueStatus(
           processingResult.source === "api"
             ? "Converted to task."
-            : "Converted to local task.",
+            : selectedCaptureSource === "cloud"
+              ? "Created a local fallback task. Cloud capture remains in Inbox."
+              : "Converted to local task.",
         );
       } else if (processingResult.action === "note") {
-        setQueueStatus("Converted to note.");
+        setQueueStatus(
+          processingResult.source === "api"
+            ? "Converted to note."
+            : selectedCaptureSource === "cloud"
+              ? "Created a local fallback note. Cloud capture remains in Inbox."
+              : "Converted to local note.",
+        );
       } else {
         setQueueStatus("Archived.");
       }
@@ -180,14 +238,36 @@ export default function InboxPage() {
   }
 
   useEffect(() => {
-    setCaptures(getQuickCaptures());
+    if (authLoading) {
+      return undefined;
+    }
+
+    let active = true;
+
+    async function loadCaptures(): Promise<void> {
+      const result = await loadCapturesFromPrimarySourceWithBoundary({
+        accessToken,
+      });
+
+      if (!active) {
+        return;
+      }
+
+      setCaptures(result.captures);
+      setCaptureSource(result.source);
+      setCaptureSourcesById(result.captureSources);
+    }
+
+    void loadCaptures();
 
     return () => {
+      active = false;
+
       if (timeoutRef.current) {
         window.clearTimeout(timeoutRef.current);
       }
     };
-  }, []);
+  }, [accessToken, authLoading]);
 
   return (
     <AppShell>
@@ -210,17 +290,16 @@ export default function InboxPage() {
               </p>
             </div>
 
-            <Badge>Local-only queue</Badge>
+            <Badge>{queueBadge}</Badge>
           </div>
 
           <Card
             variant="ghost"
             className="mb-6 p-3 text-sm text-zinc-600 dark:text-zinc-400"
           >
-            Inbox captures are local-only on this browser. Cloud sync is not
-            enabled for Inbox yet.
+            {inboxBoundaryMessage}
             {signedIn
-              ? " Converting to a task can use your cloud account; notes and the queue remain local for now."
+              ? " Processing a cloud capture marks it processed or archived in your account."
               : " Sign in before converting captures you want saved as cloud tasks."}
           </Card>
 
@@ -395,8 +474,7 @@ export default function InboxPage() {
                   Processing queue
                 </h2>
                 <p className="mt-1 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
-                  Convert captured thoughts into tasks or notes, or archive
-                  what no longer needs action. Queue storage is local-only.
+                  {queueDescription}
                 </p>
               </div>
               <Badge>{queuedCaptures.length} waiting</Badge>
@@ -429,7 +507,7 @@ export default function InboxPage() {
               />
             ) : (
               <div className="space-y-3">
-                {queuedCaptures.map(({ capture, preview }) => {
+                {queuedCaptures.map(({ capture, preview, source }) => {
                   const processing = processingCaptureId === capture.id;
                   const disabled = processingCaptureId !== null;
 
@@ -439,6 +517,7 @@ export default function InboxPage() {
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <Badge>{preview.detectedType}</Badge>
+                            <Badge>{captureSourceLabel(source)}</Badge>
                             <Badge variant={confidenceBadgeVariant(preview.confidence)}>
                               {preview.confidence.label} confidence
                             </Badge>

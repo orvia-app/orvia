@@ -22,7 +22,10 @@ import {
 } from "@/components/ui/Page";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { fetchActivitiesViaApi } from "@/lib/activities-api";
-import { getQuickCaptures } from "@/lib/quick-captures";
+import {
+  loadCapturesFromPrimarySourceWithBoundary,
+  type PrimaryCaptureSource,
+} from "@/lib/captures-api";
 import {
   loadTasksFromPrimarySourceWithBoundary,
   type PrimaryTaskSource,
@@ -232,6 +235,8 @@ export default function TodayPage() {
   const [tasksLoaded, setTasksLoaded] = useState(false);
   const [todayDateKey, setTodayDateKey] = useState("");
   const [inboxCount, setInboxCount] = useState(0);
+  const [inboxSource, setInboxSource] =
+    useState<PrimaryCaptureSource>("local-only");
   const [activityEvents, setActivityEvents] = useState<TimelineEvent[]>([]);
   const [activityLoaded, setActivityLoaded] = useState(false);
   const [activityError, setActivityError] = useState<string | null>(null);
@@ -244,11 +249,15 @@ export default function TodayPage() {
     const taskResult = await loadTasksFromPrimarySourceWithBoundary({
       accessToken,
     });
+    const captureResult = await loadCapturesFromPrimarySourceWithBoundary({
+      accessToken,
+    });
 
     setTasks(taskResult.tasks);
     setTaskSource(taskResult.source);
     setTaskSourcesById(taskResult.taskSources);
-    setInboxCount(getQuickCaptures().length);
+    setInboxCount(captureResult.captures.length);
+    setInboxSource(captureResult.source);
     setTasksLoaded(true);
 
     if (!accessToken) {
@@ -309,7 +318,9 @@ export default function TodayPage() {
   const todayBoundaryMessage = accessToken
     ? taskSource === "local-fallback"
       ? "Cloud tasks could not load, so Today's plan is showing local fallback data from this browser."
-      : "Today's plan is cloud-primary for tasks. Inbox waiting is still local-only on this browser."
+      : inboxSource === "local-fallback"
+        ? "Today's plan is cloud-primary for tasks. Inbox waiting is showing local fallback captures."
+        : "Today's plan is cloud-primary for tasks and Inbox captures when available."
     : "Local-only mode. Today's plan uses browser data until you sign in.";
 
   return (
@@ -448,7 +459,13 @@ export default function TodayPage() {
               <PageSection className="mt-0">
                 <PageSectionHeader
                   title="Inbox waiting"
-                  description="Local-only captures ready for review."
+                  description={
+                    inboxSource === "cloud"
+                      ? "Cloud-primary captures ready for review."
+                      : inboxSource === "local-fallback"
+                        ? "Local fallback captures ready for review."
+                        : "Local-only captures ready for review."
+                  }
                 />
                 <Card variant="secondary" className="p-3.5">
                   <div className="flex items-start justify-between gap-3">

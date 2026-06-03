@@ -132,6 +132,27 @@ const coreApiRoutes = [
       },
     ],
   },
+  {
+    path: "src/app/api/captures/[id]/route.ts",
+    checks: [
+      {
+        label: "validates API auth",
+        pattern: /authenticateApiRequest\(request\)/,
+      },
+      {
+        label: "scopes by capture id",
+        pattern: /\.eq\("id",\s*captureId\)/,
+      },
+      {
+        label: "scopes by authenticated user",
+        pattern: /\.eq\("user_id",\s*auth\.userId\)/,
+      },
+      {
+        label: "ignores soft-deleted rows before mutation",
+        pattern: /\.is\("deleted_at",\s*null\)/,
+      },
+    ],
+  },
 ];
 
 function readProjectFile(path) {

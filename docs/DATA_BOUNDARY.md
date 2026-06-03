@@ -9,7 +9,7 @@ The following data is cloud-backed when the user is signed in and API requests s
 - Tasks through `GET /api/tasks`, `POST /api/tasks`, `PATCH /api/tasks/[id]`, and `DELETE /api/tasks/[id]`
 - Notes through `GET /api/notes`, `POST /api/notes`, `PATCH /api/notes/[id]`, and `DELETE /api/notes/[id]`
 - Activities through `GET /api/activities` and `POST /api/activities`
-- Captures through `GET /api/captures` and `POST /api/captures` for future Inbox migration
+- Inbox captures through `GET /api/captures`, `POST /api/captures`, and `PATCH /api/captures/[id]`
 
 These API routes validate the Supabase access token server-side, derive `user_id` from the validated user, and scope reads/writes to that user.
 
@@ -17,15 +17,14 @@ These API routes validate the Supabase access token server-side, derive `user_id
 
 The following data remains browser-local today:
 
-- Inbox / quick captures
 - Theme preference
 - Onboarding state
 - Command history
 - Settings that are not explicitly cloud-backed
 - Finance, Cars, and Automation Labs data
-- Local task/note cache and signed-out task/note data
+- Local task/note/capture cache and signed-out task/note/capture data
 
-Inbox UI and Quick Capture still use local browser storage unless a future PR explicitly wires them to the cloud capture API.
+Signed-out Inbox and Quick Capture remain local-only. Signed-in Inbox and Quick Capture are API-primary, with local fallback if the capture API is unavailable.
 
 Local-only data is stored through repository/storage helpers. It is not account data, does not sync across devices, and may be lost if browser storage is cleared.
 
@@ -33,9 +32,9 @@ Local-only data is stored through repository/storage helpers. It is not account 
 
 Some screens intentionally combine cloud-backed and local-only data while Orvia transitions from local-first MVP to authenticated cloud storage:
 
-- Tasks and Notes prefer cloud data when signed in, but may include local-only cached items that have not been imported.
-- Dashboard and Today use cloud-primary tasks when signed in, but Inbox counts are local-only.
-- Search includes cloud tasks/activity when signed in and local notes/inbox sources where those modules still use local helpers.
+- Tasks, Notes, and Inbox captures prefer cloud data when signed in, but may include local-only cached items that have not been imported or processed.
+- Dashboard and Today use cloud-primary tasks and cloud-primary Inbox captures when signed in, with visible local fallback copy if cloud reads fail.
+- Search includes cloud tasks, cloud-primary Inbox captures, activity, and local notes while Notes-related transitional surfaces still keep a local cache.
 - Settings provides a manual local-to-cloud import for supported local tasks and notes only.
 
 Signed-in UI must never silently present local-only data as cloud/account data.
@@ -46,7 +45,7 @@ Signed-in UI must never silently present local-only data as cloud/account data.
 - Local-only items should use compact labels such as `Local only`.
 - Local fallback items should use compact labels such as `Local fallback`.
 - Page-level helper copy should explain mixed surfaces without long warnings.
-- Local Inbox/quick capture surfaces must not imply cloud sync exists.
+- Inbox/quick capture surfaces must label cloud-primary, local-only, or local fallback mode clearly.
 - Activity/timeline data should only be fetched with an authenticated access token.
 
 ## Local Fallback Rules
@@ -73,13 +72,14 @@ Rules:
 - It does not run automatically on login.
 - It should show candidate counts before import.
 - It should show a success/error summary after import.
-- It must not import Inbox captures, settings, Labs data, or unsupported local records.
+- It must not import Inbox captures, settings, Labs data, or unsupported local records. Capture import/migration remains a separate future workflow.
 
 ## Remaining Beta Risks
 
 - Local-only browser data can still sit beside cloud data until the user imports or clears it.
 - There is no full bidirectional sync engine yet.
 - There is no conflict resolution UI yet.
-- Inbox UI is still local-only even though a cloud capture API foundation now exists.
+- Existing local Inbox captures are not automatically migrated to cloud.
+- Cloud capture processing currently supports status changes only; there is no full capture edit/delete UI yet.
 - Finance, Cars, and Automation remain Labs/experimental and local-only.
 - Source labels are UI-only and derived from the current loader result, not persisted as durable per-record sync metadata.
