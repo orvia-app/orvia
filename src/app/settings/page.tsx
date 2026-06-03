@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Monitor, Moon, Sun } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
@@ -25,14 +26,51 @@ import {
 } from "@/lib/local-cloud-sync";
 import { resetOnboarding } from "@/lib/onboarding";
 
-const sections = [
-  { title: "Profile", description: "Name, avatar, and preferences." },
+type SettingsSectionId =
+  | "profile"
+  | "integrations"
+  | "billing"
+  | "data-privacy";
+
+const settingsSections: {
+  id: SettingsSectionId;
+  title: string;
+  status: string;
+  description: string;
+  detail: string;
+}[] = [
   {
-    title: "Integrations",
-    description: "Connect calendars, messengers, and APIs.",
+    id: "profile",
+    title: "Profile",
+    status: "Coming in Beta",
+    description: "Name, avatar, and personal workspace identity.",
+    detail:
+      "Profile controls will let you manage account identity and workspace defaults once account settings are fully cloud-backed.",
   },
-  { title: "Billing", description: "Plans and payment methods." },
-  { title: "Data & Privacy", description: "Export, retention, and security." },
+  {
+    id: "integrations",
+    title: "Integrations",
+    status: "Coming in Beta",
+    description: "Calendar, email, and messaging connections.",
+    detail:
+      "Calendar, email, Telegram, and other integrations are planned for a future release after backend linking and consent controls are ready.",
+  },
+  {
+    id: "billing",
+    title: "Billing",
+    status: "Future release",
+    description: "Plans, invoices, and payment management.",
+    detail:
+      "Billing will be added when Orvia introduces paid plans. Payment details will be handled by a payment provider, not stored directly by Orvia.",
+  },
+  {
+    id: "data-privacy",
+    title: "Data & Privacy",
+    status: "In progress",
+    description: "Export, local reset, and future account controls.",
+    detail:
+      "Available now: create a local backup, reset browser-local Orvia data, and keep cloud account data protected by account authentication. Coming later: full cloud account export, account deletion, and retention controls.",
+  },
 ];
 
 const appearanceOptions: {
@@ -76,6 +114,11 @@ export default function SettingsPage() {
   const [resettingLocalData, setResettingLocalData] = useState(false);
   const [onboardingDialogOpen, setOnboardingDialogOpen] = useState(false);
   const [resettingOnboarding, setResettingOnboarding] = useState(false);
+  const [activeSettingsSection, setActiveSettingsSection] =
+    useState<SettingsSectionId>("profile");
+  const selectedSettingsSection = settingsSections.find(
+    (section) => section.id === activeSettingsSection,
+  ) ?? settingsSections[0];
 
   const importDisabled = useMemo(() => {
     if (authLoading || planLoading || importing || !isAuthenticated) {
@@ -255,47 +298,112 @@ export default function SettingsPage() {
           <Section className="mt-8">
             <Card>
               <SectionHeader
-                title="Data Management"
-                subtitle="Export or reset the data stored locally in this browser."
+                title="Backup & Restore"
+                subtitle="Protect your workspace by creating a backup and restoring it later if needed."
               />
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
-                  <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
-                    Export data
-                  </h3>
-                  <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                    Download a JSON snapshot of local tasks, notes, finance,
-                    cars, captures, and theme preference.
-                  </p>
-                  <Button
-                    className="mt-4 w-full sm:w-auto"
-                    onClick={exportData}
-                  >
-                    Export JSON
-                  </Button>
+                <div className="flex min-h-[190px] flex-col rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+                  <div>
+                    <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
+                      Create Backup
+                    </h3>
+                    <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                      Export your tasks, notes, and supported local workspace
+                      data into a backup file.
+                    </p>
+                    <p className="mt-2 text-xs font-medium text-zinc-500 dark:text-zinc-500">
+                      Supported format: Orvia backup file (.json)
+                    </p>
+                  </div>
+                  <div className="mt-auto pt-4">
+                    <Button
+                      className="h-9 w-full px-3 text-sm sm:w-auto"
+                      onClick={exportData}
+                    >
+                      Create backup
+                    </Button>
+                  </div>
                 </div>
 
-                <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-500/20 dark:bg-red-500/10">
-                  <h3 className="text-sm font-semibold text-red-900 dark:text-red-200">
-                    Reset local data
-                  </h3>
-                  <p className="mt-1 text-sm leading-6 text-red-800/80 dark:text-red-200/80">
-                    Clear only Orvia local data from this browser. Other
-                    browser storage is left untouched.
-                  </p>
-                  <Button
-                    className="mt-4 w-full sm:w-auto"
+                <div className="flex min-h-[190px] flex-col rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+                  <div>
+                    <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
+                      Restore Backup
+                    </h3>
+                    <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                      Import a previously exported Orvia backup. Restore is not
+                      available yet.
+                    </p>
+                    <p className="mt-2 text-xs font-medium text-zinc-500 dark:text-zinc-500">
+                      Supported format: Orvia backup file (.json)
+                    </p>
+                  </div>
+                  <div className="mt-auto pt-4">
+                    <Button
+                      className="h-9 w-full px-3 text-sm sm:w-auto"
+                      disabled
+                      variant="secondary"
+                    >
+                      Coming Soon
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </Section>
+
+          <Section className="mt-8">
+            <Card>
+              <SectionHeader
+                title="Local data reset"
+                subtitle="Clear browser-local Orvia data without deleting cloud records."
+              />
+              <div className="mt-5 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
+                      Reset local data
+                    </h3>
+                    <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                      Remove Orvia data stored in this browser only. Cloud
+                      tasks, notes, captures, and activity are not deleted.
+                    </p>
+                    <p className="mt-2 text-xs font-medium text-zinc-500 dark:text-zinc-500">
+                      This action cannot be undone.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="inline-flex h-9 w-full shrink-0 items-center justify-center rounded-xl border border-red-200/80 bg-white px-3 text-sm font-medium text-red-700 transition hover:border-red-300 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300/70 dark:border-red-500/25 dark:bg-zinc-950/40 dark:text-red-300 dark:hover:border-red-500/35 dark:hover:bg-red-500/10 dark:focus-visible:ring-red-500/30 sm:w-auto"
                     onClick={resetData}
-                    variant="danger"
                   >
                     Reset local data
-                  </Button>
+                  </button>
                 </div>
+              </div>
+            </Card>
+          </Section>
+
+          <Section className="mt-8">
+            <Card>
+              <SectionHeader
+                title="Workspace"
+                subtitle="Module organization and workspace customization."
+              />
+              <div className="mt-3 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+                <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
+                  Workspace customization
+                </h3>
+                <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                  Workspace customization is planned for a future release.
+                  Future versions of Orvia will allow enabling, disabling, and
+                  organizing workspace modules.
+                </p>
               </div>
 
               <div className="mt-3 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
                 <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
-                  Reset onboarding
+                  Onboarding
                 </h3>
                 <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
                   Show the Dashboard onboarding panel again for this browser.
@@ -393,18 +501,85 @@ export default function SettingsPage() {
             </Card>
           </Section>
 
-          <ul className="mt-8 divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
-            {sections.map((section) => (
-              <li key={section.title} className="px-5 py-5 sm:px-6">
-                <h2 className="text-base font-semibold text-zinc-950 dark:text-white">
-                  {section.title}
-                </h2>
-                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                  {section.description}
-                </p>
-              </li>
-            ))}
-          </ul>
+          <Section className="mt-8">
+            <Card>
+              <SectionHeader
+                title="Account settings"
+                subtitle="These areas are intentionally staged for beta."
+              />
+              <div className="mt-5 grid gap-3 sm:grid-cols-[220px_minmax(0,1fr)]">
+                <div className="grid gap-2">
+                  {settingsSections.map((section) => {
+                    const active = section.id === activeSettingsSection;
+
+                    return (
+                      <button
+                        key={section.id}
+                        type="button"
+                        onClick={() => setActiveSettingsSection(section.id)}
+                        className={
+                          active
+                            ? "rounded-xl bg-violet-50 px-3 py-3 text-left ring-1 ring-violet-200/80 dark:bg-violet-500/10 dark:ring-violet-500/25"
+                            : "rounded-xl bg-zinc-50/80 px-3 py-3 text-left ring-1 ring-zinc-200/80 transition hover:bg-white hover:ring-violet-200/70 dark:bg-zinc-900/40 dark:ring-zinc-800/80 dark:hover:bg-zinc-900 dark:hover:ring-violet-500/20"
+                        }
+                      >
+                        <span className="block text-sm font-semibold text-zinc-950 dark:text-white">
+                          {section.title}
+                        </span>
+                        <span className="mt-1 block text-xs text-zinc-500 dark:text-zinc-500">
+                          {section.status}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-5 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+                  <p className="text-xs font-medium uppercase tracking-wide text-violet-700 dark:text-violet-300">
+                    {selectedSettingsSection.status}
+                  </p>
+                  <h3 className="mt-2 text-base font-semibold text-zinc-950 dark:text-white">
+                    {selectedSettingsSection.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                    {selectedSettingsSection.description}
+                  </p>
+                  <p className="mt-3 text-sm leading-6 text-zinc-500 dark:text-zinc-500">
+                    {selectedSettingsSection.detail}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </Section>
+
+          <Section className="mt-8">
+            <Card>
+              <SectionHeader
+                title="Help & Legal"
+                subtitle="Learn how Orvia works and review early beta policies."
+              />
+              <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                <Link
+                  href="/help-center"
+                  className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 text-sm font-medium text-zinc-800 transition hover:bg-white hover:text-violet-800 hover:ring-1 hover:ring-violet-200/70 dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:text-zinc-200 dark:hover:bg-zinc-900 dark:hover:text-violet-200 dark:hover:ring-violet-500/20"
+                >
+                  Help Center
+                </Link>
+                <Link
+                  href="/legal/privacy"
+                  className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 text-sm font-medium text-zinc-800 transition hover:bg-white hover:text-violet-800 hover:ring-1 hover:ring-violet-200/70 dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:text-zinc-200 dark:hover:bg-zinc-900 dark:hover:text-violet-200 dark:hover:ring-violet-500/20"
+                >
+                  Privacy Policy
+                </Link>
+                <Link
+                  href="/legal/terms"
+                  className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 text-sm font-medium text-zinc-800 transition hover:bg-white hover:text-violet-800 hover:ring-1 hover:ring-violet-200/70 dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:text-zinc-200 dark:hover:bg-zinc-900 dark:hover:text-violet-200 dark:hover:ring-violet-500/20"
+                >
+                  Terms of Service
+                </Link>
+              </div>
+            </Card>
+          </Section>
         </div>
       </div>
 

@@ -84,7 +84,7 @@ Commands use typed action unions so navigation, task creation, note creation, AI
 Current action commands support:
 - Create Task
 - Create Note
-- Open AI Inbox
+- Open Inbox
 
 The palette handles keyboard discovery and selection. Action execution is delegated to command hooks/components. Creation flows persist through existing task/note repositories, keeping storage and validation concerns outside the palette UI.
 
