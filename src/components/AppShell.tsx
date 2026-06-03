@@ -270,25 +270,25 @@ function AuthStatus() {
   }
 
   return (
-    <div className="rounded-lg bg-white/65 px-2.5 py-2 ring-1 ring-zinc-200/70 dark:bg-zinc-900/45 dark:ring-zinc-800/70">
-      <p className="text-[11px] font-medium text-zinc-800 dark:text-zinc-200">
-        Local-first mode
+    <div className="rounded-xl bg-white/60 px-3 py-3 ring-1 ring-zinc-200/75 dark:bg-zinc-900/35 dark:ring-zinc-800/75">
+      <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+        Create your workspace
       </p>
-      <p className="mt-0.5 text-[10px] text-zinc-500 dark:text-zinc-500">
-        Auth available. Sync not enabled yet.
+      <p className="mt-1 text-[11px] leading-4 text-zinc-500 dark:text-zinc-500">
+        Sync across devices.
       </p>
-      <div className="mt-1.5 flex gap-2">
+      <div className="mt-3 grid gap-2">
         <Link
           href="/login"
-          className="text-[11px] font-medium text-violet-700 hover:text-violet-900 dark:text-violet-300 dark:hover:text-violet-200"
+          className="inline-flex h-8 items-center justify-center rounded-lg bg-violet-800 px-2 text-[11px] font-medium text-white shadow-sm shadow-violet-950/10 hover:bg-violet-700 dark:bg-violet-600/85 dark:hover:bg-violet-600"
         >
-          Log in
+          Sign In
         </Link>
         <Link
           href="/register"
-          className="text-[11px] font-medium text-zinc-500 hover:text-violet-700 dark:text-zinc-500 dark:hover:text-violet-300"
+          className="inline-flex h-8 items-center justify-center rounded-lg px-2 text-[11px] font-medium text-zinc-600 ring-1 ring-zinc-200/80 hover:bg-white hover:text-violet-800 dark:text-zinc-400 dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:text-violet-200"
         >
-          Register
+          Create Account
         </Link>
       </div>
       {authError ? (
@@ -397,7 +397,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               Orvia
             </p>
             <p className="text-[11px] text-zinc-500 dark:text-zinc-500">
-              Turn context into action
+              Capture. Organize. Execute.
             </p>
           </div>
         </div>
@@ -523,7 +523,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       Orvia
                     </p>
                     <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-500">
-                      Turn context into action
+                      Capture. Organize. Execute.
                     </p>
                   </div>
                 </div>

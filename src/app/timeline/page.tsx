@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CircleDot } from "lucide-react";
-
 import { AppShell } from "@/components/AppShell";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
@@ -77,12 +75,10 @@ export default function TimelinePage() {
 
   return (
     <AppShell>
-      <Page width="narrow">
+      <Page>
         <PageHeader
-          eyebrow="Recall"
           title="Timeline"
-          description="Activity feed from your recorded task, note, and import events."
-          icon={CircleDot}
+          description="Activity history of tasks, notes, captures, and imports."
         />
 
           <div className="mt-7">
@@ -105,8 +101,8 @@ export default function TimelinePage() {
               />
             ) : events.length === 0 ? (
               <EmptyState
-                title="Your activity timeline is empty."
-                description="Create, update, or delete tasks and notes to add activity here."
+                title="No activity yet"
+                description="Create tasks, notes, or captures to start building your timeline."
               />
             ) : (
               <PageSection className="mt-0">

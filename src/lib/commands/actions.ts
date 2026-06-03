@@ -24,9 +24,9 @@ export const actionCommands: readonly CommandItem[] = [
     metadata: { priority: "primary", contextualScore: 90 },
   },
   {
-    id: "action-open-ai-inbox",
-    title: "Open AI Inbox",
-    subtitle: "Review local capture intake",
+    id: "action-open-inbox",
+    title: "Open Inbox",
+    subtitle: "Review captures waiting for action",
     keywords: ["inbox", "capture", "process"],
     group: "Actions",
     icon: Inbox,

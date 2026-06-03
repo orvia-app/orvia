@@ -81,14 +81,11 @@ export function CommandPalette({
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
-              <kbd className="hidden h-7 items-center rounded-md border border-zinc-200/70 bg-zinc-50/80 px-2 text-[10px] font-medium text-zinc-500 shadow-sm shadow-zinc-950/[0.015] dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-500 sm:inline-flex">
-                Esc
-              </kbd>
               <button
                 type="button"
                 aria-label="Close"
                 onClick={() => onOpenChange(false)}
-                className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md border border-zinc-200/70 bg-white/75 text-zinc-500 shadow-sm shadow-zinc-950/[0.015] transition-colors hover:border-violet-200 hover:bg-violet-50/80 hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400 dark:hover:border-violet-500/25 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:focus-visible:ring-violet-400"
+                className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-zinc-500 ring-1 ring-zinc-200/70 transition-colors hover:bg-violet-50 hover:text-violet-700 hover:ring-violet-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 dark:text-zinc-400 dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/25 dark:focus-visible:ring-violet-400"
               >
                 <X className="h-3.5 w-3.5 shrink-0" aria-hidden strokeWidth={2.25} />
               </button>
@@ -130,9 +127,6 @@ export function CommandPalette({
                   <div className="flex items-center justify-between px-2.5 pb-1.5 pt-1">
                     <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
                       {section.label}
-                    </div>
-                    <div className="text-[11px] font-medium text-zinc-400 dark:text-zinc-600">
-                      {section.commands.length}
                     </div>
                   </div>
                   <div className="space-y-1">

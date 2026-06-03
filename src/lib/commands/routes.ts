@@ -1,6 +1,5 @@
 import {
   CalendarDays,
-  Car,
   CheckSquare,
   CircleDot,
   FileText,
@@ -9,8 +8,6 @@ import {
   MessageSquare,
   Search,
   Settings,
-  Wallet,
-  Zap,
 } from "lucide-react";
 
 import type { CommandItem } from "@/lib/commands/types";
@@ -95,36 +92,6 @@ export const routeCommands: readonly CommandItem[] = [
     icon: MessageSquare,
     action: { type: "navigate", href: "/ai-chat" },
     metadata: { priority: "secondary", recentLabel: "Open AI Chat" },
-  },
-  {
-    id: "route-finance",
-    title: "Go to Finance",
-    subtitle: "/finance",
-    keywords: ["money", "transactions", "cashflow"],
-    group: "Navigation",
-    icon: Wallet,
-    action: { type: "navigate", href: "/finance" },
-    metadata: { priority: "secondary", recentLabel: "Open Finance" },
-  },
-  {
-    id: "route-cars",
-    title: "Go to Cars",
-    subtitle: "/cars",
-    keywords: ["vehicles", "maintenance"],
-    group: "Navigation",
-    icon: Car,
-    action: { type: "navigate", href: "/cars" },
-    metadata: { priority: "secondary", recentLabel: "Open Cars" },
-  },
-  {
-    id: "route-automation",
-    title: "Go to Automation",
-    subtitle: "/automation",
-    keywords: ["workflows", "telegram", "reminders"],
-    group: "Navigation",
-    icon: Zap,
-    action: { type: "navigate", href: "/automation" },
-    metadata: { priority: "secondary", recentLabel: "Open Automation" },
   },
   {
     id: "route-settings",

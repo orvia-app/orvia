@@ -69,7 +69,7 @@ function SearchGuidance({ counts }: { counts: UnifiedSearchCounts | null }) {
     <div className="space-y-4">
       <EmptyState
         title="Search your workspace"
-        description="Find tasks, notes, inbox captures, and timeline events with local deterministic search."
+        description="Type a keyword to find the work, notes, captures, and activity that matter now."
       />
 
       {counts ? (
@@ -142,12 +142,10 @@ export default function SearchPage() {
 
   return (
     <AppShell>
-      <Page width="narrow">
+      <Page>
         <PageHeader
-          eyebrow="Find"
           title="Search"
-          description="Search tasks, notes, inbox captures, and timeline events."
-          icon={Search}
+          description="Find tasks, notes, captures, and activity across your workspace."
         />
 
           <Card
@@ -175,14 +173,14 @@ export default function SearchPage() {
           <div className="mt-7">
             {!loaded ? (
               <Card className="text-sm text-zinc-500 dark:text-zinc-400">
-                Preparing local search index...
+                Preparing your search index...
               </Card>
             ) : !hasQuery ? (
               <SearchGuidance counts={counts} />
             ) : !hasResults ? (
               <EmptyState
                 title="No results found"
-                description="Try another keyword or capture something new."
+                description="Try a different keyword, or capture something new to make it searchable."
               />
             ) : (
               <div className="space-y-7">
