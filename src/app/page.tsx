@@ -39,6 +39,10 @@ import {
   type TaskSourceById,
 } from "@/lib/tasks-api";
 import {
+  getPrioritizedTasks,
+  type PrioritizedTask,
+} from "@/lib/priority-engine";
+import {
   createTimelineEventsFromActivities,
   type TimelineEvent,
 } from "@/lib/timeline";
@@ -49,15 +53,8 @@ type FocusBucket = {
   emptyDescription: string;
   emptyTitle: string;
   icon: typeof TriangleAlert;
-  tasks: Task[];
+  tasks: PrioritizedTask[];
   title: string;
-};
-
-const priorityRank: Record<TaskPriority, number> = {
-  critical: 4,
-  high: 3,
-  medium: 2,
-  low: 1,
 };
 
 function getTodayDateKey(): string {
@@ -72,35 +69,11 @@ function getTaskDueDateKey(task: Task): string | undefined {
   return task.dueDate?.split("T")[0];
 }
 
-function isActiveTask(task: Task): boolean {
-  return task.status !== "done";
-}
-
 function isHighPriorityTask(task: Task): boolean {
   return (
-    isActiveTask(task) &&
+    task.status !== "done" &&
     (task.priority === "critical" || task.priority === "high")
   );
-}
-
-function sortByPriorityAndDate(tasks: readonly Task[]): Task[] {
-  return [...tasks].sort((a, b) => {
-    const priorityDifference =
-      priorityRank[b.priority] - priorityRank[a.priority];
-
-    if (priorityDifference !== 0) {
-      return priorityDifference;
-    }
-
-    const aDueDate = getTaskDueDateKey(a) ?? "9999-12-31";
-    const bDueDate = getTaskDueDateKey(b) ?? "9999-12-31";
-
-    if (aDueDate !== bDueDate) {
-      return aDueDate.localeCompare(bDueDate);
-    }
-
-    return b.createdAt.localeCompare(a.createdAt);
-  });
 }
 
 function getTaskFilterUrl(task: Task): string {
@@ -128,15 +101,15 @@ function formatTaskPriority(priority: TaskPriority): string {
 }
 
 function taskSourceLabel(source: PrimaryTaskSource): string {
-  if (source === "cloud") {
-    return "Cloud";
-  }
-
   if (source === "local-fallback") {
     return "Local fallback";
   }
 
   return "Local only";
+}
+
+function shouldShowTaskSource(source: PrimaryTaskSource): boolean {
+  return source !== "cloud";
 }
 
 function CompactEmptyState({
@@ -177,7 +150,7 @@ function TaskSignalList({
   emptyDescription: string;
   emptyTitle: string;
   taskSources: TaskSourceById;
-  tasks: Task[];
+  tasks: PrioritizedTask[];
 }) {
   if (tasks.length === 0) {
     return (
@@ -191,7 +164,8 @@ function TaskSignalList({
 
   return (
     <ul className="space-y-2">
-      {tasks.slice(0, 4).map((task) => {
+      {tasks.slice(0, 4).map((prioritizedTask) => {
+        const { reasons, task } = prioritizedTask;
         const dueDate = getTaskDueDateKey(task);
 
         return (
@@ -212,14 +186,26 @@ function TaskSignalList({
                     <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800">
                       {formatTaskStatus(task.status)}
                     </span>
-                    <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800">
-                      {taskSourceLabel(taskSources[task.id] ?? "local-only")}
-                    </span>
+                    {shouldShowTaskSource(
+                      taskSources[task.id] ?? "local-only",
+                    ) ? (
+                      <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800">
+                        {taskSourceLabel(taskSources[task.id] ?? "local-only")}
+                      </span>
+                    ) : null}
                     {dueDate ? (
                       <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800">
                         {dueDate}
                       </span>
                     ) : null}
+                    {reasons.slice(0, 2).map((reason) => (
+                      <span
+                        key={reason}
+                        className="rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 ring-1 ring-violet-200/70 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20"
+                      >
+                        {reason}
+                      </span>
+                    ))}
                   </div>
                 </div>
                 <ArrowRight
@@ -318,16 +304,20 @@ export default function Home() {
   }, [authLoading, refreshDashboardData]);
 
   const focusBuckets = useMemo<FocusBucket[]>(() => {
-    const activeTasks = tasks.filter(isActiveTask);
+    const prioritizedTasks = todayDateKey
+      ? getPrioritizedTasks(tasks, { todayDateKey })
+      : [];
     const overdueTasks = todayDateKey
-      ? activeTasks.filter((task) => {
+      ? prioritizedTasks.filter(({ task }) => {
           const dueDate = getTaskDueDateKey(task);
 
           return dueDate ? dueDate < todayDateKey : false;
         })
       : [];
     const todayTasks = todayDateKey
-      ? activeTasks.filter((task) => getTaskDueDateKey(task) === todayDateKey)
+      ? prioritizedTasks.filter(
+          ({ task }) => getTaskDueDateKey(task) === todayDateKey,
+        )
       : [];
 
     return [
@@ -337,7 +327,7 @@ export default function Home() {
         emptyTitle: "No urgent tasks today.",
         emptyDescription: "High-priority work will appear here.",
         icon: TriangleAlert,
-        tasks: sortByPriorityAndDate(activeTasks.filter(isHighPriorityTask)),
+        tasks: prioritizedTasks.filter(({ task }) => isHighPriorityTask(task)),
       },
       {
         title: "Overdue",
@@ -345,7 +335,7 @@ export default function Home() {
         emptyTitle: "Nothing overdue.",
         emptyDescription: "No past-due work needs attention.",
         icon: Clock,
-        tasks: sortByPriorityAndDate(overdueTasks),
+        tasks: overdueTasks,
       },
       {
         title: "Due today",
@@ -353,7 +343,7 @@ export default function Home() {
         emptyTitle: "Nothing due today.",
         emptyDescription: "Your dated task lane is clear.",
         icon: CheckCircle2,
-        tasks: sortByPriorityAndDate(todayTasks),
+        tasks: todayTasks,
       },
     ];
   }, [tasks, todayDateKey]);
@@ -376,7 +366,7 @@ export default function Home() {
       ? "Cloud tasks could not load, so Dashboard is showing local fallback data from this browser."
       : inboxSource === "local-fallback"
         ? "Tasks are cloud-primary. Inbox count is showing local fallback captures because cloud Inbox could not load."
-        : "Tasks and Inbox are cloud-primary when available. Local-only items may appear during the transition."
+        : null
     : "Local-only mode. Dashboard uses browser data until you sign in.";
 
   return (
@@ -407,12 +397,14 @@ export default function Home() {
           }
         />
 
-          <Card
-            variant={taskSource === "local-fallback" ? "secondary" : "ghost"}
-            className="mt-5 p-3 text-sm text-zinc-600 dark:text-zinc-400"
-          >
-            {dashboardBoundaryMessage}
-          </Card>
+          {dashboardBoundaryMessage ? (
+            <Card
+              variant={taskSource === "local-fallback" ? "secondary" : "ghost"}
+              className="mt-5 p-3 text-sm text-zinc-600 dark:text-zinc-400"
+            >
+              {dashboardBoundaryMessage}
+            </Card>
+          ) : null}
 
           {onboardingLoaded && showOnboarding ? (
             <Card className="mt-5 overflow-hidden p-0">
