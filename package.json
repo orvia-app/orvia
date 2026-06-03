@@ -7,6 +7,7 @@
     "build": "next build",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm run build",
+    "security:guard": "node scripts/security-guard.mjs",
     "verify:rls": "node scripts/verify-rls-ownership.mjs",
     "start": "next start",
     "lint": "eslint"
