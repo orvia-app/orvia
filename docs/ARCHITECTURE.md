@@ -25,6 +25,9 @@ No backend, authentication, cloud sync, vector database, production AI calls, or
 ## App Structure
 
 - `src/app/*`: route pages and page-level UI orchestration.
+- Public marketing routes are served from `/` and `/landing`.
+- The beta app surface lives under `/app/*`, with legacy top-level app routes kept as compatibility routes during the transition.
+- `AppShell` provides a lightweight client-side auth gate for app screens. This improves beta UX but is not a server authorization boundary; API ownership checks and RLS remain the real data protections.
 - `src/components/AppShell.tsx`: application shell, sidebar navigation, theme controls, and command center mount.
 - `src/components/ThemeProvider.tsx`: theme state and document class management.
 - `src/components/ui/*`: reusable UI primitives such as cards, buttons, badges, sections, empty states, and skeletons.

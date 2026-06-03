@@ -65,7 +65,7 @@ function getTaskUrl(task: Task): string {
     taskId: task.id,
   });
 
-  return `/tasks?${params.toString()}`;
+  return `/app/tasks?${params.toString()}`;
 }
 
 function formatPriority(priority: TaskPriority): string {
@@ -458,7 +458,7 @@ export default function TodayPage() {
                     </span>
                   </div>
                   <Link
-                    href="/inbox"
+                    href="/app/inbox"
                     className="mt-3 inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50 hover:text-violet-800 hover:ring-violet-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-zinc-950/60 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/25 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
                   >
                     Open Inbox

@@ -38,26 +38,26 @@ type NavItem = {
 };
 
 const focusNavItems: NavItem[] = [
-  { label: "Dashboard", href: "/", icon: House },
-  { label: "Today", href: "/today", icon: CalendarDays },
+  { label: "Dashboard", href: "/app", icon: House },
+  { label: "Today", href: "/app/today", icon: CalendarDays },
 ];
 
 const workflowNavItems: NavItem[] = [
-  { label: "Inbox", href: "/inbox", icon: Inbox },
-  { label: "Tasks", href: "/tasks", icon: CheckSquare },
-  { label: "Notes", href: "/notes", icon: FileText },
-  { label: "Search", href: "/search", icon: Search },
-  { label: "Timeline", href: "/timeline", icon: CircleDot },
+  { label: "Inbox", href: "/app/inbox", icon: Inbox },
+  { label: "Tasks", href: "/app/tasks", icon: CheckSquare },
+  { label: "Notes", href: "/app/notes", icon: FileText },
+  { label: "Search", href: "/app/search", icon: Search },
+  { label: "Timeline", href: "/app/timeline", icon: CircleDot },
 ];
 
 const settingsNavItems: NavItem[] = [
-  { label: "Settings", href: "/settings", icon: Settings },
+  { label: "Settings", href: "/app/settings", icon: Settings },
 ];
 
 const labsNavItems: NavItem[] = [
-  { label: "Cars", href: "/cars", icon: Car },
-  { label: "Finance", href: "/finance", icon: Wallet },
-  { label: "Automation", href: "/automation", icon: Zap },
+  { label: "Cars", href: "/app/cars", icon: Car },
+  { label: "Finance", href: "/app/finance", icon: Wallet },
+  { label: "Automation", href: "/app/automation", icon: Zap },
 ];
 
 const navItems: NavItem[] = [
@@ -74,8 +74,8 @@ const themeOptions: { value: Theme; label: string; icon: LucideIcon }[] = [
 ];
 
 function isNavActive(pathname: string, href: string) {
-  if (href === "/") {
-    return pathname === "/";
+  if (href === "/app") {
+    return pathname === "/app";
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -302,7 +302,7 @@ function AuthStatus() {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { session } = useAuthSession();
+  const { isAuthenticated, loading, session } = useAuthSession();
   const navItemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [quickCaptureOpen, setQuickCaptureOpen] = useState(false);
@@ -377,6 +377,55 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [openQuickCapture]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-100 px-4 text-zinc-950 dark:bg-zinc-950 dark:text-white">
+        <div className="rounded-2xl bg-white/85 px-5 py-4 text-sm text-zinc-600 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/75 dark:bg-zinc-900/70 dark:text-zinc-400 dark:ring-zinc-800/75">
+          Checking account...
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.11),transparent_30rem),linear-gradient(180deg,#fafafa_0%,#f4f4f5_100%)] px-4 py-10 text-zinc-950 dark:bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.16),transparent_30rem),linear-gradient(180deg,#18181b_0%,#09090b_100%)] dark:text-white">
+        <div className="w-full max-w-md rounded-2xl bg-white/90 p-6 text-center shadow-sm shadow-zinc-950/[0.04] ring-1 ring-zinc-200/75 dark:bg-zinc-900/75 dark:ring-zinc-800/75">
+          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-800 ring-1 ring-violet-200/80 dark:bg-violet-500/10 dark:text-violet-200 dark:ring-violet-500/25">
+            <BrandMark className="h-6 w-6" />
+          </div>
+          <h1 className="mt-5 text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+            Sign in to continue
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+            The Orvia app preview is available after sign in. You can still
+            view the public landing page.
+          </p>
+          <div className="mt-6 grid gap-2 sm:grid-cols-2">
+            <Link
+              href="/login"
+              className="inline-flex h-10 items-center justify-center rounded-xl bg-violet-800 px-4 text-sm font-medium text-white shadow-sm shadow-violet-950/10 transition hover:bg-violet-700 dark:bg-violet-600/85 dark:hover:bg-violet-600"
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/register"
+              className="inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-medium text-zinc-700 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50/70 hover:text-violet-800 hover:ring-violet-200/70 dark:bg-zinc-950/60 dark:text-zinc-200 dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/20"
+            >
+              Create account
+            </Link>
+          </div>
+          <Link
+            href="/"
+            className="mt-4 inline-flex text-sm font-medium text-zinc-500 hover:text-violet-800 dark:text-zinc-500 dark:hover:text-violet-200"
+          >
+            Back to landing
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-zinc-100 text-zinc-950 dark:bg-zinc-950 dark:text-white">

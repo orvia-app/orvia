@@ -119,7 +119,7 @@ export default function ResetPasswordPage() {
             Log in
           </Link>
           <Link
-            href="/"
+            href="/app"
             className="font-medium text-zinc-800 hover:text-zinc-950 dark:text-zinc-200 dark:hover:text-white"
           >
             Go to dashboard

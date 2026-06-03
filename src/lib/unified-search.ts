@@ -66,7 +66,7 @@ function normalizeSearchText(value: string): string {
 }
 
 function taskHref(task: Task): string {
-  return `/tasks?filter=${task.status}&taskId=${encodeURIComponent(task.id)}`;
+  return `/app/tasks?filter=${task.status}&taskId=${encodeURIComponent(task.id)}`;
 }
 
 function taskSourceLabel(source: PrimaryTaskSource | undefined): string {
@@ -144,7 +144,7 @@ function noteToSearchResult(note: Note): UnifiedSearchResult {
     title: note.title,
     description: note.content,
     source: "Local note",
-    href: "/notes",
+    href: "/app/notes",
     searchableText: normalizeSearchText(
       compactText([note.title, note.content, note.type]),
     ),
@@ -162,7 +162,7 @@ function inboxCaptureToSearchResult(
     description: "Inbox capture",
     source: captureSourceLabel(source),
     createdAt: capture.createdAt,
-    href: "/inbox",
+    href: "/app/inbox",
     searchableText: normalizeSearchText(capture.text),
   };
 }
@@ -177,7 +177,7 @@ function timelineEventToSearchResult(
     description: timelineEventDescription(event),
     source: "Activity",
     createdAt: event.timestamp,
-    href: "/timeline",
+    href: "/app/timeline",
     searchableText: normalizeSearchText(
       compactText([event.title, event.type, timelineEventDescription(event)]),
     ),
