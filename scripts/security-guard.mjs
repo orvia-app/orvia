@@ -111,6 +111,27 @@ const coreApiRoutes = [
       },
     ],
   },
+  {
+    path: "src/app/api/captures/route.ts",
+    checks: [
+      {
+        label: "validates API auth",
+        pattern: /authenticateApiRequest\(request\)/,
+      },
+      {
+        label: "filters reads by authenticated user",
+        pattern: /\.eq\("user_id",\s*auth\.userId\)/,
+      },
+      {
+        label: "excludes soft-deleted rows",
+        pattern: /\.is\("deleted_at",\s*null\)/,
+      },
+      {
+        label: "inserts authenticated user_id",
+        pattern: /\.insert\(\{\s*\.{3}parsedPayload\.payload,\s*user_id:\s*auth\.userId\s*\}\)/,
+      },
+    ],
+  },
 ];
 
 function readProjectFile(path) {
@@ -259,4 +280,3 @@ if (failures.length > 0) {
 }
 
 console.log("Security guard passed.");
-

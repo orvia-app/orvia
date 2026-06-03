@@ -99,6 +99,37 @@ export type SupabaseActivityInsert = {
   deleted_at?: string | null;
 };
 
+export type SupabaseCaptureStatus = "inbox" | "processed" | "archived";
+
+export type SupabaseCaptureSource =
+  | "quick_capture"
+  | "manual"
+  | "import"
+  | "telegram"
+  | "system";
+
+export type SupabaseCaptureRow = {
+  id: string;
+  user_id: string;
+  content: string;
+  source: SupabaseCaptureSource;
+  status: SupabaseCaptureStatus;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  [key: string]: unknown;
+};
+
+export type SupabaseCaptureInsert = {
+  user_id?: string;
+  content: string;
+  source?: SupabaseCaptureSource;
+  status?: SupabaseCaptureStatus;
+  metadata?: Record<string, unknown>;
+  deleted_at?: string | null;
+};
+
 export type SupabaseDatabase = {
   public: {
     Tables: {
@@ -118,6 +149,12 @@ export type SupabaseDatabase = {
         Row: SupabaseActivityRow;
         Insert: SupabaseActivityInsert;
         Update: Partial<SupabaseActivityInsert>;
+        Relationships: [];
+      };
+      captures: {
+        Row: SupabaseCaptureRow;
+        Insert: SupabaseCaptureInsert;
+        Update: Partial<SupabaseCaptureInsert>;
         Relationships: [];
       };
     };
