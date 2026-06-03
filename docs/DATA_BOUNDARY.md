@@ -9,6 +9,7 @@ The following data is cloud-backed when the user is signed in and API requests s
 - Tasks through `GET /api/tasks`, `POST /api/tasks`, `PATCH /api/tasks/[id]`, and `DELETE /api/tasks/[id]`
 - Notes through `GET /api/notes`, `POST /api/notes`, `PATCH /api/notes/[id]`, and `DELETE /api/notes/[id]`
 - Activities through `GET /api/activities` and `POST /api/activities`
+- Captures through `GET /api/captures` and `POST /api/captures` for future Inbox migration
 
 These API routes validate the Supabase access token server-side, derive `user_id` from the validated user, and scope reads/writes to that user.
 
@@ -23,6 +24,8 @@ The following data remains browser-local today:
 - Settings that are not explicitly cloud-backed
 - Finance, Cars, and Automation Labs data
 - Local task/note cache and signed-out task/note data
+
+Inbox UI and Quick Capture still use local browser storage unless a future PR explicitly wires them to the cloud capture API.
 
 Local-only data is stored through repository/storage helpers. It is not account data, does not sync across devices, and may be lost if browser storage is cleared.
 
@@ -77,7 +80,6 @@ Rules:
 - Local-only browser data can still sit beside cloud data until the user imports or clears it.
 - There is no full bidirectional sync engine yet.
 - There is no conflict resolution UI yet.
-- Inbox is still local-only and not account-backed.
+- Inbox UI is still local-only even though a cloud capture API foundation now exists.
 - Finance, Cars, and Automation remain Labs/experimental and local-only.
 - Source labels are UI-only and derived from the current loader result, not persisted as durable per-record sync metadata.
-

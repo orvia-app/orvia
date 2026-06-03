@@ -86,6 +86,15 @@ verifyRlsPolicySet({
   deletePolicy: 'create policy "Users can delete own activities"',
 });
 
+verifyRlsPolicySet({
+  migrationPath: "supabase/migrations/202606010005_create_captures.sql",
+  table: "captures",
+  selectPolicy: "create policy captures_select_own on public.captures",
+  insertPolicy: "create policy captures_insert_own on public.captures",
+  updatePolicy: "create policy captures_update_own on public.captures",
+  deletePolicy: "create policy captures_delete_own on public.captures",
+});
+
 verifyApiRoute("src/server/api/auth.ts", [
   "parseBearerToken",
   "createSupabaseServerAuthClient({ accessToken })",
@@ -123,6 +132,13 @@ verifyApiRoute("src/app/api/notes/[id]/route.ts", [
 ]);
 
 verifyApiRoute("src/app/api/activities/route.ts", [
+  "authenticateApiRequest(request)",
+  '.eq("user_id", auth.userId)',
+  '.is("deleted_at", null)',
+  ".insert({ ...parsedPayload.payload, user_id: auth.userId })",
+]);
+
+verifyApiRoute("src/app/api/captures/route.ts", [
   "authenticateApiRequest(request)",
   '.eq("user_id", auth.userId)',
   '.is("deleted_at", null)',
