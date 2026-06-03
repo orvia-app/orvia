@@ -29,6 +29,7 @@
 - Workspace and tag helper foundation for organization, search, and future AI context.
 - Local onboarding v1 for the Orvia capture, organize, and retrieve loop.
 - Production brand infrastructure for `useorvia.com`, `orvia-app/orvia`, and Vercel project `orvia`.
+- Public landing MVP at `/landing` with private beta positioning and a UI-only waitlist form.
 - Central storage key registry and browser-safe storage adapter foundation.
 - Generic local repository contracts for current local-first domains.
 - Core backend-ready entity, relation, search, capture, activity, and memory seams.
@@ -59,6 +60,11 @@
 - Rewrite README into a fuller product/developer overview later.
 - Keep production brand infrastructure documented and consistent across README, docs, Vercel, Cloudflare, and GitHub.
 - Complete any remaining trademark, App Store, Telegram handle, and SEO/searchability checks before public beta.
+- Connect the `/landing` waitlist form to an approved backend or email provider before using it for real collection.
+- Future PR: Public/App Split:
+  - `/` should become the public landing page.
+  - The app should move behind `/app/*` or protected app routes.
+  - Signed-out app access should redirect to login or onboarding.
 
 ## AI Layer Phase
 
