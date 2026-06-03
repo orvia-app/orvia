@@ -32,17 +32,14 @@ import {
   type TaskSourceById,
 } from "@/lib/tasks-api";
 import {
+  getPrioritizedTasks,
+  type PrioritizedTask,
+} from "@/lib/priority-engine";
+import {
   createTimelineEventsFromActivities,
   type TimelineEvent,
 } from "@/lib/timeline";
 import type { Task, TaskPriority, TaskStatus } from "@/types";
-
-const PRIORITY_RANK: Record<TaskPriority, number> = {
-  critical: 4,
-  high: 3,
-  medium: 2,
-  low: 1,
-};
 
 const STATUS_LABELS: Record<TaskStatus, string> = {
   done: "Done",
@@ -62,16 +59,6 @@ function getTaskDueDateKey(task: Task): string | undefined {
   return task.dueDate?.split("T")[0];
 }
 
-function isActiveTask(task: Task): boolean {
-  return task.status !== "done";
-}
-
-function isOverdueTask(task: Task, todayDateKey: string): boolean {
-  const dueDate = getTaskDueDateKey(task);
-
-  return isActiveTask(task) && Boolean(dueDate) && dueDate! < todayDateKey;
-}
-
 function getTaskUrl(task: Task): string {
   const params = new URLSearchParams({
     filter: task.status,
@@ -86,15 +73,15 @@ function formatPriority(priority: TaskPriority): string {
 }
 
 function taskSourceLabel(source: PrimaryTaskSource): string {
-  if (source === "cloud") {
-    return "Cloud";
-  }
-
   if (source === "local-fallback") {
     return "Local fallback";
   }
 
   return "Local only";
+}
+
+function shouldShowTaskSource(source: PrimaryTaskSource): boolean {
+  return source !== "cloud";
 }
 
 function formatTimestamp(timestamp: string): string {
@@ -104,79 +91,14 @@ function formatTimestamp(timestamp: string): string {
   return timeLabel ? `${datePart} · ${timeLabel}` : datePart;
 }
 
-function sortForTopPriority(tasks: readonly Task[]): Task[] {
-  return [...tasks].sort((a, b) => {
-    const priorityDifference =
-      PRIORITY_RANK[b.priority] - PRIORITY_RANK[a.priority];
-
-    if (priorityDifference !== 0) {
-      return priorityDifference;
-    }
-
-    const aDueDate = getTaskDueDateKey(a) ?? "9999-12-31";
-    const bDueDate = getTaskDueDateKey(b) ?? "9999-12-31";
-
-    if (aDueDate !== bDueDate) {
-      return aDueDate.localeCompare(bDueDate);
-    }
-
-    return b.createdAt.localeCompare(a.createdAt);
-  });
-}
-
-function scoreFocusQueueTask(task: Task, todayDateKey: string): number {
-  let score = PRIORITY_RANK[task.priority] * 10;
-
-  if (isOverdueTask(task, todayDateKey)) {
-    score += 50;
-  }
-
-  if (task.priority === "critical") {
-    score += 30;
-  }
-
-  if (task.priority === "high") {
-    score += 20;
-  }
-
-  if (task.status === "in-progress") {
-    score += 15;
-  }
-
-  return score;
-}
-
-function sortForFocusQueue(
-  tasks: readonly Task[],
-  todayDateKey: string,
-): Task[] {
-  return [...tasks].sort((a, b) => {
-    const scoreDifference =
-      scoreFocusQueueTask(b, todayDateKey) -
-      scoreFocusQueueTask(a, todayDateKey);
-
-    if (scoreDifference !== 0) {
-      return scoreDifference;
-    }
-
-    const aDueDate = getTaskDueDateKey(a) ?? "9999-12-31";
-    const bDueDate = getTaskDueDateKey(b) ?? "9999-12-31";
-
-    if (aDueDate !== bDueDate) {
-      return aDueDate.localeCompare(bDueDate);
-    }
-
-    return b.createdAt.localeCompare(a.createdAt);
-  });
-}
-
 function TaskMeta({
+  prioritizedTask,
   source,
-  task,
 }: {
+  prioritizedTask: PrioritizedTask;
   source: PrimaryTaskSource;
-  task: Task;
 }) {
+  const { reasons, task } = prioritizedTask;
   const dueDate = getTaskDueDateKey(task);
 
   return (
@@ -187,16 +109,42 @@ function TaskMeta({
       <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800">
         {STATUS_LABELS[task.status]}
       </span>
-      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800">
-        {taskSourceLabel(source)}
-      </span>
+      {shouldShowTaskSource(source) ? (
+        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800">
+          {taskSourceLabel(source)}
+        </span>
+      ) : null}
       {dueDate ? (
         <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800">
           {dueDate}
         </span>
       ) : null}
+      {reasons.slice(0, 3).map((reason) => (
+        <span
+          key={reason}
+          className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800"
+        >
+          {reason}
+        </span>
+      ))}
     </div>
   );
+}
+
+function getReasonSentence(reasons: readonly string[]): string {
+  if (reasons.length === 0) {
+    return "Recommended because it is the next active task in your queue.";
+  }
+
+  const formattedReasons = reasons.map((reason) => reason.toLowerCase());
+
+  if (formattedReasons.length === 1) {
+    return `Recommended because it is ${formattedReasons[0]}.`;
+  }
+
+  return `Recommended because it is ${formattedReasons
+    .slice(0, -1)
+    .join(", ")} and ${formattedReasons[formattedReasons.length - 1]}.`;
 }
 
 function EmptyInline({
@@ -303,24 +251,21 @@ export default function TodayPage() {
     };
   }, [authLoading, refreshTodayData]);
 
-  const activeTasks = useMemo(
-    () => tasks.filter(isActiveTask),
-    [tasks],
+  const prioritizedTasks = useMemo(
+    () =>
+      todayDateKey
+        ? getPrioritizedTasks(tasks, { todayDateKey })
+        : [],
+    [tasks, todayDateKey],
   );
-  const topPriorityTask = useMemo(
-    () => sortForTopPriority(activeTasks)[0],
-    [activeTasks],
-  );
-  const focusQueue = useMemo(
-    () => sortForFocusQueue(activeTasks, todayDateKey).slice(0, 5),
-    [activeTasks, todayDateKey],
-  );
+  const topPriorityTask = prioritizedTasks[0];
+  const focusQueue = prioritizedTasks.slice(1, 6);
   const todayBoundaryMessage = accessToken
     ? taskSource === "local-fallback"
       ? "Cloud tasks could not load, so Today's plan is showing local fallback data from this browser."
       : inboxSource === "local-fallback"
         ? "Today's plan is cloud-primary for tasks. Inbox waiting is showing local fallback captures."
-        : "Today's plan is cloud-primary for tasks and Inbox captures when available."
+        : null
     : "Local-only mode. Today's plan uses browser data until you sign in.";
 
   return (
@@ -332,21 +277,23 @@ export default function TodayPage() {
           description="Focus on the highest-impact work first."
         />
 
-          <Card
-            variant={taskSource === "local-fallback" ? "secondary" : "ghost"}
-            className="mt-5 p-3 text-sm text-zinc-600 dark:text-zinc-400"
-          >
-            {todayBoundaryMessage}
-          </Card>
+          {todayBoundaryMessage ? (
+            <Card
+              variant={taskSource === "local-fallback" ? "secondary" : "ghost"}
+              className="mt-5 p-3 text-sm text-zinc-600 dark:text-zinc-400"
+            >
+              {todayBoundaryMessage}
+            </Card>
+          ) : null}
 
           <div className="mt-7 grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(260px,1fr)]">
             <div className="space-y-7">
               <PageSection className="mt-0">
                 <PageSectionHeader
-                  title="Top priority"
-                  description="Start here before pulling in more work."
+                  title="Do this first"
+                  description="The highest-impact next action from your active tasks."
                 />
-                <Card className="p-4 sm:p-5">
+                <Card className="p-5 sm:p-6">
                   {!tasksLoaded ? (
                     <div aria-label="Loading top priority">
                       <Skeleton className="h-5 w-44" />
@@ -355,32 +302,41 @@ export default function TodayPage() {
                     </div>
                   ) : topPriorityTask ? (
                     <Link
-                      href={getTaskUrl(topPriorityTask)}
+                      href={getTaskUrl(topPriorityTask.task)}
                       className="group block cursor-pointer"
                     >
                       <div className="flex items-start gap-3">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
                           <Target className="h-4 w-4" aria-hidden />
                         </span>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-3">
-                            <h2 className="truncate text-base font-semibold text-zinc-950 dark:text-white">
-                              {topPriorityTask.title}
-                            </h2>
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300">
+                                Recommended next
+                              </p>
+                              <h2 className="mt-1 truncate text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                                {topPriorityTask.task.title}
+                              </h2>
+                            </div>
                             <ArrowRight
-                              className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400 transition group-hover:translate-x-0.5 group-hover:text-zinc-700 dark:group-hover:text-zinc-200"
+                              className="mt-1 h-4 w-4 shrink-0 text-zinc-400 transition group-hover:translate-x-0.5 group-hover:text-zinc-700 dark:group-hover:text-zinc-200"
                               aria-hidden
                             />
                           </div>
-                          {topPriorityTask.description ? (
-                            <p className="mt-1 line-clamp-2 text-sm leading-6 text-zinc-500 dark:text-zinc-500">
-                              {topPriorityTask.description}
+                          <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                            {getReasonSentence(topPriorityTask.reasons)}
+                          </p>
+                          {topPriorityTask.task.description ? (
+                            <p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-500 dark:text-zinc-500">
+                              {topPriorityTask.task.description}
                             </p>
                           ) : null}
                           <TaskMeta
-                            task={topPriorityTask}
+                            prioritizedTask={topPriorityTask}
                             source={
-                              taskSourcesById[topPriorityTask.id] ?? taskSource
+                              taskSourcesById[topPriorityTask.task.id] ??
+                              taskSource
                             }
                           />
                         </div>
@@ -422,10 +378,10 @@ export default function TodayPage() {
                     </div>
                   ) : (
                     <ul className="divide-y divide-zinc-200/70 dark:divide-zinc-800/70">
-                      {focusQueue.map((task, index) => (
-                        <li key={task.id}>
+                      {focusQueue.map((prioritizedTask, index) => (
+                        <li key={prioritizedTask.task.id}>
                           <Link
-                            href={getTaskUrl(task)}
+                            href={getTaskUrl(prioritizedTask.task)}
                             className="group flex cursor-pointer items-start gap-3 px-4 py-3 transition hover:bg-violet-50/60 dark:hover:bg-violet-500/5"
                           >
                             <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-xs font-semibold text-violet-700 ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
@@ -434,7 +390,7 @@ export default function TodayPage() {
                             <div className="min-w-0 flex-1">
                               <div className="flex items-start justify-between gap-3">
                                 <p className="truncate text-sm font-semibold text-zinc-950 dark:text-white">
-                                  {task.title}
+                                  {prioritizedTask.task.title}
                                 </p>
                                 <ArrowRight
                                   className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400 transition group-hover:translate-x-0.5 group-hover:text-zinc-700 dark:group-hover:text-zinc-200"
@@ -442,8 +398,11 @@ export default function TodayPage() {
                                 />
                               </div>
                               <TaskMeta
-                                task={task}
-                                source={taskSourcesById[task.id] ?? taskSource}
+                                prioritizedTask={prioritizedTask}
+                                source={
+                                  taskSourcesById[prioritizedTask.task.id] ??
+                                  taskSource
+                                }
                               />
                             </div>
                           </Link>
