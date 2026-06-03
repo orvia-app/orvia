@@ -29,7 +29,6 @@ Visible/product-facing surfaces were renamed to Orvia:
 - inbox heading and helper copy
 - command center heading and action dialog copy
 - settings reset/export-facing copy
-- seed/demo titles shown in the UI
 - export app name and downloaded export filename
 - README title and overview
 - project docs and teammate-facing docs

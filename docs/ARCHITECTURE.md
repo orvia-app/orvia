@@ -31,7 +31,6 @@ No backend, authentication, cloud sync, vector database, production AI calls, or
 - `src/components/command-palette/*`: command palette, action dialog, and command hooks.
 - `src/core/*`: backend-ready core contracts for storage adapters, repositories, normalized entities, relations, search, capture, activity events, and memory retrieval seams.
 - `src/lib/*`: repositories, domain helpers, command registries, entity/search/activity/briefing/memory foundations.
-- `src/data/mock.ts`: seed data for MVP defaults.
 - `src/types/index.ts`: shared core domain types.
 
 All TypeScript modules must use `.ts` or `.tsx` extensions. Extensionless TypeScript files are not allowed because they can confuse TypeScript, Next.js, and Turbopack resolution.
@@ -39,6 +38,8 @@ All TypeScript modules must use `.ts` or `.tsx` extensions. Extensionless TypeSc
 ## Repository And Storage Boundary
 
 Domain data access goes through typed repository helpers. Pages and components should not parse JSON or access `localStorage` directly.
+
+New local workspaces start empty. Legacy demo/test records from earlier MVP seed data are filtered by repository helpers instead of being presented as normal user data.
 
 Current public domain helpers include:
 - `src/lib/tasks.ts`

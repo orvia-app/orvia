@@ -28,6 +28,8 @@ Signed-out Inbox and Quick Capture remain local-only. Signed-in Inbox and Quick 
 
 Local-only data is stored through repository/storage helpers. It is not account data, does not sync across devices, and may be lost if browser storage is cleared.
 
+New local workspaces start empty. Earlier MVP demo/test records are no longer seeded; exact known legacy demo records are filtered from normal local views so a new user does not see project sample data as their own workspace.
+
 ## Mixed / Transitional Surfaces
 
 Some screens intentionally combine cloud-backed and local-only data while Orvia transitions from local-first MVP to authenticated cloud storage:
@@ -77,6 +79,7 @@ Rules:
 ## Remaining Beta Risks
 
 - Local-only browser data can still sit beside cloud data until the user imports or clears it.
+- Non-demo local browser data from previous sessions can still appear in local-only or fallback mode until the user exports, imports, or resets local browser data.
 - There is no full bidirectional sync engine yet.
 - There is no conflict resolution UI yet.
 - Existing local Inbox captures are not automatically migrated to cloud.
