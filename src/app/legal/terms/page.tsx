@@ -1,4 +1,3 @@
-import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Page, PageHeader, PageSection } from "@/components/ui/Page";
 
@@ -35,7 +34,7 @@ const sections = [
 
 export default function TermsPage() {
   return (
-    <AppShell>
+    <main className="min-h-screen bg-zinc-100 text-zinc-950 dark:bg-zinc-950 dark:text-white">
       <Page>
         <PageHeader
           title="Terms of Service"
@@ -57,6 +56,6 @@ export default function TermsPage() {
           </Card>
         </PageSection>
       </Page>
-    </AppShell>
+    </main>
   );
 }
