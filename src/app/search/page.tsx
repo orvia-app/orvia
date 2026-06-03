@@ -92,6 +92,7 @@ function SearchGuidance({ counts }: { counts: UnifiedSearchCounts | null }) {
 
 export default function SearchPage() {
   const { session } = useAuthSession();
+  const accessToken = session?.access_token;
   const [query, setQuery] = useState("");
   const [allResults, setAllResults] = useState<UnifiedSearchResult[]>([]);
   const [counts, setCounts] = useState<UnifiedSearchCounts | null>(null);
@@ -105,7 +106,7 @@ export default function SearchPage() {
 
       try {
         const dataset = await loadUnifiedSearchDataset({
-          accessToken: session?.access_token,
+          accessToken,
         });
 
         if (!active) {
@@ -126,7 +127,7 @@ export default function SearchPage() {
     return () => {
       active = false;
     };
-  }, [session?.access_token]);
+  }, [accessToken]);
 
   const results = useMemo(
     () => searchUnifiedResults(allResults, query),
@@ -148,6 +149,15 @@ export default function SearchPage() {
           description="Search tasks, notes, inbox captures, and timeline events."
           icon={Search}
         />
+
+          <Card
+            variant="ghost"
+            className="mt-5 p-3 text-sm text-zinc-600 dark:text-zinc-400"
+          >
+            {accessToken
+              ? "Search includes cloud tasks and timeline activity plus local-only notes and Inbox captures from this browser."
+              : "Local-only search. Sign in to include cloud tasks and timeline activity."}
+          </Card>
 
           <div className="relative mt-7">
             <Search

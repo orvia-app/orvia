@@ -166,6 +166,11 @@ export function QuickCapture({
             >
               Capture anything
             </h2>
+            <p className="mt-1 max-w-sm text-sm leading-5 text-zinc-500 dark:text-zinc-500">
+              {accessToken
+                ? "Tasks can save to your cloud account. Notes are local-only on this browser for now."
+                : "Local-only on this browser until you sign in."}
+            </p>
           </div>
           <button
             type="button"

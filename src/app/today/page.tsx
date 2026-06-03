@@ -23,8 +23,11 @@ import {
 import { Skeleton } from "@/components/ui/Skeleton";
 import { fetchActivitiesViaApi } from "@/lib/activities-api";
 import { getQuickCaptures } from "@/lib/quick-captures";
-import { getTasks } from "@/lib/tasks";
-import { loadTasksFromPrimarySource } from "@/lib/tasks-api";
+import {
+  loadTasksFromPrimarySourceWithBoundary,
+  type PrimaryTaskSource,
+  type TaskSourceById,
+} from "@/lib/tasks-api";
 import {
   createTimelineEventsFromActivities,
   type TimelineEvent,
@@ -77,6 +80,18 @@ function getTaskUrl(task: Task): string {
 
 function formatPriority(priority: TaskPriority): string {
   return priority.charAt(0).toUpperCase() + priority.slice(1);
+}
+
+function taskSourceLabel(source: PrimaryTaskSource): string {
+  if (source === "cloud") {
+    return "Cloud";
+  }
+
+  if (source === "local-fallback") {
+    return "Local fallback";
+  }
+
+  return "Local only";
 }
 
 function formatTimestamp(timestamp: string): string {
@@ -152,7 +167,13 @@ function sortForFocusQueue(
   });
 }
 
-function TaskMeta({ task }: { task: Task }) {
+function TaskMeta({
+  source,
+  task,
+}: {
+  source: PrimaryTaskSource;
+  task: Task;
+}) {
   const dueDate = getTaskDueDateKey(task);
 
   return (
@@ -162,6 +183,9 @@ function TaskMeta({ task }: { task: Task }) {
       </span>
       <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800">
         {STATUS_LABELS[task.status]}
+      </span>
+      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800">
+        {taskSourceLabel(source)}
       </span>
       {dueDate ? (
         <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800">
@@ -203,6 +227,8 @@ export default function TodayPage() {
   const { loading: authLoading, session } = useAuthSession();
   const accessToken = session?.access_token;
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [taskSource, setTaskSource] = useState<PrimaryTaskSource>("local-only");
+  const [taskSourcesById, setTaskSourcesById] = useState<TaskSourceById>({});
   const [tasksLoaded, setTasksLoaded] = useState(false);
   const [todayDateKey, setTodayDateKey] = useState("");
   const [inboxCount, setInboxCount] = useState(0);
@@ -215,11 +241,13 @@ export default function TodayPage() {
     setActivityLoaded(false);
     setActivityError(null);
 
-    const nextTasks = accessToken
-      ? await loadTasksFromPrimarySource({ accessToken })
-      : getTasks();
+    const taskResult = await loadTasksFromPrimarySourceWithBoundary({
+      accessToken,
+    });
 
-    setTasks(nextTasks);
+    setTasks(taskResult.tasks);
+    setTaskSource(taskResult.source);
+    setTaskSourcesById(taskResult.taskSources);
     setInboxCount(getQuickCaptures().length);
     setTasksLoaded(true);
 
@@ -278,6 +306,11 @@ export default function TodayPage() {
     () => sortForFocusQueue(activeTasks, todayDateKey).slice(0, 5),
     [activeTasks, todayDateKey],
   );
+  const todayBoundaryMessage = accessToken
+    ? taskSource === "local-fallback"
+      ? "Cloud tasks could not load, so Today's plan is showing local fallback data from this browser."
+      : "Today's plan is cloud-primary for tasks. Inbox waiting is still local-only on this browser."
+    : "Local-only mode. Today's plan uses browser data until you sign in.";
 
   return (
     <AppShell>
@@ -287,6 +320,13 @@ export default function TodayPage() {
           title="Today's plan"
           description="Focus on the highest-impact work first."
         />
+
+          <Card
+            variant={taskSource === "local-fallback" ? "secondary" : "ghost"}
+            className="mt-5 p-3 text-sm text-zinc-600 dark:text-zinc-400"
+          >
+            {todayBoundaryMessage}
+          </Card>
 
           <div className="mt-7 grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(260px,1fr)]">
             <div className="space-y-7">
@@ -326,7 +366,12 @@ export default function TodayPage() {
                               {topPriorityTask.description}
                             </p>
                           ) : null}
-                          <TaskMeta task={topPriorityTask} />
+                          <TaskMeta
+                            task={topPriorityTask}
+                            source={
+                              taskSourcesById[topPriorityTask.id] ?? taskSource
+                            }
+                          />
                         </div>
                       </div>
                     </Link>
@@ -385,7 +430,10 @@ export default function TodayPage() {
                                   aria-hidden
                                 />
                               </div>
-                              <TaskMeta task={task} />
+                              <TaskMeta
+                                task={task}
+                                source={taskSourcesById[task.id] ?? taskSource}
+                              />
                             </div>
                           </Link>
                         </li>
@@ -400,7 +448,7 @@ export default function TodayPage() {
               <PageSection className="mt-0">
                 <PageSectionHeader
                   title="Inbox waiting"
-                  description="Captured items ready for review."
+                  description="Local-only captures ready for review."
                 />
                 <Card variant="secondary" className="p-3.5">
                   <div className="flex items-start justify-between gap-3">

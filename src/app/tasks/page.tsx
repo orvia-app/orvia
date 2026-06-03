@@ -32,7 +32,9 @@ import {
 import {
   createTaskViaApi,
   deleteTaskViaApi,
-  loadTasksFromPrimarySource,
+  loadTasksFromPrimarySourceWithBoundary,
+  type PrimaryTaskSource,
+  type TaskSourceById,
   updateTaskViaApi,
 } from "@/lib/tasks-api";
 import {
@@ -97,10 +99,16 @@ function priorityVariant(priority: TaskPriority): BadgeVariant {
   return "default";
 }
 
-function statusVariant(status: TaskStatus): BadgeVariant {
-  if (status === "done") return "success";
-  if (status === "in-progress") return "info";
-  return "default";
+function taskSourceLabel(source: PrimaryTaskSource): string {
+  if (source === "cloud") {
+    return "Cloud";
+  }
+
+  if (source === "local-fallback") {
+    return "Local fallback";
+  }
+
+  return "Local only";
 }
 
 function isFilterValue(value: string | null): value is FilterValue {
@@ -128,6 +136,8 @@ function TasksContent() {
     [searchParams],
   );
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [taskSource, setTaskSource] = useState<PrimaryTaskSource>("local-only");
+  const [taskSourcesById, setTaskSourcesById] = useState<TaskSourceById>({});
   const [taskContextById, setTaskContextById] = useState<TaskContextById>({});
   const [statusFilter, setStatusFilter] = useState<FilterValue>(
     initialPageContext.statusFilter,
@@ -162,13 +172,17 @@ function TasksContent() {
     }
 
     async function loadTasks(): Promise<void> {
-      const loadedTasks = await loadTasksFromPrimarySource({ accessToken });
+      const result = await loadTasksFromPrimarySourceWithBoundary({
+        accessToken,
+      });
 
       if (cancelled) {
         return;
       }
 
-      setTasks(loadedTasks);
+      setTasks(result.tasks);
+      setTaskSource(result.source);
+      setTaskSourcesById(result.taskSources);
       setTaskContextById(getNextContextById());
     }
 
@@ -203,6 +217,11 @@ function TasksContent() {
 
     return tasks.filter((task) => task.status === statusFilter);
   }, [statusFilter, tasks]);
+  const taskBoundaryMessage = accessToken
+    ? taskSource === "local-fallback"
+      ? "Showing local fallback because cloud tasks could not load. Changes may stay on this browser until cloud access recovers."
+      : "Cloud tasks are primary. Local-only browser tasks may also appear here until you import them from Settings."
+    : "Local-only on this browser. Sign in to use cloud-backed tasks.";
 
   function openModal(): void {
     setCreateError(null);
@@ -215,9 +234,27 @@ function TasksContent() {
     setCreateError(null);
   }
 
-  function syncTasks(nextTasks: Task[]): void {
+  function syncTasks(
+    nextTasks: Task[],
+    sourceOverrides: TaskSourceById = {},
+  ): void {
     saveTasks(nextTasks);
     setTasks(nextTasks);
+    setTaskSourcesById((currentSources) => {
+      const nextSources: TaskSourceById = {};
+      const defaultSource: PrimaryTaskSource = accessToken
+        ? taskSource === "local-fallback"
+          ? "local-fallback"
+          : "cloud"
+        : "local-only";
+
+      for (const task of nextTasks) {
+        nextSources[task.id] =
+          sourceOverrides[task.id] ?? currentSources[task.id] ?? defaultSource;
+      }
+
+      return nextSources;
+    });
 
     const entities = getLocalContextEntities();
     setTaskContextById(
@@ -294,7 +331,9 @@ function TasksContent() {
 
       const nextTasks = [newTask, ...tasks];
 
-      syncTasks(nextTasks);
+      syncTasks(nextTasks, {
+        [newTask.id]: accessToken ? "cloud" : "local-only",
+      });
       closeModal();
 
       if (accessToken) {
@@ -309,8 +348,9 @@ function TasksContent() {
       const localTask = createLocalTaskFromForm(title, workspaceId);
       const nextTasks = [localTask, ...tasks];
 
-      syncTasks(nextTasks);
+      syncTasks(nextTasks, { [localTask.id]: "local-fallback" });
       closeModal();
+      setTaskActionError("Cloud create failed. Saved this task locally.");
     } finally {
       setIsCreatingTask(false);
     }
@@ -364,7 +404,7 @@ function TasksContent() {
           : currentTask,
       );
 
-      syncTasks(nextTasks);
+      syncTasks(nextTasks, { [task.id]: "local-fallback" });
       setTaskActionError("Cloud update failed. Saved this change locally.");
     } finally {
       setTaskPending(task.id, false);
@@ -426,6 +466,13 @@ function TasksContent() {
           }
         />
 
+          <Card
+            variant={taskSource === "local-fallback" ? "secondary" : "ghost"}
+            className="mt-5 p-3 text-sm text-zinc-600 dark:text-zinc-400"
+          >
+            {taskBoundaryMessage}
+          </Card>
+
           <div className="app-scrollbar -mx-4 mt-7 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
             {filters.map(({ label, value }) => {
               const active = statusFilter === value;
@@ -473,12 +520,6 @@ function TasksContent() {
                 >
                   <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
                     <div className="min-w-0">
-                      {task.status === "in-progress" ? (
-                        <div className="mb-2 flex items-center gap-2 text-xs font-medium text-blue-700 dark:text-blue-300">
-                          <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                          Active now
-                        </div>
-                      ) : null}
                       <h2 className="text-lg font-semibold text-zinc-950 dark:text-white sm:text-xl">
                         {task.title}
                       </h2>
@@ -493,15 +534,11 @@ function TasksContent() {
                         <Badge variant={priorityVariant(task.priority)}>
                           {task.priority}
                         </Badge>
-                        <Badge>{getWorkspaceLabel(task.workspaceId)}</Badge>
-                        {context?.labels.slice(0, 2).map((label) => (
-                          <span
-                            key={label}
-                            className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600 ring-1 ring-zinc-200/60 dark:bg-zinc-900/70 dark:text-zinc-400 dark:ring-zinc-800/70"
-                          >
-                            {label}
-                          </span>
-                        ))}
+                        <Badge className="bg-zinc-100/80 text-zinc-500 ring-zinc-200/70 dark:bg-zinc-900/75 dark:text-zinc-400 dark:ring-zinc-800/80">
+                          {taskSourceLabel(
+                            taskSourcesById[task.id] ?? taskSource,
+                          )}
+                        </Badge>
                       </div>
                       {context && context.relatedItems.length > 0 ? (
                         <div className="mt-4 rounded-xl bg-zinc-100/60 px-3 py-2.5 ring-1 ring-inset ring-zinc-200/60 dark:bg-zinc-900/35 dark:ring-zinc-800/70">

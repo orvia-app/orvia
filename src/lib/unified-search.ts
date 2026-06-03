@@ -2,7 +2,9 @@ import { fetchActivitiesViaApi } from "@/lib/activities-api";
 import { getNotes, type Note } from "@/lib/notes";
 import { getQuickCaptures, type QuickCapture } from "@/lib/quick-captures";
 import {
-  loadTasksFromPrimarySource,
+  loadTasksFromPrimarySourceWithBoundary,
+  type PrimaryTaskSource,
+  type TaskSourceById,
   type TasksApiRequestOptions,
 } from "@/lib/tasks-api";
 import {
@@ -31,6 +33,7 @@ export type UnifiedSearchGroup = {
 
 export type UnifiedSearchDataset = {
   tasks: Task[];
+  taskSources: TaskSourceById;
   notes: Note[];
   inboxCaptures: QuickCapture[];
   timelineEvents: TimelineEvent[];
@@ -60,6 +63,18 @@ function taskHref(task: Task): string {
   return `/tasks?filter=${task.status}&taskId=${encodeURIComponent(task.id)}`;
 }
 
+function taskSourceLabel(source: PrimaryTaskSource | undefined): string {
+  if (source === "cloud") {
+    return "Cloud task";
+  }
+
+  if (source === "local-fallback") {
+    return "Local fallback task";
+  }
+
+  return "Local task";
+}
+
 function timelineEventDescription(event: TimelineEvent): string {
   if (event.description) {
     return event.description;
@@ -72,7 +87,10 @@ function timelineEventDescription(event: TimelineEvent): string {
     .join(" ") || "Activity";
 }
 
-function taskToSearchResult(task: Task): UnifiedSearchResult {
+function taskToSearchResult(
+  task: Task,
+  source: PrimaryTaskSource | undefined,
+): UnifiedSearchResult {
   const description = compactText([
     task.description,
     task.status,
@@ -85,7 +103,7 @@ function taskToSearchResult(task: Task): UnifiedSearchResult {
     type: "task",
     title: task.title,
     description,
-    source: "Tasks",
+    source: taskSourceLabel(source),
     createdAt: task.createdAt,
     href: taskHref(task),
     searchableText: normalizeSearchText(
@@ -107,7 +125,7 @@ function noteToSearchResult(note: Note): UnifiedSearchResult {
     type: "note",
     title: note.title,
     description: note.content,
-    source: "Notes",
+    source: "Local note",
     href: "/notes",
     searchableText: normalizeSearchText(
       compactText([note.title, note.content, note.type]),
@@ -121,7 +139,7 @@ function inboxCaptureToSearchResult(capture: QuickCapture): UnifiedSearchResult 
     type: "inbox",
     title: capture.text,
     description: "Inbox capture",
-    source: "Inbox",
+    source: "Local inbox",
     createdAt: capture.createdAt,
     href: "/inbox",
     searchableText: normalizeSearchText(capture.text),
@@ -136,7 +154,7 @@ function timelineEventToSearchResult(
     type: "timeline",
     title: event.title,
     description: timelineEventDescription(event),
-    source: "Timeline",
+    source: "Activity",
     createdAt: event.timestamp,
     href: "/timeline",
     searchableText: normalizeSearchText(
@@ -163,7 +181,7 @@ function sortResultsNewestFirst(
 export async function loadUnifiedSearchDataset(
   options: TasksApiRequestOptions = {},
 ): Promise<UnifiedSearchDataset> {
-  const tasks = await loadTasksFromPrimarySource(options);
+  const taskResult = await loadTasksFromPrimarySourceWithBoundary(options);
   const timelineEvents = options.accessToken
     ? createTimelineEventsFromActivities(
         await fetchActivitiesViaApi(options).catch(() => []),
@@ -171,7 +189,8 @@ export async function loadUnifiedSearchDataset(
     : [];
 
   return {
-    tasks,
+    taskSources: taskResult.taskSources,
+    tasks: taskResult.tasks,
     notes: getNotes(),
     inboxCaptures: getQuickCaptures(),
     timelineEvents,
@@ -182,7 +201,9 @@ export function createUnifiedSearchResults(
   dataset: UnifiedSearchDataset,
 ): UnifiedSearchResult[] {
   return sortResultsNewestFirst([
-    ...dataset.tasks.map(taskToSearchResult),
+    ...dataset.tasks.map((task) =>
+      taskToSearchResult(task, dataset.taskSources[task.id]),
+    ),
     ...dataset.notes.map(noteToSearchResult),
     ...dataset.inboxCaptures.map(inboxCaptureToSearchResult),
     ...dataset.timelineEvents.map(timelineEventToSearchResult),
