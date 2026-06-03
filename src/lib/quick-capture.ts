@@ -1,4 +1,5 @@
-import { createNote, type Note } from "@/lib/notes";
+import { type Note } from "@/lib/notes";
+import { createNoteFromPrimarySource } from "@/lib/notes-api";
 import { getTasks, saveTasks } from "@/lib/tasks";
 import { createTaskViaApi, type TasksApiRequestOptions } from "@/lib/tasks-api";
 import { getLegacyWorkspaceId } from "@/lib/workspaces/workspaces";
@@ -16,6 +17,7 @@ export type QuickCaptureTaskInput = {
 };
 
 export type QuickCaptureNoteInput = {
+  accessToken?: string;
   title: string;
   content: string;
   type?: Note["type"];
@@ -23,7 +25,7 @@ export type QuickCaptureNoteInput = {
 
 export type QuickCaptureResult =
   | { type: "task"; task: Task; source: "api" | "local" }
-  | { type: "note"; note: Note; source: "local" };
+  | { type: "note"; note: Note; source: "api" | "local" };
 
 const DEFAULT_TASK_STATUS = "todo";
 const DEFAULT_TASK_PRIORITY = "medium";
@@ -85,17 +87,17 @@ export async function createQuickCaptureTask(
   }
 }
 
-export function createQuickCaptureNote(
+export async function createQuickCaptureNote(
   input: QuickCaptureNoteInput,
-): QuickCaptureResult {
-  const note: Note = {
-    id: crypto.randomUUID(),
-    title: input.title,
-    content: input.content,
-    type: input.type ?? "note",
-  };
+): Promise<QuickCaptureResult> {
+  const result = await createNoteFromPrimarySource(
+    {
+      content: input.content,
+      title: input.title,
+      type: input.type ?? "note",
+    },
+    { accessToken: input.accessToken },
+  );
 
-  createNote(note);
-
-  return { type: "note", note, source: "local" };
+  return { type: "note", note: result.note, source: result.source };
 }

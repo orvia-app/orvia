@@ -1,6 +1,11 @@
 import { fetchActivitiesViaApi } from "@/lib/activities-api";
+import {
+  loadCapturesFromPrimarySourceWithBoundary,
+  type CaptureSourceById,
+  type PrimaryCaptureSource,
+} from "@/lib/captures-api";
 import { getNotes, type Note } from "@/lib/notes";
-import { getQuickCaptures, type QuickCapture } from "@/lib/quick-captures";
+import type { QuickCapture } from "@/lib/quick-captures";
 import {
   loadTasksFromPrimarySourceWithBoundary,
   type PrimaryTaskSource,
@@ -32,6 +37,7 @@ export type UnifiedSearchGroup = {
 };
 
 export type UnifiedSearchDataset = {
+  captureSources: CaptureSourceById;
   tasks: Task[];
   taskSources: TaskSourceById;
   notes: Note[];
@@ -73,6 +79,18 @@ function taskSourceLabel(source: PrimaryTaskSource | undefined): string {
   }
 
   return "Local task";
+}
+
+function captureSourceLabel(source: PrimaryCaptureSource | undefined): string {
+  if (source === "cloud") {
+    return "Cloud inbox";
+  }
+
+  if (source === "local-fallback") {
+    return "Local fallback";
+  }
+
+  return "Local inbox";
 }
 
 function timelineEventDescription(event: TimelineEvent): string {
@@ -133,13 +151,16 @@ function noteToSearchResult(note: Note): UnifiedSearchResult {
   };
 }
 
-function inboxCaptureToSearchResult(capture: QuickCapture): UnifiedSearchResult {
+function inboxCaptureToSearchResult(
+  capture: QuickCapture,
+  source: PrimaryCaptureSource | undefined,
+): UnifiedSearchResult {
   return {
     id: `inbox:${capture.id}`,
     type: "inbox",
     title: capture.text,
     description: "Inbox capture",
-    source: "Local inbox",
+    source: captureSourceLabel(source),
     createdAt: capture.createdAt,
     href: "/inbox",
     searchableText: normalizeSearchText(capture.text),
@@ -182,6 +203,7 @@ export async function loadUnifiedSearchDataset(
   options: TasksApiRequestOptions = {},
 ): Promise<UnifiedSearchDataset> {
   const taskResult = await loadTasksFromPrimarySourceWithBoundary(options);
+  const captureResult = await loadCapturesFromPrimarySourceWithBoundary(options);
   const timelineEvents = options.accessToken
     ? createTimelineEventsFromActivities(
         await fetchActivitiesViaApi(options).catch(() => []),
@@ -189,10 +211,11 @@ export async function loadUnifiedSearchDataset(
     : [];
 
   return {
+    captureSources: captureResult.captureSources,
     taskSources: taskResult.taskSources,
     tasks: taskResult.tasks,
     notes: getNotes(),
-    inboxCaptures: getQuickCaptures(),
+    inboxCaptures: captureResult.captures,
     timelineEvents,
   };
 }
@@ -205,7 +228,9 @@ export function createUnifiedSearchResults(
       taskToSearchResult(task, dataset.taskSources[task.id]),
     ),
     ...dataset.notes.map(noteToSearchResult),
-    ...dataset.inboxCaptures.map(inboxCaptureToSearchResult),
+    ...dataset.inboxCaptures.map((capture) =>
+      inboxCaptureToSearchResult(capture, dataset.captureSources[capture.id]),
+    ),
     ...dataset.timelineEvents.map(timelineEventToSearchResult),
   ]);
 }

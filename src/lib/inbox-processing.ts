@@ -4,6 +4,15 @@ import {
   workspaceIdFromLabel,
 } from "@/lib/inbox";
 import {
+  recordNoteCreatedActivity,
+  recordTaskCreatedActivity,
+} from "@/lib/activity-recording";
+import {
+  updateCaptureStatusViaApi,
+  type PrimaryCaptureSource,
+} from "@/lib/captures-api";
+import {
+  getQuickCaptures,
   removeQuickCapture,
   type QuickCapture,
 } from "@/lib/quick-captures";
@@ -16,6 +25,7 @@ import type { Task } from "@/types";
 
 export type InboxProcessingOptions = {
   accessToken?: string;
+  captureSource?: PrimaryCaptureSource;
 };
 
 export type InboxTaskProcessingResult = {
@@ -29,7 +39,7 @@ export type InboxNoteProcessingResult = {
   action: "note";
   note: Note;
   remainingCaptures: QuickCapture[];
-  source: "local";
+  source: "api" | "local";
 };
 
 export type InboxArchiveProcessingResult = {
@@ -41,6 +51,38 @@ export type InboxProcessingResult =
   | InboxTaskProcessingResult
   | InboxNoteProcessingResult
   | InboxArchiveProcessingResult;
+
+async function removeProcessedCapture(
+  capture: QuickCapture,
+  status: "processed" | "archived",
+  options: InboxProcessingOptions,
+): Promise<QuickCapture[]> {
+  if (options.captureSource === "cloud") {
+    if (!options.accessToken?.trim()) {
+      throw new Error("Cloud capture processing requires an access token.");
+    }
+
+    await updateCaptureStatusViaApi(
+      capture.id,
+      { status },
+      { accessToken: options.accessToken },
+    );
+  }
+
+  return removeQuickCapture(capture.id);
+}
+
+async function maybeRemoveConvertedCapture(
+  capture: QuickCapture,
+  conversionSource: "api" | "local",
+  options: InboxProcessingOptions,
+): Promise<QuickCapture[]> {
+  if (options.captureSource === "cloud" && conversionSource !== "api") {
+    return getQuickCaptures();
+  }
+
+  return removeProcessedCapture(capture, "processed", options);
+}
 
 export async function convertInboxItemToTask(
   capture: QuickCapture,
@@ -60,19 +102,31 @@ export async function convertInboxItemToTask(
     throw new Error("Inbox task conversion returned an unexpected result.");
   }
 
+  if (result.source === "api") {
+    await recordTaskCreatedActivity(result.task, {
+      accessToken: options.accessToken,
+    });
+  }
+
   return {
     action: "task",
     task: result.task,
     source: result.source,
-    remainingCaptures: removeQuickCapture(capture.id),
+    remainingCaptures: await maybeRemoveConvertedCapture(
+      capture,
+      result.source,
+      options,
+    ),
   };
 }
 
-export function convertInboxItemToNote(
+export async function convertInboxItemToNote(
   capture: QuickCapture,
-): InboxNoteProcessingResult {
+  options: InboxProcessingOptions = {},
+): Promise<InboxNoteProcessingResult> {
   const preview = parseInboxInput(capture.text);
-  const result = createQuickCaptureNote({
+  const result = await createQuickCaptureNote({
+    accessToken: options.accessToken,
     title: preview.suggestedTitle,
     content: preview.summary,
     type: noteTypeFromInboxType(preview.type),
@@ -82,19 +136,34 @@ export function convertInboxItemToNote(
     throw new Error("Inbox note conversion returned an unexpected result.");
   }
 
+  if (result.source === "api") {
+    await recordNoteCreatedActivity(result.note, {
+      accessToken: options.accessToken,
+    });
+  }
+
   return {
     action: "note",
     note: result.note,
     source: result.source,
-    remainingCaptures: removeQuickCapture(capture.id),
+    remainingCaptures: await maybeRemoveConvertedCapture(
+      capture,
+      result.source,
+      options,
+    ),
   };
 }
 
-export function archiveInboxItem(
+export async function archiveInboxItem(
   capture: QuickCapture,
-): InboxArchiveProcessingResult {
+  options: InboxProcessingOptions = {},
+): Promise<InboxArchiveProcessingResult> {
   return {
     action: "archive",
-    remainingCaptures: removeQuickCapture(capture.id),
+    remainingCaptures: await removeProcessedCapture(
+      capture,
+      "archived",
+      options,
+    ),
   };
 }

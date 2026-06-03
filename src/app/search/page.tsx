@@ -155,7 +155,7 @@ export default function SearchPage() {
             className="mt-5 p-3 text-sm text-zinc-600 dark:text-zinc-400"
           >
             {accessToken
-              ? "Search includes cloud tasks and timeline activity plus local-only notes and Inbox captures from this browser."
+              ? "Search includes cloud tasks, cloud-primary Inbox captures, timeline activity, and local notes from this browser."
               : "Local-only search. Sign in to include cloud tasks and timeline activity."}
           </Card>
 
