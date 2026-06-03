@@ -1,28 +1,21 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { BrandMark } from "@/components/BrandMark";
-import { useAuthSession } from "@/components/auth/useAuthSession";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { getSupabaseBrowserAuthClient } from "@/lib/supabase/auth";
 
-export default function LoginPage() {
-  const router = useRouter();
-  const { isAuthenticated, loading } = useAuthSession();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+const RESET_EMAIL_SUCCESS_MESSAGE =
+  "If an Orvia account exists for that email, a reset link will be sent.";
 
-  useEffect(() => {
-    if (!loading && isAuthenticated) {
-      router.replace("/");
-    }
-  }, [isAuthenticated, loading, router]);
+export default function ForgotPasswordPage() {
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -32,22 +25,27 @@ export default function LoginPage() {
     }
 
     setError(null);
+    setSuccess(null);
     setSubmitting(true);
 
     try {
       const supabase = getSupabaseBrowserAuthClient();
-      const { error: signInError } =
-        await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password,
+      const redirectTo =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/reset-password`
+          : undefined;
+
+      const { error: resetError } =
+        await supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo,
         });
 
-      if (signInError) {
-        setError("Could not sign in with those credentials.");
+      if (resetError) {
+        setError("Could not send a reset email right now.");
         return;
       }
 
-      router.replace("/");
+      setSuccess(RESET_EMAIL_SUCCESS_MESSAGE);
     } catch {
       setError("Auth is not configured for this environment.");
     } finally {
@@ -64,10 +62,10 @@ export default function LoginPage() {
           </div>
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-              Log in to Orvia
+              Reset your password
             </h1>
             <p className="text-sm text-zinc-500 dark:text-zinc-500">
-              Auth foundation only. Cloud sync is not enabled yet.
+              Send a secure recovery link to your email.
             </p>
           </div>
         </div>
@@ -75,13 +73,13 @@ export default function LoginPage() {
         <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
           <div>
             <label
-              htmlFor="login-email"
+              htmlFor="forgot-password-email"
               className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
             >
               Email
             </label>
             <input
-              id="login-email"
+              id="forgot-password-email"
               type="email"
               autoComplete="email"
               required
@@ -92,51 +90,33 @@ export default function LoginPage() {
             />
           </div>
 
-          <div>
-            <div className="flex items-center justify-between gap-3">
-              <label
-                htmlFor="login-password"
-                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-              >
-                Password
-              </label>
-              <Link
-                href="/forgot-password"
-                className="text-xs font-medium text-zinc-500 hover:text-violet-800 dark:text-zinc-500 dark:hover:text-violet-200"
-              >
-                Forgot password?
-              </Link>
-            </div>
-            <input
-              id="login-password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
-              placeholder="Password"
-            />
-          </div>
-
           {error ? (
             <p className="text-sm text-red-600 dark:text-red-400" role="alert">
               {error}
             </p>
           ) : null}
 
+          {success ? (
+            <p
+              className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700 ring-1 ring-emerald-200/70 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20"
+              role="status"
+            >
+              {success}
+            </p>
+          ) : null}
+
           <Button type="submit" disabled={submitting} className="w-full">
-            {submitting ? "Signing in..." : "Log in"}
+            {submitting ? "Sending reset link..." : "Send reset link"}
           </Button>
         </form>
 
         <p className="mt-5 text-center text-sm text-zinc-500 dark:text-zinc-500">
-          New to Orvia?{" "}
+          Remembered your password?{" "}
           <Link
-            href="/register"
+            href="/login"
             className="font-medium text-zinc-800 hover:text-zinc-950 dark:text-zinc-200 dark:hover:text-white"
           >
-            Create an account
+            Log in
           </Link>
         </p>
       </Card>
