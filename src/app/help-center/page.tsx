@@ -21,19 +21,19 @@ const faqs = [
       "Open Inbox, review a capture, and choose Convert to Task. Orvia creates the task and keeps the capture processing explicit.",
   },
   {
-    question: "What is local-first mode?",
+    question: "What does saved on this device mean?",
     answer:
-      "Local-first mode stores supported data in this browser. It is useful for signed-out use, but it does not sync across devices.",
+      "Some signed-out or offline data is stored in this browser. It is useful for quick capture, but it does not follow you across devices.",
   },
   {
     question: "What is cloud sync?",
     answer:
-      "When signed in, supported tasks, notes, captures, and activity use Orvia cloud APIs first. Some local fallback behavior remains during the beta transition.",
+      "When signed in, supported tasks, notes, captures, and activity can be saved to your account. If sync is unavailable, Orvia may keep a device copy until you can retry.",
   },
   {
     question: "What data stays local?",
     answer:
-      "Theme, onboarding state, command history, Labs modules, and some fallback/cache data remain browser-local today.",
+      "Theme, onboarding state, command history, Labs modules, and some recovery/cache data remain on this device today.",
   },
   {
     question: "What is Timeline?",
@@ -43,7 +43,7 @@ const faqs = [
   {
     question: "How do backups work?",
     answer:
-      "Create Backup downloads a .json backup of supported local workspace data. Restore is planned and is not available yet.",
+      "Create Backup downloads an Orvia backup file for supported workspace data saved on this device. Restore is planned and is not available yet.",
   },
   {
     question: "How do I reset local data?",
@@ -53,7 +53,7 @@ const faqs = [
   {
     question: "How do I contact support?",
     answer:
-      "During early beta, contact support through the channel where you received your Orvia invite or demo access.",
+      "During early beta, contact support through the channel where you received your Orvia invite.",
   },
 ] as const;
 

@@ -153,8 +153,8 @@ export default function SearchPage() {
             className="mt-5 p-3 text-sm text-zinc-600 dark:text-zinc-400"
           >
             {accessToken
-              ? "Search includes cloud tasks, cloud-primary Inbox captures, timeline activity, and local notes from this browser."
-              : "Local-only search. Sign in to include cloud tasks and timeline activity."}
+              ? "Search includes tasks, notes, Inbox captures, and activity available to this workspace."
+              : "Signed out. Search uses data saved on this device."}
           </Card>
 
           <div className="relative mt-7">

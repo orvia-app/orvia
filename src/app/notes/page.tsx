@@ -156,9 +156,9 @@ export default function NotesPage() {
   }, [notes, typeFilter]);
   const noteBoundaryMessage = accessToken
     ? noteSource === "local-fallback"
-      ? "Showing local fallback because cloud notes could not load. Edits may stay on this browser until cloud access recovers."
-      : "Cloud notes are primary. Local-only browser notes may also appear here until you import them from Settings."
-    : "Local-only on this browser. Sign in to use cloud-backed notes.";
+      ? "Note sync is unavailable. Showing notes saved on this device."
+      : "Notes are saved to your account. Device-only notes may appear until you import them from Settings."
+    : "Signed out. Notes are saved on this device.";
 
   function openModal(): void {
     setModalOpen(true);

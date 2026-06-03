@@ -308,8 +308,8 @@ export default function SettingsPage() {
                       Create Backup
                     </h3>
                     <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                      Export your tasks, notes, and supported local workspace
-                      data into a backup file.
+                      Export your tasks, notes, and supported workspace data
+                      saved on this device into a backup file.
                     </p>
                     <p className="mt-2 text-xs font-medium text-zinc-500 dark:text-zinc-500">
                       Supported format: Orvia backup file (.json)
@@ -423,7 +423,7 @@ export default function SettingsPage() {
             <Card>
               <SectionHeader
                 title="Local data sync"
-                subtitle="Explicitly import supported local-only tasks and notes into your signed-in cloud account."
+                subtitle="Move supported device-only tasks and notes into your account."
               />
               <div className="mt-5 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -435,12 +435,12 @@ export default function SettingsPage() {
                       {authLoading
                         ? "Checking sign-in status..."
                         : isAuthenticated
-                        ? "Signed in. Import is manual, does not delete local browser data, and only supports tasks and notes."
-                        : "Sign in to import supported local-only tasks and notes to cloud storage."}
+                        ? "Signed in. Import is manual, does not delete data saved on this device, and only supports tasks and notes."
+                        : "Sign in to import supported device-only tasks and notes to your account."}
                     </p>
                     <p className="mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-500">
                       Orvia does not auto-import on login. Inbox captures,
-                      settings, and Labs data remain local-only for now.
+                      settings, and Labs data stay on this device for now.
                     </p>
                     <div className="mt-3 grid gap-2 text-sm text-zinc-700 dark:text-zinc-300 sm:grid-cols-2">
                       <div className="rounded-lg bg-white px-3 py-2 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:ring-zinc-800">
@@ -473,8 +473,8 @@ export default function SettingsPage() {
                       <div className="mt-3 rounded-xl border border-emerald-200/80 bg-emerald-50/80 px-3 py-2.5 text-sm leading-6 text-emerald-900 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200">
                         <p className="font-medium">Import completed.</p>
                         <p className="mt-0.5">
-                          Supported local tasks and notes were copied to your
-                          cloud account. Imported {importSummary.importedTasks}{" "}
+                          Supported device-only tasks and notes were copied to
+                          your account. Imported {importSummary.importedTasks}{" "}
                           tasks and {importSummary.importedNotes} notes. Skipped{" "}
                           {importSummary.skippedTasks} tasks and{" "}
                           {importSummary.skippedNotes} notes.
@@ -587,7 +587,7 @@ export default function SettingsPage() {
         cancelLabel="Cancel"
         confirmLabel="Reset local data"
         confirming={resettingLocalData}
-        description="This clears Orvia data stored in this browser only. Cloud data remains safe. Local-only unsynced data will be lost."
+        description="This clears Orvia data stored in this browser only. Account data remains safe. Device-only unsynced data will be lost."
         onCancel={() => {
           if (!resettingLocalData) {
             setResetDialogOpen(false);
@@ -603,7 +603,7 @@ export default function SettingsPage() {
         cancelLabel="Cancel"
         confirmLabel="Reset onboarding"
         confirming={resettingOnboarding}
-        description="This shows the Dashboard onboarding panel again on this browser. Your tasks, notes, and cloud data are not changed."
+        description="This shows the Dashboard onboarding panel again on this browser. Your tasks, notes, and account data are not changed."
         onCancel={() => {
           if (!resettingOnboarding) {
             setOnboardingDialogOpen(false);

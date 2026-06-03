@@ -16,7 +16,7 @@ export const actionCommands: readonly CommandItem[] = [
   {
     id: "action-create-note",
     title: "Quick Note",
-    subtitle: "Save a note into local memory",
+    subtitle: "Capture a note for later recall",
     keywords: ["new note", "capture", "idea", "create note"],
     group: "Capture",
     icon: FilePlus2,

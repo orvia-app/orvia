@@ -74,10 +74,10 @@ function formatPriority(priority: TaskPriority): string {
 
 function taskSourceLabel(source: PrimaryTaskSource): string {
   if (source === "local-fallback") {
-    return "Local fallback";
+    return "Saved on this device";
   }
 
-  return "Local only";
+  return "On this device";
 }
 
 function shouldShowTaskSource(source: PrimaryTaskSource): boolean {
@@ -262,11 +262,11 @@ export default function TodayPage() {
   const focusQueue = prioritizedTasks.slice(1, 6);
   const todayBoundaryMessage = accessToken
     ? taskSource === "local-fallback"
-      ? "Cloud tasks could not load, so Today's plan is showing local fallback data from this browser."
+      ? "Task sync is unavailable. Today's plan is using tasks saved on this device."
       : inboxSource === "local-fallback"
-        ? "Today's plan is cloud-primary for tasks. Inbox waiting is showing local fallback captures."
+        ? "Inbox sync is unavailable. Showing captures saved on this device."
         : null
-    : "Local-only mode. Today's plan uses browser data until you sign in.";
+    : "Signed out. Today's plan uses data saved on this device.";
 
   return (
     <AppShell>
@@ -420,10 +420,10 @@ export default function TodayPage() {
                   title="Inbox waiting"
                   description={
                     inboxSource === "cloud"
-                      ? "Cloud-primary captures ready for review."
+                      ? "Captures saved to your account."
                       : inboxSource === "local-fallback"
-                        ? "Local fallback captures ready for review."
-                        : "Local-only captures ready for review."
+                        ? "Sync is unavailable. Showing captures on this device."
+                        : "Captures saved on this device."
                   }
                 />
                 <Card variant="secondary" className="p-3.5">
@@ -541,7 +541,7 @@ export default function TodayPage() {
               <PageSection className="mt-0">
                 <PageSectionHeader
                   title="End of day"
-                  description="A simple closeout placeholder."
+                  description="Closeout tools are planned for a later beta."
                 />
                 <Card variant="secondary" className="p-3.5">
                   <div className="flex items-start gap-2.5">

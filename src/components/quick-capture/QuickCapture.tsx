@@ -94,14 +94,14 @@ export function QuickCapture({
 
   function captureStatusMessage(source: PrimaryCaptureSource): string {
     if (source === "cloud") {
-      return "Capture saved to cloud Inbox.";
+      return "Capture saved to your Inbox.";
     }
 
     if (source === "local-fallback") {
-      return "Cloud capture failed. Saved as local fallback.";
+      return "Sync is unavailable. Capture saved on this device.";
     }
 
-    return "Capture saved locally.";
+    return "Capture saved on this device.";
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -179,8 +179,8 @@ export function QuickCapture({
             </h2>
             <p className="mt-1 max-w-sm text-sm leading-5 text-zinc-500 dark:text-zinc-500">
               {accessToken
-                ? "Captures save to your cloud Inbox when available, with local fallback if cloud is unreachable."
-                : "Local-only on this browser until you sign in."}
+                ? "Captures save to your Inbox. If sync is unavailable, they stay on this device."
+                : "Captures are saved on this device until you sign in."}
             </p>
           </div>
           <button

@@ -219,9 +219,9 @@ function TasksContent() {
   }, [statusFilter, tasks]);
   const taskBoundaryMessage = accessToken
     ? taskSource === "local-fallback"
-      ? "Showing local fallback because cloud tasks could not load. Changes may stay on this browser until cloud access recovers."
-      : "Cloud tasks are primary. Local-only browser tasks may also appear here until you import them from Settings."
-    : "Local-only on this browser. Sign in to use cloud-backed tasks.";
+      ? "Task sync is unavailable. Showing tasks saved on this device."
+      : "Tasks are saved to your account. Device-only tasks may appear until you import them from Settings."
+    : "Signed out. Tasks are saved on this device.";
 
   function openModal(): void {
     setCreateError(null);

@@ -22,7 +22,7 @@ type ChatMessage = {
 };
 
 const INITIAL_ASSISTANT =
-  "This local preview shows how Orvia can become a contextual workspace assistant. Responses are deterministic until the server-side AI layer exists.";
+  "This preview shows how Orvia can become a contextual workspace assistant. Full AI support is planned for a later beta.";
 
 const THINKING_MS = 800;
 
@@ -147,8 +147,7 @@ export default function AiChatPage() {
                 Assistant
               </h1>
               <p className="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">
-                A local deterministic preview of the future workspace command
-                layer.
+                A preview of the future workspace assistant layer.
               </p>
             </div>
           </div>
@@ -219,7 +218,7 @@ export default function AiChatPage() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Ask about your local workspace preview..."
+                  placeholder="Ask about your workspace preview..."
                   disabled={busy}
                   className="min-h-[2.75rem] flex-1 resize-y rounded-xl bg-white px-4 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 outline-none ring-1 ring-zinc-200/80 transition focus:ring-2 focus:ring-zinc-300 disabled:opacity-50 dark:bg-black/60 dark:text-white dark:ring-zinc-800 dark:focus:ring-zinc-700 sm:text-[15px]"
                   autoComplete="off"
@@ -234,7 +233,7 @@ export default function AiChatPage() {
                 </button>
               </form>
               <p className="mt-2 text-center text-[11px] text-zinc-500 sm:text-left dark:text-zinc-600">
-                Local preview · Enter to send · Shift+Enter for a new line
+                Preview mode · Enter to send · Shift+Enter for a new line
               </p>
             </div>
           </Card>

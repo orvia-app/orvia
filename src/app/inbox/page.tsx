@@ -60,14 +60,14 @@ function confidenceBadgeVariant(confidence: InboxParseResult["confidence"]) {
 
 function captureSourceLabel(source: PrimaryCaptureSource): string {
   if (source === "cloud") {
-    return "Cloud";
+    return "Account";
   }
 
   if (source === "local-fallback") {
-    return "Local fallback";
+    return "On this device";
   }
 
-  return "Local only";
+  return "On this device";
 }
 
 export default function InboxPage() {
@@ -104,23 +104,23 @@ export default function InboxPage() {
 
   const inboxBoundaryMessage = signedIn
     ? captureSource === "local-fallback"
-      ? "Cloud Inbox could not load, so this queue is showing local fallback captures from this browser."
-      : "Inbox is cloud-primary when signed in. Local-only captures may appear until you import or process them."
-    : "Local-only Inbox on this browser until you sign in.";
+      ? "Inbox sync is unavailable. Showing captures saved on this device."
+      : "Inbox captures are saved to your account when sync is available."
+    : "Signed out. Inbox captures are saved on this device.";
 
   const queueDescription =
     captureSource === "local-fallback"
-      ? "Cloud Inbox is unavailable. Process local fallback captures carefully."
+      ? "Review captures saved on this device while sync is unavailable."
       : signedIn
-        ? "Convert cloud-primary captures into tasks or notes, or archive what no longer needs action."
-        : "Convert local captures into tasks or notes, or archive what no longer needs action.";
+        ? "Convert account captures into tasks or notes, or archive what no longer needs action."
+        : "Convert captures saved on this device into tasks or notes, or archive what no longer needs action.";
 
   const queueBadge =
     captureSource === "local-fallback"
-      ? "Local fallback queue"
+      ? "Device queue"
       : signedIn
-        ? "Cloud-primary queue"
-        : "Local-only queue";
+        ? "Account queue"
+        : "Device queue";
 
   const handleProcess = useCallback(() => {
     const trimmedInput = input.trim();
@@ -216,16 +216,16 @@ export default function InboxPage() {
           processingResult.source === "api"
             ? "Converted to task."
             : selectedCaptureSource === "cloud"
-              ? "Created a local fallback task. Cloud capture remains in Inbox."
-              : "Converted to local task.",
+              ? "Sync is unavailable. Created a task on this device and kept the capture in Inbox."
+              : "Converted to task on this device.",
         );
       } else if (processingResult.action === "note") {
         setQueueStatus(
           processingResult.source === "api"
             ? "Converted to note."
             : selectedCaptureSource === "cloud"
-              ? "Created a local fallback note. Cloud capture remains in Inbox."
-              : "Converted to local note.",
+              ? "Sync is unavailable. Created a note on this device and kept the capture in Inbox."
+              : "Converted to note on this device.",
         );
       } else {
         setQueueStatus("Archived.");
@@ -285,8 +285,8 @@ export default function InboxPage() {
 
               <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400 sm:text-base">
                 Drop anything into your second brain. Orvia can preview how a
-                capture may become a task or note later, using local
-                deterministic rules for now.
+                capture may become a task or note later. You stay in control of
+                what gets created.
               </p>
             </div>
 
@@ -299,8 +299,8 @@ export default function InboxPage() {
           >
             {inboxBoundaryMessage}
             {signedIn
-              ? " Processing a cloud capture marks it processed or archived in your account."
-              : " Sign in before converting captures you want saved as cloud tasks."}
+              ? " Processing an account capture marks it processed or archived."
+              : " Sign in before converting captures you want saved to your account."}
           </Card>
 
           <Card className="p-0">
@@ -345,8 +345,8 @@ export default function InboxPage() {
 
               <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="max-w-xl text-sm leading-6 text-zinc-500 dark:text-zinc-400">
-                  Preview is local and deterministic. No AI call is made, and
-                  you choose whether to create the task or note.
+                  Orvia previews a structure for your capture. No AI service is
+                  contacted, and you choose whether to create the task or note.
                 </p>
 
                 <Button
@@ -379,8 +379,7 @@ export default function InboxPage() {
                     Capture preview
                   </h2>
                   <p className="mt-1 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
-                    Structured by the deterministic parser. Review before
-                    creating anything.
+                    Review the suggested structure before creating anything.
                   </p>
                 </div>
 

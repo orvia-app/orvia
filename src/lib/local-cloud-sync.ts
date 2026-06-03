@@ -197,7 +197,7 @@ export async function importLocalItemsToCloud({
       importedNotes: 0,
       skippedTasks: 0,
       skippedNotes: 0,
-      errors: ["Could not load cloud data before import."],
+      errors: ["Could not load account data before import."],
     };
   }
 
