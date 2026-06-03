@@ -68,8 +68,9 @@ npm run check
 - `src/lib/supabase/*`: future browser-safe Supabase setup seams. No live integration yet.
 - `src/lib/*`: domain repositories, helpers, command registries, local-first foundations.
 - `src/types/index.ts`: shared domain types.
-- `src/data/mock.ts`: local seed data for first-time MVP experience.
 - `docs/*`: product, architecture, security, backend, QA, and contributor guidance.
+
+New-user workspaces should start empty. Do not add task, note, car, finance, or inbox demo seeds to repository helpers or page loaders.
 
 ## Branch Workflow
 

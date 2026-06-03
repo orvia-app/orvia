@@ -1,8 +1,5 @@
 import { createLocalEntityRepository } from "@/core/repositories/local-json-repository";
-import {
-  hasCompletedLocalDataReset,
-  STORAGE_KEYS,
-} from "@/lib/storage";
+import { STORAGE_KEYS } from "@/lib/storage";
 
 export type CarRecord = {
   id: string;
@@ -12,7 +9,7 @@ export type CarRecord = {
   notes: string;
 };
 
-export const DEFAULT_CARS: readonly CarRecord[] = [
+const LEGACY_DEFAULT_CARS: readonly CarRecord[] = [
   {
     id: "car-1",
     name: "Infiniti G37x",
@@ -51,39 +48,36 @@ export const carRepository = createLocalEntityRepository<CarRecord>({
   validate: isCarRecord,
 });
 
+function isLegacyDefaultCar(car: CarRecord): boolean {
+  return LEGACY_DEFAULT_CARS.some((defaultCar) => {
+    return (
+      car.id === defaultCar.id &&
+      car.name === defaultCar.name &&
+      car.owner === defaultCar.owner &&
+      car.mileage === defaultCar.mileage &&
+      car.notes === defaultCar.notes
+    );
+  });
+}
+
+function removeLegacyDefaultCars(cars: CarRecord[]): CarRecord[] {
+  return cars.filter((car) => !isLegacyDefaultCar(car));
+}
+
 export function getStoredCars(): CarRecord[] {
-  return carRepository.list();
+  return removeLegacyDefaultCars(carRepository.list());
 }
 
 export function getCars(): CarRecord[] {
-  const storedCars = getStoredCars();
-
-  if (hasCompletedLocalDataReset()) {
-    return storedCars;
-  }
-
-  return storedCars.length > 0 ? storedCars : [...DEFAULT_CARS];
+  return getStoredCars();
 }
 
 export function saveCars(cars: readonly CarRecord[]): void {
-  carRepository.save(cars);
+  carRepository.save(removeLegacyDefaultCars([...cars]));
 }
 
 export function ensureCarsSeeded(): CarRecord[] {
-  const storedCars = getStoredCars();
-
-  if (storedCars.length > 0) {
-    return storedCars;
-  }
-
-  if (hasCompletedLocalDataReset()) {
-    return [];
-  }
-
-  const defaultCars = [...DEFAULT_CARS];
-  saveCars(defaultCars);
-
-  return defaultCars;
+  return getStoredCars();
 }
 
 export function createCar(car: CarRecord): CarRecord[] {

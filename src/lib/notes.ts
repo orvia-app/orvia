@@ -1,8 +1,5 @@
 import { createLocalEntityRepository } from "@/core/repositories/local-json-repository";
-import {
-  hasCompletedLocalDataReset,
-  STORAGE_KEYS,
-} from "@/lib/storage";
+import { STORAGE_KEYS } from "@/lib/storage";
 
 export type NoteType = "note" | "idea" | "book" | "course" | "link";
 
@@ -21,7 +18,7 @@ export const NOTE_TYPES: readonly NoteType[] = [
   "link",
 ];
 
-export const initialNotes: Note[] = [
+const LEGACY_DEMO_NOTES: readonly Note[] = [
   {
     id: "1",
     title: "Orvia idea",
@@ -64,22 +61,31 @@ export const noteRepository = createLocalEntityRepository<Note>({
   validate: isNote,
 });
 
+function isLegacyDemoNote(note: Note): boolean {
+  return LEGACY_DEMO_NOTES.some((demoNote) => {
+    return (
+      note.id === demoNote.id &&
+      note.title === demoNote.title &&
+      note.content === demoNote.content &&
+      note.type === demoNote.type
+    );
+  });
+}
+
+function removeLegacyDemoNotes(notes: Note[]): Note[] {
+  return notes.filter((note) => !isLegacyDemoNote(note));
+}
+
 export function getNotes(): Note[] {
-  const validNotes = noteRepository.list();
-
-  if (hasCompletedLocalDataReset()) {
-    return validNotes;
-  }
-
-  return validNotes.length > 0 ? validNotes : initialNotes;
+  return removeLegacyDemoNotes(noteRepository.list());
 }
 
 export function getStoredNotes(): Note[] {
-  return noteRepository.list();
+  return removeLegacyDemoNotes(noteRepository.list());
 }
 
 export function saveNotes(notes: Note[]): void {
-  noteRepository.save(notes);
+  noteRepository.save(removeLegacyDemoNotes(notes));
 }
 
 export function createNote(note: Note): Note[] {
