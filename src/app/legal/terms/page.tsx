@@ -29,7 +29,7 @@ const sections = [
   },
   {
     title: "Contact",
-    body: "For beta access, support, or terms questions, use the contact channel where you received your Orvia invite or demo access.",
+    body: "For beta access, support, or terms questions, use the contact channel where you received your Orvia invite.",
   },
 ] as const;
 

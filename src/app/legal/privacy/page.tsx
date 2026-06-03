@@ -5,7 +5,7 @@ import { Page, PageHeader, PageSection } from "@/components/ui/Page";
 const sections = [
   {
     title: "Overview",
-    body: "This Privacy Policy describes how Orvia handles data during the early beta. Orvia is still evolving, and some features are local-only while others use authenticated cloud APIs.",
+    body: "This Privacy Policy describes how Orvia handles data during the early beta. Orvia is still evolving, and some features save data on this device while others save supported records to your account.",
   },
   {
     title: "Data You Provide",
@@ -13,11 +13,11 @@ const sections = [
   },
   {
     title: "Local Data",
-    body: "Some data remains in browser storage, including theme preference, onboarding state, command history, Labs data, and local fallback/cache data. Clearing browser storage or using Settings reset can remove local data.",
+    body: "Some data remains in browser storage, including theme preference, onboarding state, command history, Labs data, and device recovery/cache data. Clearing browser storage or using Settings reset can remove local data.",
   },
   {
     title: "Cloud Data",
-    body: "When signed in, supported tasks, notes, captures, and activities are stored through Orvia cloud APIs. Orvia uses account ownership checks and Supabase row-level security policies for supported cloud records.",
+    body: "When signed in, supported tasks, notes, captures, and activities are stored with your Orvia account. Orvia uses account ownership checks and Supabase row-level security policies for supported cloud records.",
   },
   {
     title: "AI And Integrations",
@@ -25,7 +25,7 @@ const sections = [
   },
   {
     title: "Backups And Reset",
-    body: "Create Backup exports supported local workspace data to a .json file. Local reset clears Orvia browser data only. Cloud account deletion/export controls are planned for a later backend phase.",
+    body: "Create Backup exports supported workspace data saved on this device to an Orvia backup file. Local reset clears Orvia browser data only. Cloud account deletion/export controls are planned for a later backend phase.",
   },
   {
     title: "Contact",

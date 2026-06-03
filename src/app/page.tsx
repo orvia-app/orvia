@@ -102,10 +102,10 @@ function formatTaskPriority(priority: TaskPriority): string {
 
 function taskSourceLabel(source: PrimaryTaskSource): string {
   if (source === "local-fallback") {
-    return "Local fallback";
+    return "Saved on this device";
   }
 
-  return "Local only";
+  return "On this device";
 }
 
 function shouldShowTaskSource(source: PrimaryTaskSource): boolean {
@@ -363,11 +363,11 @@ export default function Home() {
 
   const dashboardBoundaryMessage = accessToken
     ? taskSource === "local-fallback"
-      ? "Cloud tasks could not load, so Dashboard is showing local fallback data from this browser."
+      ? "Task sync is unavailable. Showing tasks saved on this device."
       : inboxSource === "local-fallback"
-        ? "Tasks are cloud-primary. Inbox count is showing local fallback captures because cloud Inbox could not load."
+        ? "Inbox sync is unavailable. Showing captures saved on this device."
         : null
-    : "Local-only mode. Dashboard uses browser data until you sign in.";
+    : "Signed out. Dashboard uses data saved on this device.";
 
   return (
     <AppShell>
@@ -469,8 +469,8 @@ export default function Home() {
 
               <div className="flex flex-col gap-3 border-t border-zinc-200/80 bg-zinc-50/80 p-5 dark:border-zinc-800/80 dark:bg-zinc-950/35 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Local-first onboarding. Cloud sync only runs when explicitly
-                  supported by signed-in workflows.
+                  Start with capture. Sign in when you want supported data saved
+                  to your account.
                 </p>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Button
@@ -554,10 +554,10 @@ export default function Home() {
                   </h2>
                   <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
                     {inboxSource === "cloud"
-                      ? "Cloud-primary captures waiting for review."
+                      ? "Captures saved to your account."
                       : inboxSource === "local-fallback"
-                        ? "Local fallback captures waiting for review."
-                        : "Local-only captures waiting for review."}
+                        ? "Sync is unavailable. Showing captures on this device."
+                        : "Captures saved on this device."}
                   </p>
                 </div>
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 text-violet-700 ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">

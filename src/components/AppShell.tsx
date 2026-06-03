@@ -249,7 +249,7 @@ function AuthStatus() {
               {user?.email ?? "Signed in"}
             </p>
             <p className="mt-0.5 truncate text-[10px] text-zinc-500 dark:text-zinc-500">
-              Auth only. Sync not enabled yet.
+              Account active. Sync is still limited.
             </p>
           </div>
           <button
