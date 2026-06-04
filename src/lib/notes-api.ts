@@ -1,11 +1,15 @@
 import {
   createNote,
   getNotes,
+  isNote,
   NOTE_TYPES,
-  saveNotes,
   type Note,
   type NoteType,
 } from "@/lib/notes";
+import {
+  readUserScopedList,
+  writeUserScopedList,
+} from "@/lib/user-scoped-cache";
 
 type ApiNoteRow = {
   id?: unknown;
@@ -43,6 +47,7 @@ export type UpdateNoteApiInput = Partial<CreateNoteApiInput>;
 
 export type NotesApiRequestOptions = {
   accessToken?: string;
+  ownerId?: string;
 };
 
 export type PrimaryNoteSource = "cloud" | "local-fallback" | "local-only";
@@ -70,6 +75,41 @@ export function mergeApiNotesWithLocalNotes(
   return [...apiNotes, ...localOnlyNotes];
 }
 
+export function getCachedNotesForOwner(ownerId?: string): Note[] {
+  return readUserScopedList({
+    domain: "notes",
+    userId: ownerId,
+    validate: isNote,
+  });
+}
+
+export function saveCachedNotesForOwner(
+  ownerId: string | undefined,
+  notes: readonly Note[],
+): void {
+  writeUserScopedList({
+    domain: "notes",
+    items: notes,
+    userId: ownerId,
+  });
+}
+
+export function upsertCachedNoteForOwner(
+  ownerId: string | undefined,
+  note: Note,
+): Note[] {
+  const nextNotes = [
+    note,
+    ...getCachedNotesForOwner(ownerId).filter(
+      (existingNote) => existingNote.id !== note.id,
+    ),
+  ];
+
+  saveCachedNotesForOwner(ownerId, nextNotes);
+
+  return nextNotes;
+}
+
 function createNoteSourceMap(
   notes: readonly Note[],
   source: PrimaryNoteSource,
@@ -78,20 +118,6 @@ function createNoteSourceMap(
 
   for (const note of notes) {
     sources[note.id] = source;
-  }
-
-  return sources;
-}
-
-function createMergedNoteSourceMap(
-  apiNotes: readonly Note[],
-  mergedNotes: readonly Note[],
-): NoteSourceById {
-  const apiNoteIds = new Set(apiNotes.map((note) => note.id));
-  const sources: NoteSourceById = {};
-
-  for (const note of mergedNotes) {
-    sources[note.id] = apiNoteIds.has(note.id) ? "cloud" : "local-only";
   }
 
   return sources;
@@ -106,6 +132,22 @@ function createLocalFallbackNote(input: CreateNoteApiInput): Note {
   };
 
   createNote(note);
+
+  return note;
+}
+
+function createOwnerScopedFallbackNote(
+  input: CreateNoteApiInput,
+  ownerId?: string,
+): Note {
+  const note: Note = {
+    id: crypto.randomUUID(),
+    title: input.title,
+    content: input.content?.trim() ?? "",
+    type: input.type ?? "note",
+  };
+
+  upsertCachedNoteForOwner(ownerId, note);
 
   return note;
 }
@@ -261,17 +303,16 @@ export async function loadNotesFromPrimarySourceWithBoundary(
 
   try {
     const apiNotes = await fetchNotesViaApi(options);
-    const mergedNotes = mergeApiNotesWithLocalNotes(apiNotes, getNotes());
 
-    saveNotes(mergedNotes);
+    saveCachedNotesForOwner(options.ownerId, apiNotes);
 
     return {
-      noteSources: createMergedNoteSourceMap(apiNotes, mergedNotes),
-      notes: mergedNotes,
+      noteSources: createNoteSourceMap(apiNotes, "cloud"),
+      notes: apiNotes,
       source: "cloud",
     };
   } catch {
-    const notes = getNotes();
+    const notes = getCachedNotesForOwner(options.ownerId);
 
     return {
       noteSources: createNoteSourceMap(notes, "local-fallback"),
@@ -388,13 +429,14 @@ export async function createNoteFromPrimarySource(
 
   try {
     const note = await createNoteViaApi(input, options);
-    const nextNotes = mergeApiNotesWithLocalNotes([note], getNotes());
 
-    saveNotes(nextNotes);
+    upsertCachedNoteForOwner(options.ownerId, note);
 
     return { note, source: "api" };
   } catch {
-    const note = createLocalFallbackNote(input);
+    const note = options.accessToken?.trim()
+      ? createOwnerScopedFallbackNote(input, options.ownerId)
+      : createLocalFallbackNote(input);
 
     return { note, source: "local" };
   }

@@ -432,6 +432,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <CommandCenter />
       <QuickCapture
         accessToken={session?.access_token}
+        ownerId={session?.user.id}
         onOpenChange={setQuickCaptureOpen}
         open={quickCaptureOpen}
       />

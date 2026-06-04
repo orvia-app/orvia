@@ -33,13 +33,14 @@ import {
   createTaskViaApi,
   deleteTaskViaApi,
   loadTasksFromPrimarySourceWithBoundary,
+  saveCachedTasksForOwner,
   type PrimaryTaskSource,
   type TaskSourceById,
   updateTaskViaApi,
 } from "@/lib/tasks-api";
 import {
+  getContextEntitiesFromRecords,
   getEntityContext,
-  getLocalContextEntities,
   getRelatedContextSubtitle,
   type EntityContext,
 } from "@/lib/memory/context";
@@ -69,6 +70,19 @@ type TaskPageContext = {
 type TaskSearchParams = Pick<URLSearchParams, "get">;
 
 type TaskContextById = Record<string, EntityContext>;
+
+function buildTaskContextById(tasks: readonly Task[]): TaskContextById {
+  const entities = getContextEntitiesFromRecords({ tasks });
+
+  return Object.fromEntries(
+    entities
+      .filter((entity) => entity.type === "task")
+      .map((entity) => [
+        entity.sourceId,
+        getEntityContext(entity, entities),
+      ]),
+  );
+}
 
 const filters: { label: string; value: FilterValue }[] = [
   { label: "All", value: "all" },
@@ -131,6 +145,7 @@ function TasksContent() {
   const searchParams = useSearchParams();
   const { session } = useAuthSession();
   const accessToken = session?.access_token;
+  const ownerId = session?.user.id;
   const initialPageContext = useMemo(
     () => getTaskPageContextFromSearchParams(searchParams),
     [searchParams],
@@ -158,22 +173,10 @@ function TasksContent() {
   useEffect(() => {
     let cancelled = false;
 
-    function getNextContextById(): TaskContextById {
-      const entities = getLocalContextEntities();
-
-      return Object.fromEntries(
-        entities
-          .filter((entity) => entity.type === "task")
-          .map((entity) => [
-            entity.sourceId,
-            getEntityContext(entity, entities),
-          ]),
-      );
-    }
-
     async function loadTasks(): Promise<void> {
       const result = await loadTasksFromPrimarySourceWithBoundary({
         accessToken,
+        ownerId,
       });
 
       if (cancelled) {
@@ -183,7 +186,7 @@ function TasksContent() {
       setTasks(result.tasks);
       setTaskSource(result.source);
       setTaskSourcesById(result.taskSources);
-      setTaskContextById(getNextContextById());
+      setTaskContextById(buildTaskContextById(result.tasks));
     }
 
     void loadTasks();
@@ -191,7 +194,7 @@ function TasksContent() {
     return () => {
       cancelled = true;
     };
-  }, [accessToken]);
+  }, [accessToken, ownerId]);
 
   useEffect(() => {
     setStatusFilter(initialPageContext.statusFilter);
@@ -238,7 +241,11 @@ function TasksContent() {
     nextTasks: Task[],
     sourceOverrides: TaskSourceById = {},
   ): void {
-    saveTasks(nextTasks);
+    if (accessToken) {
+      saveCachedTasksForOwner(ownerId, nextTasks);
+    } else {
+      saveTasks(nextTasks);
+    }
     setTasks(nextTasks);
     setTaskSourcesById((currentSources) => {
       const nextSources: TaskSourceById = {};
@@ -256,17 +263,7 @@ function TasksContent() {
       return nextSources;
     });
 
-    const entities = getLocalContextEntities();
-    setTaskContextById(
-      Object.fromEntries(
-        entities
-          .filter((entity) => entity.type === "task")
-          .map((entity) => [
-            entity.sourceId,
-            getEntityContext(entity, entities),
-          ]),
-      ),
-    );
+    setTaskContextById(buildTaskContextById(nextTasks));
   }
 
   function createLocalTaskFromForm(title: string, workspaceId: string): Task {
@@ -325,6 +322,7 @@ function TasksContent() {
             },
             {
               accessToken,
+              ownerId,
             },
           )
         : createLocalTaskFromForm(title, workspaceId);
@@ -374,7 +372,7 @@ function TasksContent() {
             {
               status: nextStatus,
             },
-            { accessToken },
+            { accessToken, ownerId },
           )
         : {
             ...task,
@@ -427,7 +425,7 @@ function TasksContent() {
 
     try {
       if (accessToken) {
-        await deleteTaskViaApi(task.id, { accessToken });
+        await deleteTaskViaApi(task.id, { accessToken, ownerId });
       }
 
       const nextTasks = tasks.filter(

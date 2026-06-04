@@ -22,7 +22,7 @@ The following data remains browser-local today:
 - Command history
 - Settings that are not explicitly cloud-backed
 - Finance, Cars, and Automation Labs data
-- Local task/note/capture cache and signed-out task/note/capture data
+- Signed-out task/note/capture data
 
 Signed-out Inbox and Quick Capture remain local-only. Signed-in Inbox and Quick Capture are API-primary, with local fallback if the capture API is unavailable.
 
@@ -30,13 +30,17 @@ Local-only data is stored through repository/storage helpers. It is not account 
 
 New local workspaces start empty. Earlier MVP demo/test records are no longer seeded; exact known legacy demo records are filtered from normal local views so a new user does not see project sample data as their own workspace.
 
+The Settings local reset action removes every Orvia-owned browser storage key
+that starts with `personal-os.`, including legacy local-only keys and
+authenticated user-scoped cache keys such as `personal-os.user.<userId>.*`.
+
 ## Mixed / Transitional Surfaces
 
 Some screens intentionally combine cloud-backed and local-only data while Orvia transitions from local-first MVP to authenticated cloud storage:
 
-- Tasks, Notes, and Inbox captures prefer cloud data when signed in, but may include local-only cached items that have not been imported or processed.
+- Tasks, Notes, and Inbox captures prefer cloud data when signed in. Authenticated cache data is scoped by Supabase user id so users on the same browser do not inherit another signed-in user's cached records.
 - Dashboard and Today use cloud-primary tasks and cloud-primary Inbox captures when signed in, with visible local fallback copy if cloud reads fail.
-- Search includes cloud tasks, cloud-primary Inbox captures, activity, and local notes while Notes-related transitional surfaces still keep a local cache.
+- Search includes account tasks, account notes, account Inbox captures, and account activity when signed in. Signed-out search uses data saved on the current device.
 - Settings provides a manual local-to-cloud import for supported local tasks and notes only.
 
 Signed-in UI must never silently present local-only data as cloud/account data.
@@ -60,7 +64,8 @@ Rules:
 - Fallback must not silently become account data.
 - Fallback should not delete local data.
 - Fallback should not auto-import local data.
-- Fallback writes may update local browser cache but should be labeled as local fallback until cloud access succeeds.
+- Signed-in fallback writes must use user-scoped browser cache keyed by authenticated user id.
+- Signed-out fallback writes may update shared browser-local storage and should be labeled as device-only data.
 
 ## Settings Import Rules
 
@@ -78,8 +83,9 @@ Rules:
 
 ## Remaining Beta Risks
 
-- Local-only browser data can still sit beside cloud data until the user imports or clears it.
-- Non-demo local browser data from previous sessions can still appear in local-only or fallback mode until the user exports, imports, or resets local browser data.
+- Signed-out local-only browser data remains device-scoped, not account-scoped.
+- User-scoped authenticated cache is an offline recovery cache, not full bidirectional sync.
+- Reset local data removes Orvia-owned browser storage state and then reloads the app so in-memory React state is discarded.
 - There is no full bidirectional sync engine yet.
 - There is no conflict resolution UI yet.
 - Existing local Inbox captures are not automatically migrated to cloud.

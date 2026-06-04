@@ -26,13 +26,14 @@ import {
   createNoteFromPrimarySource,
   deleteNoteViaApi,
   loadNotesFromPrimarySourceWithBoundary,
+  saveCachedNotesForOwner,
   type NoteSourceById,
   type PrimaryNoteSource,
   updateNoteViaApi,
 } from "@/lib/notes-api";
 import {
+  getContextEntitiesFromRecords,
   getEntityContext,
-  getLocalContextEntities,
   getRelatedContextSubtitle,
   type EntityContext,
 } from "@/lib/memory/context";
@@ -46,6 +47,19 @@ type NoteFormState = {
 };
 
 type NoteContextById = Record<string, EntityContext>;
+
+function buildNoteContextById(notes: readonly Note[]): NoteContextById {
+  const entities = getContextEntitiesFromRecords({ notes });
+
+  return Object.fromEntries(
+    entities
+      .filter((entity) => entity.type === "note")
+      .map((entity) => [
+        entity.sourceId,
+        getEntityContext(entity, entities),
+      ]),
+  );
+}
 
 const FILTERS: { label: string; value: FilterValue }[] = [
   { label: "All", value: "all" },
@@ -96,6 +110,7 @@ function noteSourceLabel(source: PrimaryNoteSource): string {
 export default function NotesPage() {
   const { session } = useAuthSession();
   const accessToken = session?.access_token;
+  const ownerId = session?.user.id;
   const [notes, setNotes] = useState<Note[]>([]);
   const [noteSource, setNoteSource] = useState<PrimaryNoteSource>("local-only");
   const [noteSourcesById, setNoteSourcesById] = useState<NoteSourceById>({});
@@ -117,27 +132,17 @@ export default function NotesPage() {
     async function loadNotes(): Promise<void> {
       const result = await loadNotesFromPrimarySourceWithBoundary({
         accessToken,
+        ownerId,
       });
 
       if (!active) {
         return;
       }
 
-      const entities = getLocalContextEntities();
-
       setNotes(result.notes);
       setNoteSource(result.source);
       setNoteSourcesById(result.noteSources);
-      setNoteContextById(
-        Object.fromEntries(
-          entities
-            .filter((entity) => entity.type === "note")
-            .map((entity) => [
-              entity.sourceId,
-              getEntityContext(entity, entities),
-            ]),
-        ),
-      );
+      setNoteContextById(buildNoteContextById(result.notes));
     }
 
     void loadNotes();
@@ -145,7 +150,7 @@ export default function NotesPage() {
     return () => {
       active = false;
     };
-  }, [accessToken]);
+  }, [accessToken, ownerId]);
 
   const filteredNotes = useMemo(() => {
     if (typeFilter === "all") {
@@ -173,7 +178,11 @@ export default function NotesPage() {
     nextNotes: Note[],
     sourceOverrides: NoteSourceById = {},
   ): void {
-    saveNotes(nextNotes);
+    if (accessToken) {
+      saveCachedNotesForOwner(ownerId, nextNotes);
+    } else {
+      saveNotes(nextNotes);
+    }
     setNotes(nextNotes);
     setNoteSourcesById((currentSources) => {
       const nextSources: NoteSourceById = {};
@@ -191,17 +200,7 @@ export default function NotesPage() {
       return nextSources;
     });
 
-    const entities = getLocalContextEntities();
-    setNoteContextById(
-      Object.fromEntries(
-        entities
-          .filter((entity) => entity.type === "note")
-          .map((entity) => [
-            entity.sourceId,
-            getEntityContext(entity, entities),
-          ]),
-      ),
-    );
+    setNoteContextById(buildNoteContextById(nextNotes));
   }
 
   function setNotePending(noteId: string, pending: boolean): void {
@@ -249,7 +248,7 @@ export default function NotesPage() {
         content,
         type: form.type,
       },
-      { accessToken },
+      { accessToken, ownerId },
     );
 
     syncNotes(
@@ -296,7 +295,7 @@ export default function NotesPage() {
               content,
               type: editForm.type,
             },
-            { accessToken },
+            { accessToken, ownerId },
           )
         : {
             ...note,
@@ -346,7 +345,7 @@ export default function NotesPage() {
 
     try {
       if (accessToken) {
-        await deleteNoteViaApi(note.id, { accessToken });
+        await deleteNoteViaApi(note.id, { accessToken, ownerId });
       }
 
       syncNotes(notes.filter((currentNote) => currentNote.id !== note.id));

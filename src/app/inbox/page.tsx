@@ -73,6 +73,7 @@ function captureSourceLabel(source: PrimaryCaptureSource): string {
 export default function InboxPage() {
   const { loading: authLoading, session } = useAuthSession();
   const accessToken = session?.access_token;
+  const ownerId = session?.user.id;
   const signedIn = Boolean(accessToken);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -158,10 +159,12 @@ export default function InboxPage() {
           status: "todo",
           workspaceId: workspaceIdFromLabel(result.suggestedWorkspace),
           accessToken,
+          ownerId,
         });
       } else {
         await createQuickCaptureNote({
           accessToken,
+          ownerId,
           title: result.suggestedTitle,
           content: result.summary,
           type: noteTypeFromInboxType(result.type),
@@ -196,16 +199,19 @@ export default function InboxPage() {
         processingResult = await convertInboxItemToTask(capture, {
           accessToken,
           captureSource: selectedCaptureSource,
+          ownerId,
         });
       } else if (action === "note") {
         processingResult = await convertInboxItemToNote(capture, {
           accessToken,
           captureSource: selectedCaptureSource,
+          ownerId,
         });
       } else {
         processingResult = await archiveInboxItem(capture, {
           accessToken,
           captureSource: selectedCaptureSource,
+          ownerId,
         });
       }
 
@@ -247,6 +253,7 @@ export default function InboxPage() {
     async function loadCaptures(): Promise<void> {
       const result = await loadCapturesFromPrimarySourceWithBoundary({
         accessToken,
+        ownerId,
       });
 
       if (!active) {
@@ -267,7 +274,7 @@ export default function InboxPage() {
         window.clearTimeout(timeoutRef.current);
       }
     };
-  }, [accessToken, authLoading]);
+  }, [accessToken, authLoading, ownerId]);
 
   return (
     <AppShell>
