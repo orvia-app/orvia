@@ -9,6 +9,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 
+import { useAuthSession } from "@/components/auth/useAuthSession";
 import {
   getRecentCommands,
   recordCommandExecution,
@@ -88,7 +89,15 @@ function sortCommands(commands: readonly CommandItem[]): CommandItem[] {
   });
 }
 
-function getContextBoostedCommandIds(): ReadonlySet<string> {
+function getContextBoostedCommandIds({
+  allowLocalContext,
+}: {
+  allowLocalContext: boolean;
+}): ReadonlySet<string> {
+  if (!allowLocalContext) {
+    return new Set();
+  }
+
   const activeContext = getLocalActiveContext(6);
   const commandIds = new Set<string>();
 
@@ -168,6 +177,7 @@ export function useCommandPalette(
 ) {
   const { enabled = true, onAction } = options;
   const router = useRouter();
+  const { isAuthenticated, loading: authLoading } = useAuthSession();
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -270,7 +280,9 @@ export function useCommandPalette(
 
     setRecentCommands(getRecentCommands(contextualCommands));
     setContextBoostedCommandIds((currentIds) => {
-      const nextIds = getContextBoostedCommandIds();
+      const nextIds = getContextBoostedCommandIds({
+        allowLocalContext: !authLoading && !isAuthenticated,
+      });
 
       return areSetsEqual(currentIds, nextIds) ? currentIds : nextIds;
     });
@@ -280,7 +292,7 @@ export function useCommandPalette(
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [contextualCommands, open]);
+  }, [authLoading, contextualCommands, isAuthenticated, open]);
 
   useEffect(() => {
     if (activeIndex <= filteredCommands.length - 1) return;

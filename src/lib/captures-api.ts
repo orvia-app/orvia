@@ -5,9 +5,13 @@ import type {
 import {
   createQuickCapture,
   getQuickCaptures,
-  saveQuickCaptures,
+  isQuickCapture,
   type QuickCapture,
 } from "@/lib/quick-captures";
+import {
+  readUserScopedList,
+  writeUserScopedList,
+} from "@/lib/user-scoped-cache";
 
 export type Capture = {
   id: string;
@@ -32,6 +36,7 @@ export type UpdateCaptureApiInput = {
 
 export type CapturesApiRequestOptions = {
   accessToken?: string;
+  ownerId?: string;
 };
 
 export type PrimaryCaptureSource = "cloud" | "local-fallback" | "local-only";
@@ -137,22 +142,6 @@ function createCaptureSourceMap(
   return sources;
 }
 
-function createMergedCaptureSourceMap(
-  apiCaptures: readonly QuickCapture[],
-  mergedCaptures: readonly QuickCapture[],
-): CaptureSourceById {
-  const apiCaptureIds = new Set(apiCaptures.map((capture) => capture.id));
-  const sources: CaptureSourceById = {};
-
-  for (const capture of mergedCaptures) {
-    sources[capture.id] = apiCaptureIds.has(capture.id)
-      ? "cloud"
-      : "local-only";
-  }
-
-  return sources;
-}
-
 function mapApiCaptureToCapture(row: ApiCaptureRow): Capture | null {
   const id = optionalString(row.id);
   const content = optionalString(row.content);
@@ -251,6 +240,54 @@ export function mergeApiCapturesWithLocalCaptures(
   return [...apiCaptures, ...localOnlyCaptures];
 }
 
+export function getCachedCapturesForOwner(ownerId?: string): QuickCapture[] {
+  return readUserScopedList({
+    domain: "quick-captures",
+    userId: ownerId,
+    validate: isQuickCapture,
+  });
+}
+
+export function saveCachedCapturesForOwner(
+  ownerId: string | undefined,
+  captures: readonly QuickCapture[],
+): void {
+  writeUserScopedList({
+    domain: "quick-captures",
+    items: captures,
+    userId: ownerId,
+  });
+}
+
+export function upsertCachedCaptureForOwner(
+  ownerId: string | undefined,
+  capture: QuickCapture,
+): QuickCapture[] {
+  const nextCaptures = [
+    capture,
+    ...getCachedCapturesForOwner(ownerId).filter(
+      (existingCapture) => existingCapture.id !== capture.id,
+    ),
+  ];
+
+  saveCachedCapturesForOwner(ownerId, nextCaptures);
+
+  return nextCaptures;
+}
+
+export function removeCachedCaptureForOwner(
+  ownerId: string | undefined,
+  captureId: string,
+): QuickCapture[] {
+  const nextCaptures = getCachedCapturesForOwner(ownerId).filter(
+    (capture) => capture.id !== captureId,
+  );
+
+  saveCachedCapturesForOwner(ownerId, nextCaptures);
+
+  return nextCaptures;
+}
+
 function createLocalFallbackCapture(
   input: CreateCaptureApiInput,
 ): QuickCapture {
@@ -261,6 +298,21 @@ function createLocalFallbackCapture(
   };
 
   createQuickCapture(capture);
+
+  return capture;
+}
+
+function createOwnerScopedFallbackCapture(
+  input: CreateCaptureApiInput,
+  ownerId?: string,
+): QuickCapture {
+  const capture: QuickCapture = {
+    id: crypto.randomUUID(),
+    text: input.content,
+    createdAt: new Date().toISOString(),
+  };
+
+  upsertCachedCaptureForOwner(ownerId, capture);
 
   return capture;
 }
@@ -389,27 +441,20 @@ export async function loadCapturesFromPrimarySourceWithBoundary(
     const apiCaptures = (await fetchCapturesViaApi(options))
       .filter((capture) => capture.status === "inbox")
       .map(mapCaptureToQuickCapture);
-    const mergedCaptures = mergeApiCapturesWithLocalCaptures(
-      apiCaptures,
-      getQuickCaptures(),
-    );
 
     try {
-      saveQuickCaptures(mergedCaptures);
+      saveCachedCapturesForOwner(options.ownerId, apiCaptures);
     } catch {
       // Cache refresh is best-effort; the cloud read is still the source of truth.
     }
 
     return {
-      captureSources: createMergedCaptureSourceMap(
-        apiCaptures,
-        mergedCaptures,
-      ),
-      captures: mergedCaptures,
+      captureSources: createCaptureSourceMap(apiCaptures, "cloud"),
+      captures: apiCaptures,
       source: "cloud",
     };
   } catch {
-    const captures = getQuickCaptures();
+    const captures = getCachedCapturesForOwner(options.ownerId);
 
     return {
       captureSources: createCaptureSourceMap(captures, "local-fallback"),
@@ -433,19 +478,22 @@ export async function createCaptureFromPrimarySource(
   try {
     const capture = await createCaptureViaApi(input, options);
     const quickCapture = mapCaptureToQuickCapture(capture);
-    const nextCaptures = mergeApiCapturesWithLocalCaptures(
-      [quickCapture],
-      getQuickCaptures(),
-    );
 
     try {
-      saveQuickCaptures(nextCaptures);
+      upsertCachedCaptureForOwner(options.ownerId, quickCapture);
     } catch {
       // Cache refresh is best-effort; the cloud write already succeeded.
     }
 
     return { capture: quickCapture, source: "cloud" };
   } catch {
+    if (options.accessToken?.trim()) {
+      return {
+        capture: createOwnerScopedFallbackCapture(input, options.ownerId),
+        source: "local-fallback",
+      };
+    }
+
     return {
       capture: createLocalFallbackCapture(input),
       source: "local-fallback",

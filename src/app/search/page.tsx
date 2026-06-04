@@ -93,6 +93,7 @@ function SearchGuidance({ counts }: { counts: UnifiedSearchCounts | null }) {
 export default function SearchPage() {
   const { session } = useAuthSession();
   const accessToken = session?.access_token;
+  const ownerId = session?.user.id;
   const [query, setQuery] = useState("");
   const [allResults, setAllResults] = useState<UnifiedSearchResult[]>([]);
   const [counts, setCounts] = useState<UnifiedSearchCounts | null>(null);
@@ -107,6 +108,7 @@ export default function SearchPage() {
       try {
         const dataset = await loadUnifiedSearchDataset({
           accessToken,
+          ownerId,
         });
 
         if (!active) {
@@ -127,7 +129,7 @@ export default function SearchPage() {
     return () => {
       active = false;
     };
-  }, [accessToken]);
+  }, [accessToken, ownerId]);
 
   const results = useMemo(
     () => searchUnifiedResults(allResults, query),

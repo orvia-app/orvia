@@ -1,9 +1,13 @@
 import {
   getTasks,
-  saveTasks,
+  isTask,
   TASK_PRIORITIES,
   TASK_STATUSES,
 } from "@/lib/tasks";
+import {
+  readUserScopedList,
+  writeUserScopedList,
+} from "@/lib/user-scoped-cache";
 import type { Task, TaskPriority, TaskStatus } from "@/types";
 
 type ApiTaskRow = {
@@ -55,6 +59,7 @@ export type UpdateTaskApiInput = Partial<CreateTaskApiInput>;
 
 export type TasksApiRequestOptions = {
   accessToken?: string;
+  ownerId?: string;
 };
 
 export type PrimaryTaskSource = "cloud" | "local-fallback" | "local-only";
@@ -83,6 +88,41 @@ export function mergeApiTasksWithLocalTasks(
   return [...apiTasks, ...localOnlyTasks];
 }
 
+export function getCachedTasksForOwner(ownerId?: string): Task[] {
+  return readUserScopedList({
+    domain: "tasks",
+    userId: ownerId,
+    validate: isTask,
+  });
+}
+
+export function saveCachedTasksForOwner(
+  ownerId: string | undefined,
+  tasks: readonly Task[],
+): void {
+  writeUserScopedList({
+    domain: "tasks",
+    items: tasks,
+    userId: ownerId,
+  });
+}
+
+export function upsertCachedTaskForOwner(
+  ownerId: string | undefined,
+  task: Task,
+): Task[] {
+  const nextTasks = [
+    task,
+    ...getCachedTasksForOwner(ownerId).filter(
+      (existingTask) => existingTask.id !== task.id,
+    ),
+  ];
+
+  saveCachedTasksForOwner(ownerId, nextTasks);
+
+  return nextTasks;
+}
+
 function createTaskSourceMap(
   tasks: readonly Task[],
   source: PrimaryTaskSource,
@@ -91,20 +131,6 @@ function createTaskSourceMap(
 
   for (const task of tasks) {
     sources[task.id] = source;
-  }
-
-  return sources;
-}
-
-function createMergedTaskSourceMap(
-  apiTasks: readonly Task[],
-  mergedTasks: readonly Task[],
-): TaskSourceById {
-  const apiTaskIds = new Set(apiTasks.map((task) => task.id));
-  const sources: TaskSourceById = {};
-
-  for (const task of mergedTasks) {
-    sources[task.id] = apiTaskIds.has(task.id) ? "cloud" : "local-only";
   }
 
   return sources;
@@ -288,17 +314,16 @@ export async function loadTasksFromPrimarySourceWithBoundary(
 
   try {
     const apiTasks = await fetchTasksViaApi(options);
-    const mergedTasks = mergeApiTasksWithLocalTasks(apiTasks, getTasks());
 
-    saveTasks(mergedTasks);
+    saveCachedTasksForOwner(options.ownerId, apiTasks);
 
     return {
       source: "cloud",
-      taskSources: createMergedTaskSourceMap(apiTasks, mergedTasks),
-      tasks: mergedTasks,
+      taskSources: createTaskSourceMap(apiTasks, "cloud"),
+      tasks: apiTasks,
     };
   } catch {
-    const tasks = getTasks();
+    const tasks = getCachedTasksForOwner(options.ownerId);
 
     return {
       source: "local-fallback",

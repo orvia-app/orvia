@@ -1,7 +1,11 @@
 import { type Note } from "@/lib/notes";
 import { createNoteFromPrimarySource } from "@/lib/notes-api";
 import { getTasks, saveTasks } from "@/lib/tasks";
-import { createTaskViaApi, type TasksApiRequestOptions } from "@/lib/tasks-api";
+import {
+  createTaskViaApi,
+  upsertCachedTaskForOwner,
+  type TasksApiRequestOptions,
+} from "@/lib/tasks-api";
 import { getLegacyWorkspaceId } from "@/lib/workspaces/workspaces";
 import type { Task } from "@/types";
 
@@ -11,6 +15,7 @@ export type QuickCaptureTaskInput = {
   title: string;
   description?: string;
   accessToken?: string;
+  ownerId?: string;
   priority?: Task["priority"];
   status?: Task["status"];
   workspaceId?: string;
@@ -18,6 +23,7 @@ export type QuickCaptureTaskInput = {
 
 export type QuickCaptureNoteInput = {
   accessToken?: string;
+  ownerId?: string;
   title: string;
   content: string;
   type?: Note["type"];
@@ -60,7 +66,16 @@ export async function createQuickCaptureTask(
 ): Promise<QuickCaptureResult> {
   const taskRequestOptions: TasksApiRequestOptions = {
     accessToken: input.accessToken,
+    ownerId: input.ownerId,
   };
+
+  if (!input.accessToken?.trim()) {
+    const task = createLocalTask(input);
+
+    upsertTaskInLocalCache(task);
+
+    return { type: "task", task, source: "local" };
+  }
 
   try {
     const task = await createTaskViaApi(
@@ -75,13 +90,17 @@ export async function createQuickCaptureTask(
       taskRequestOptions,
     );
 
-    upsertTaskInLocalCache(task);
+    upsertCachedTaskForOwner(input.ownerId, task);
 
     return { type: "task", task, source: "api" };
   } catch {
     const task = createLocalTask(input);
 
-    upsertTaskInLocalCache(task);
+    if (input.accessToken?.trim()) {
+      upsertCachedTaskForOwner(input.ownerId, task);
+    } else {
+      upsertTaskInLocalCache(task);
+    }
 
     return { type: "task", task, source: "local" };
   }
@@ -96,7 +115,7 @@ export async function createQuickCaptureNote(
       title: input.title,
       type: input.type ?? "note",
     },
-    { accessToken: input.accessToken },
+    { accessToken: input.accessToken, ownerId: input.ownerId },
   );
 
   return { type: "note", note: result.note, source: result.source };

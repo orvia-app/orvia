@@ -4,7 +4,12 @@ import {
   type CaptureSourceById,
   type PrimaryCaptureSource,
 } from "@/lib/captures-api";
-import { getNotes, type Note } from "@/lib/notes";
+import type { Note } from "@/lib/notes";
+import {
+  loadNotesFromPrimarySourceWithBoundary,
+  type NoteSourceById,
+  type PrimaryNoteSource,
+} from "@/lib/notes-api";
 import type { QuickCapture } from "@/lib/quick-captures";
 import {
   loadTasksFromPrimarySourceWithBoundary,
@@ -38,6 +43,7 @@ export type UnifiedSearchGroup = {
 
 export type UnifiedSearchDataset = {
   captureSources: CaptureSourceById;
+  noteSources: NoteSourceById;
   tasks: Task[];
   taskSources: TaskSourceById;
   notes: Note[];
@@ -137,13 +143,28 @@ function taskToSearchResult(
   };
 }
 
-function noteToSearchResult(note: Note): UnifiedSearchResult {
+function noteSourceLabel(source: PrimaryNoteSource | undefined): string {
+  if (source === "cloud") {
+    return "Cloud note";
+  }
+
+  if (source === "local-fallback") {
+    return "Local fallback note";
+  }
+
+  return "Local note";
+}
+
+function noteToSearchResult(
+  note: Note,
+  source: PrimaryNoteSource | undefined,
+): UnifiedSearchResult {
   return {
     id: `note:${note.id}`,
     type: "note",
     title: note.title,
     description: note.content,
-    source: "Local note",
+    source: noteSourceLabel(source),
     href: "/app/notes",
     searchableText: normalizeSearchText(
       compactText([note.title, note.content, note.type]),
@@ -203,6 +224,7 @@ export async function loadUnifiedSearchDataset(
   options: TasksApiRequestOptions = {},
 ): Promise<UnifiedSearchDataset> {
   const taskResult = await loadTasksFromPrimarySourceWithBoundary(options);
+  const noteResult = await loadNotesFromPrimarySourceWithBoundary(options);
   const captureResult = await loadCapturesFromPrimarySourceWithBoundary(options);
   const timelineEvents = options.accessToken
     ? createTimelineEventsFromActivities(
@@ -212,9 +234,10 @@ export async function loadUnifiedSearchDataset(
 
   return {
     captureSources: captureResult.captureSources,
+    noteSources: noteResult.noteSources,
     taskSources: taskResult.taskSources,
     tasks: taskResult.tasks,
-    notes: getNotes(),
+    notes: noteResult.notes,
     inboxCaptures: captureResult.captures,
     timelineEvents,
   };
@@ -227,7 +250,9 @@ export function createUnifiedSearchResults(
     ...dataset.tasks.map((task) =>
       taskToSearchResult(task, dataset.taskSources[task.id]),
     ),
-    ...dataset.notes.map(noteToSearchResult),
+    ...dataset.notes.map((note) =>
+      noteToSearchResult(note, dataset.noteSources[note.id]),
+    ),
     ...dataset.inboxCaptures.map((capture) =>
       inboxCaptureToSearchResult(capture, dataset.captureSources[capture.id]),
     ),

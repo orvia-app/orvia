@@ -16,11 +16,12 @@ import {
 } from "@/lib/entities/entity-utils";
 import type { EntityId, PersonalEntity } from "@/lib/entities/types";
 import { getTransactions } from "@/lib/finance";
-import { getStoredNotes } from "@/lib/notes";
-import { getQuickCaptures } from "@/lib/quick-captures";
+import { getStoredNotes, type Note } from "@/lib/notes";
+import { getQuickCaptures, type QuickCapture } from "@/lib/quick-captures";
 import { dedupeTags } from "@/lib/tags/tag-utils";
 import { getStoredTasks } from "@/lib/tasks";
 import { getWorkspaceKey, getWorkspaceLabel } from "@/lib/workspaces/workspaces";
+import type { Task } from "@/types";
 
 export type ContextLabel =
   | "Active"
@@ -328,6 +329,33 @@ export function getLocalContextEntities(): PersonalEntity[] {
 
 export function getLocalActiveContext(limit = 5): EntityContext[] {
   return buildActiveContext(getLocalContextEntities(), limit);
+}
+
+export function getContextEntitiesFromRecords({
+  captures = [],
+  notes = [],
+  tasks = [],
+}: {
+  captures?: readonly QuickCapture[];
+  notes?: readonly Note[];
+  tasks?: readonly Task[];
+}): PersonalEntity[] {
+  return [
+    ...tasks.map((task) => taskToEntity(task)),
+    ...notes.map((note) => noteToEntity(note)),
+    ...captures.map((capture) => quickCaptureToEntity(capture)),
+  ];
+}
+
+export function getActiveContextFromRecords(
+  input: {
+    captures?: readonly QuickCapture[];
+    notes?: readonly Note[];
+    tasks?: readonly Task[];
+  },
+  limit = 5,
+): EntityContext[] {
+  return buildActiveContext(getContextEntitiesFromRecords(input), limit);
 }
 
 export function getRecentActivityClusters(

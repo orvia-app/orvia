@@ -177,6 +177,7 @@ function EmptyInline({
 export default function TodayPage() {
   const { loading: authLoading, session } = useAuthSession();
   const accessToken = session?.access_token;
+  const ownerId = session?.user.id;
   const [tasks, setTasks] = useState<Task[]>([]);
   const [taskSource, setTaskSource] = useState<PrimaryTaskSource>("local-only");
   const [taskSourcesById, setTaskSourcesById] = useState<TaskSourceById>({});
@@ -196,9 +197,11 @@ export default function TodayPage() {
 
     const taskResult = await loadTasksFromPrimarySourceWithBoundary({
       accessToken,
+      ownerId,
     });
     const captureResult = await loadCapturesFromPrimarySourceWithBoundary({
       accessToken,
+      ownerId,
     });
 
     setTasks(taskResult.tasks);
@@ -225,7 +228,7 @@ export default function TodayPage() {
     } finally {
       setActivityLoaded(true);
     }
-  }, [accessToken]);
+  }, [accessToken, ownerId]);
 
   useEffect(() => {
     setTodayDateKey(getTodayDateKey());

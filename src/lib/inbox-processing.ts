@@ -8,6 +8,8 @@ import {
   recordTaskCreatedActivity,
 } from "@/lib/activity-recording";
 import {
+  getCachedCapturesForOwner,
+  removeCachedCaptureForOwner,
   updateCaptureStatusViaApi,
   type PrimaryCaptureSource,
 } from "@/lib/captures-api";
@@ -26,6 +28,7 @@ import type { Task } from "@/types";
 export type InboxProcessingOptions = {
   accessToken?: string;
   captureSource?: PrimaryCaptureSource;
+  ownerId?: string;
 };
 
 export type InboxTaskProcessingResult = {
@@ -65,8 +68,10 @@ async function removeProcessedCapture(
     await updateCaptureStatusViaApi(
       capture.id,
       { status },
-      { accessToken: options.accessToken },
+      { accessToken: options.accessToken, ownerId: options.ownerId },
     );
+
+    return removeCachedCaptureForOwner(options.ownerId, capture.id);
   }
 
   return removeQuickCapture(capture.id);
@@ -78,7 +83,7 @@ async function maybeRemoveConvertedCapture(
   options: InboxProcessingOptions,
 ): Promise<QuickCapture[]> {
   if (options.captureSource === "cloud" && conversionSource !== "api") {
-    return getQuickCaptures();
+    return getCachedCapturesForOwner(options.ownerId);
   }
 
   return removeProcessedCapture(capture, "processed", options);
@@ -96,6 +101,7 @@ export async function convertInboxItemToTask(
     status: "todo",
     workspaceId: workspaceIdFromLabel(preview.suggestedWorkspace),
     accessToken: options.accessToken,
+    ownerId: options.ownerId,
   });
 
   if (result.type !== "task") {
@@ -127,6 +133,7 @@ export async function convertInboxItemToNote(
   const preview = parseInboxInput(capture.text);
   const result = await createQuickCaptureNote({
     accessToken: options.accessToken,
+    ownerId: options.ownerId,
     title: preview.suggestedTitle,
     content: preview.summary,
     type: noteTypeFromInboxType(preview.type),

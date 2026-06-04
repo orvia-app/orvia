@@ -1,6 +1,9 @@
-import { listStorageKeys } from "@/core/storage/keys";
 import {
-  markLocalDataResetCompleted,
+  getOrviaStoragePrefix,
+  listStorageKeys,
+} from "@/core/storage/keys";
+import {
+  isBrowser,
   safeRemoveStorage,
   STORAGE_KEYS,
 } from "@/lib/storage";
@@ -16,5 +19,19 @@ export function listPersonalOsStorageKeys(): PersonalOsStorageKey[] {
 
 export function resetLocalPersonalOsData(): void {
   listPersonalOsStorageKeys().forEach((key) => safeRemoveStorage(key));
-  markLocalDataResetCompleted();
+
+  if (isBrowser()) {
+    const orviaStoragePrefix = getOrviaStoragePrefix();
+    const orviaStorageKeys: string[] = [];
+
+    for (let index = 0; index < window.localStorage.length; index += 1) {
+      const key = window.localStorage.key(index);
+
+      if (key?.startsWith(orviaStoragePrefix)) {
+        orviaStorageKeys.push(key);
+      }
+    }
+
+    orviaStorageKeys.forEach((key) => safeRemoveStorage(key));
+  }
 }

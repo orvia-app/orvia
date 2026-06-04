@@ -18,6 +18,7 @@ type QuickCaptureIntent = "task" | "note";
 
 type QuickCaptureProps = {
   accessToken?: string;
+  ownerId?: string;
   onOpenChange: (open: boolean) => void;
   open: boolean;
 };
@@ -41,6 +42,7 @@ const captureTypes: {
 
 export function QuickCapture({
   accessToken,
+  ownerId,
   onOpenChange,
   open,
 }: QuickCaptureProps) {
@@ -137,7 +139,7 @@ export function QuickCapture({
             title: trimmedTitle,
           },
         },
-        { accessToken },
+        { accessToken, ownerId },
       );
 
       setStatus(captureStatusMessage(result.source));
