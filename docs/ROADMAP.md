@@ -66,7 +66,7 @@
   - Replace the current client-side app gate with server-aware middleware protection when session handling supports it cleanly.
   - Current `middleware.ts` only matches `/app/*` as a foundation; it does not validate Supabase sessions because browser auth is still stored client-side.
   - Move Supabase auth to a server-readable cookie/session pattern before enforcing middleware redirects for authenticated users.
-  - Decide whether legacy top-level app routes should redirect permanently to `/app/*`.
+  - Legacy top-level app routes now temporarily redirect to `/app/*`; decide when to make those redirects permanent after beta route stability.
   - Signed-out `/app/*` access currently redirects to `/login` through the AppShell client gate after auth state resolves.
 
 ## AI Layer Phase

@@ -98,13 +98,16 @@ Also check:
 - Preview deploy builds successfully.
 - Core routes load:
   - `/`
-  - `/today`
-  - `/inbox`
-  - `/tasks`
-  - `/notes`
-  - `/search`
-  - `/timeline`
-  - `/settings`
+  - `/landing`
+  - `/app`
+  - `/app/today`
+  - `/app/inbox`
+  - `/app/tasks`
+  - `/app/notes`
+  - `/app/search`
+  - `/app/timeline`
+  - `/app/settings`
+- Legacy app routes temporarily redirect to `/app/*`.
 - Mobile drawer works in preview.
 - Theme reload behavior works.
 - No server/client hydration warnings in browser console.
