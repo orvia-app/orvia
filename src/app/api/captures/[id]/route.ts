@@ -6,6 +6,7 @@ import {
   type SupabaseCaptureStatus,
 } from "@/lib/supabase";
 import { authenticateApiRequest } from "@/server/api/auth";
+import { logSupabaseQueryError } from "@/server/api/supabase-error";
 
 const CAPTURE_STATUSES = [
   "inbox",
@@ -112,7 +113,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     .maybeSingle();
 
   if (error) {
-    console.error("Failed to update capture in Supabase.", error.message);
+    logSupabaseQueryError("Failed to update capture in Supabase.", error, {
+      operation: "captures.PATCH",
+      table: "captures",
+    });
 
     return NextResponse.json(
       { ok: false, error: "Failed to update capture." },
