@@ -26,7 +26,7 @@ No backend, authentication, cloud sync, vector database, production AI calls, or
 
 - `src/app/*`: route pages and page-level UI orchestration.
 - Public marketing routes are served from `/` and `/landing`.
-- The beta app surface lives under `/app/*`, with legacy top-level app routes kept as compatibility routes during the transition.
+- The beta app surface lives under `/app/*`; legacy top-level app routes temporarily redirect to the matching `/app/*` route during the transition.
 - `middleware.ts` currently matches `/app/*` as the route-protection foundation, but it does not validate sessions yet because the current Supabase browser client persists auth in browser storage rather than server-readable cookies.
 - `AppShell` provides the active lightweight client-side auth gate for app screens and redirects signed-out `/app/*` visits to `/login` after auth state resolves. This improves beta UX but is not a server authorization boundary; API ownership checks and RLS remain the real data protections.
 - `src/components/AppShell.tsx`: application shell, sidebar navigation, theme controls, and command center mount.
