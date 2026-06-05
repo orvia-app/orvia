@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -238,10 +238,31 @@ export default function Home() {
   const [activityLoaded, setActivityLoaded] = useState(false);
   const [activityError, setActivityError] = useState<string | null>(null);
   const [quickCaptureOpen, setQuickCaptureOpen] = useState(false);
+  const dashboardDataLoadedRef = useRef(false);
+  const dashboardActivityLoadedRef = useRef(false);
+  const dashboardOwnerKeyRef = useRef<string | null>(null);
 
   const refreshDashboardData = useCallback(async () => {
-    setTasksLoaded(false);
-    setActivityLoaded(false);
+    const ownerKey = ownerId ?? "signed-out";
+
+    if (dashboardOwnerKeyRef.current !== ownerKey) {
+      dashboardOwnerKeyRef.current = ownerKey;
+      dashboardDataLoadedRef.current = false;
+      dashboardActivityLoadedRef.current = false;
+      setTasks([]);
+      setInboxCount(0);
+      setNotesCount(0);
+      setActivityEvents([]);
+    }
+
+    if (!dashboardDataLoadedRef.current) {
+      setTasksLoaded(false);
+    }
+
+    if (!dashboardActivityLoadedRef.current) {
+      setActivityLoaded(false);
+    }
+
     setActivityError(null);
 
     const [taskResult, captureResult, noteResult] = await Promise.all([
@@ -265,10 +286,12 @@ export default function Home() {
     setInboxCount(captureResult.captures.length);
     setInboxSource(captureResult.source);
     setNotesCount(noteResult.notes.length);
+    dashboardDataLoadedRef.current = true;
     setTasksLoaded(true);
 
     if (!accessToken) {
       setActivityEvents([]);
+      dashboardActivityLoadedRef.current = true;
       setActivityLoaded(true);
       return;
     }
@@ -282,6 +305,7 @@ export default function Home() {
       setActivityEvents([]);
       setActivityError("Recent activity could not be loaded.");
     } finally {
+      dashboardActivityLoadedRef.current = true;
       setActivityLoaded(true);
     }
   }, [accessToken, ownerId]);
@@ -416,12 +440,12 @@ export default function Home() {
                 <div>
                   <Badge>First run</Badge>
                   <h2 className="mt-3 text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-                    Start with one capture.
+                    Start with one real capture.
                   </h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                    Orvia starts working once you give it something real:
-                    capture a thought, turn it into a task or note, then use
-                    Today to decide what to do next.
+                    Orvia starts working once you give it something real. Save
+                    one thought to Inbox, process it into a task or note, then
+                    open Today to choose the next action.
                   </p>
                 </div>
               </div>
@@ -430,15 +454,14 @@ export default function Home() {
                 {[
                   {
                     step: "1",
-                    title: "Capture into Inbox",
-                    description:
-                      "Drop a task, note, idea, or reminder before it gets lost.",
+                    title: "Capture something",
+                    description: "Save a thought, reminder, or loose task to Inbox.",
                   },
                   {
                     step: "2",
-                    title: "Convert it",
+                    title: "Process Inbox",
                     description:
-                      "Process the capture into a task or note when you are ready.",
+                      "Turn the capture into a task or note when you are ready.",
                   },
                   {
                     step: "3",
@@ -463,12 +486,11 @@ export default function Home() {
 
               <div className="flex flex-col gap-3 border-t border-zinc-200/80 bg-zinc-50/80 p-5 dark:border-zinc-800/80 dark:bg-zinc-950/35 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  No demo data. Your workspace begins with what you capture.
+                  Best first step: capture one real thing you need to remember.
                 </p>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Button
                     type="button"
-                    variant="secondary"
                     onClick={() => setQuickCaptureOpen(true)}
                   >
                     <Plus className="mr-2 h-4 w-4" aria-hidden />
@@ -476,15 +498,9 @@ export default function Home() {
                   </Button>
                   <Link
                     href="/app/inbox"
-                    className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50 hover:text-violet-800 hover:ring-violet-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-zinc-950/60 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/25 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
+                    className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50 hover:text-violet-800 hover:ring-violet-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-zinc-950/60 dark:text-zinc-300 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/25 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
                   >
-                    Open Inbox
-                  </Link>
-                  <Link
-                    href="/app/today"
-                    className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-violet-800 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-violet-600/85 dark:text-white dark:shadow-none dark:hover:bg-violet-600 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
-                  >
-                    Open Today
+                    Go to Inbox
                   </Link>
                 </div>
               </div>

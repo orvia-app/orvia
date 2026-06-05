@@ -99,7 +99,7 @@ export default function LoginPage() {
               Log in to Orvia
             </h1>
             <p className="text-sm text-zinc-500 dark:text-zinc-500">
-              Auth foundation only. Cloud sync is not enabled yet.
+              Access your workspace and keep moving from capture to action.
             </p>
           </div>
         </div>

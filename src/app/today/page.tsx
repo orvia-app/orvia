@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -189,10 +189,30 @@ export default function TodayPage() {
   const [activityEvents, setActivityEvents] = useState<TimelineEvent[]>([]);
   const [activityLoaded, setActivityLoaded] = useState(false);
   const [activityError, setActivityError] = useState<string | null>(null);
+  const todayDataLoadedRef = useRef(false);
+  const todayActivityLoadedRef = useRef(false);
+  const todayOwnerKeyRef = useRef<string | null>(null);
 
   const refreshTodayData = useCallback(async () => {
-    setTasksLoaded(false);
-    setActivityLoaded(false);
+    const ownerKey = ownerId ?? "signed-out";
+
+    if (todayOwnerKeyRef.current !== ownerKey) {
+      todayOwnerKeyRef.current = ownerKey;
+      todayDataLoadedRef.current = false;
+      todayActivityLoadedRef.current = false;
+      setTasks([]);
+      setInboxCount(0);
+      setActivityEvents([]);
+    }
+
+    if (!todayDataLoadedRef.current) {
+      setTasksLoaded(false);
+    }
+
+    if (!todayActivityLoadedRef.current) {
+      setActivityLoaded(false);
+    }
+
     setActivityError(null);
 
     const taskResult = await loadTasksFromPrimarySourceWithBoundary({
@@ -209,10 +229,12 @@ export default function TodayPage() {
     setTaskSourcesById(taskResult.taskSources);
     setInboxCount(captureResult.captures.length);
     setInboxSource(captureResult.source);
+    todayDataLoadedRef.current = true;
     setTasksLoaded(true);
 
     if (!accessToken) {
       setActivityEvents([]);
+      todayActivityLoadedRef.current = true;
       setActivityLoaded(true);
       return;
     }
@@ -226,6 +248,7 @@ export default function TodayPage() {
       setActivityEvents([]);
       setActivityError("Recent changes could not be loaded.");
     } finally {
+      todayActivityLoadedRef.current = true;
       setActivityLoaded(true);
     }
   }, [accessToken, ownerId]);
@@ -543,8 +566,8 @@ export default function TodayPage() {
 
               <PageSection className="mt-0">
                 <PageSectionHeader
-                  title="End of day"
-                  description="Closeout tools are planned for a later beta."
+                  title="Wrap up"
+                  description="Mark finished work as done when the day moves forward."
                 />
                 <Card variant="secondary" className="p-3.5">
                   <div className="flex items-start gap-2.5">
@@ -554,10 +577,10 @@ export default function TodayPage() {
                     />
                     <div>
                       <p className="text-sm font-semibold text-zinc-950 dark:text-white">
-                        Completed work will land here later.
+                        Close the loop in Tasks.
                       </p>
                       <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
-                        Use Tasks for now to mark work done.
+                        Open Tasks and move completed work to Done.
                       </p>
                     </div>
                   </div>
