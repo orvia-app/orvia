@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   CalendarDays,
   Car,
@@ -314,6 +314,7 @@ function AuthStatus() {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { isAuthenticated, loading, session } = useAuthSession();
   const navItemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -323,6 +324,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const labsActive = labsNavItems.some((item) => isNavActive(pathname, item.href));
   const desktopLabsVisible = desktopLabsOpen || labsActive;
   const mobileLabsVisible = mobileLabsOpen || labsActive;
+  const isAppRoute = pathname === "/app" || pathname.startsWith("/app/");
 
   const openQuickCapture = useCallback((): void => {
     setMobileMenuOpen(false);
@@ -356,6 +358,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated && isAppRoute) {
+      router.replace("/login");
+    }
+  }, [isAppRoute, isAuthenticated, loading, router]);
 
   useEffect(() => {
     if (!mobileMenuOpen) {
