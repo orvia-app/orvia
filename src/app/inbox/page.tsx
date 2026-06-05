@@ -39,12 +39,18 @@ import {
   createQuickCaptureNote,
   createQuickCaptureTask,
 } from "@/lib/quick-capture";
+import { ORVIA_CAPTURE_CREATED_EVENT } from "@/lib/capture-events";
 
 const exampleLines = [
   "Remind me to call John tomorrow",
-  "Research Infiniti suspension setup",
-  "Idea for rehab center onboarding",
+  "Research customer onboarding flow",
+  "Idea for weekly planning ritual",
 ];
+
+type ProcessingCaptureAction = {
+  action: "archive" | "note" | "task";
+  captureId: string;
+};
 
 function confidenceBadgeVariant(confidence: InboxParseResult["confidence"]) {
   if (confidence.label === "high") {
@@ -84,9 +90,8 @@ export default function InboxPage() {
     useState<PrimaryCaptureSource>("local-only");
   const [captureSourcesById, setCaptureSourcesById] =
     useState<CaptureSourceById>({});
-  const [processingCaptureId, setProcessingCaptureId] = useState<string | null>(
-    null,
-  );
+  const [processingCaptureAction, setProcessingCaptureAction] =
+    useState<ProcessingCaptureAction | null>(null);
   const [queueError, setQueueError] = useState<string | null>(null);
   const [queueStatus, setQueueStatus] = useState<string | null>(null);
 
@@ -106,15 +111,15 @@ export default function InboxPage() {
   const inboxBoundaryMessage = signedIn
     ? captureSource === "local-fallback"
       ? "Inbox sync is unavailable. Showing captures saved on this device."
-      : "Inbox captures are saved to your account when sync is available."
+      : "Inbox captures are saved to your account."
     : "Signed out. Inbox captures are saved on this device.";
 
   const queueDescription =
     captureSource === "local-fallback"
       ? "Review captures saved on this device while sync is unavailable."
       : signedIn
-        ? "Convert account captures into tasks or notes, or archive what no longer needs action."
-        : "Convert captures saved on this device into tasks or notes, or archive what no longer needs action.";
+        ? "Process account captures into tasks or notes, or archive what no longer needs action."
+        : "Process captures saved on this device into tasks or notes, or archive what no longer needs action.";
 
   const queueBadge =
     captureSource === "local-fallback"
@@ -182,11 +187,11 @@ export default function InboxPage() {
     capture: QuickCapture,
     action: "task" | "note" | "archive",
   ): Promise<void> {
-    if (processingCaptureId) {
+    if (processingCaptureAction) {
       return;
     }
 
-    setProcessingCaptureId(capture.id);
+    setProcessingCaptureAction({ action, captureId: capture.id });
     setQueueError(null);
     setQueueStatus(null);
 
@@ -239,7 +244,7 @@ export default function InboxPage() {
     } catch {
       setQueueError("Could not process this inbox item. Please try again.");
     } finally {
-      setProcessingCaptureId(null);
+      setProcessingCaptureAction(null);
     }
   }
 
@@ -267,8 +272,18 @@ export default function InboxPage() {
 
     void loadCaptures();
 
+    function handleCaptureCreated(): void {
+      void loadCaptures();
+    }
+
+    window.addEventListener(ORVIA_CAPTURE_CREATED_EVENT, handleCaptureCreated);
+
     return () => {
       active = false;
+      window.removeEventListener(
+        ORVIA_CAPTURE_CREATED_EVENT,
+        handleCaptureCreated,
+      );
 
       if (timeoutRef.current) {
         window.clearTimeout(timeoutRef.current);
@@ -291,9 +306,9 @@ export default function InboxPage() {
               </h1>
 
               <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400 sm:text-base">
-                Drop anything into your second brain. Orvia can preview how a
-                capture may become a task or note later. You stay in control of
-                what gets created.
+                Inbox is the processing queue for loose thoughts, reminders,
+                and ideas. Capture first, then turn the useful ones into tasks
+                or notes.
               </p>
             </div>
 
@@ -306,9 +321,161 @@ export default function InboxPage() {
           >
             {inboxBoundaryMessage}
             {signedIn
-              ? " Processing an account capture marks it processed or archived."
-              : " Sign in before converting captures you want saved to your account."}
+              ? " Processing a capture moves it out of Inbox."
+              : " Sign in before processing captures you want saved to your account."}
           </Card>
+
+          <section className="mb-6">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-zinc-950 dark:text-white">
+                  Waiting to process
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
+                  {queueDescription}
+                </p>
+              </div>
+              <Badge>{queuedCaptures.length} waiting</Badge>
+            </div>
+
+            {queueError ? (
+              <div
+                role="alert"
+                className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 ring-1 ring-red-200/70 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/20"
+              >
+                {queueError}
+              </div>
+            ) : null}
+
+            {queueStatus ? (
+              <div
+                role="status"
+                className="mb-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 ring-1 ring-emerald-200/70 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20"
+              >
+                {queueStatus}
+              </div>
+            ) : null}
+
+            {queuedCaptures.length === 0 ? (
+              <EmptyState
+                icon={Inbox}
+                size="sm"
+                title="Inbox zero"
+                description="No captures are waiting. Save a thought here or use + Capture when something needs a home."
+              />
+            ) : (
+              <div className="space-y-3">
+                {queuedCaptures.map(({ capture, preview, source }) => {
+                  const processingTask =
+                    processingCaptureAction?.captureId === capture.id &&
+                    processingCaptureAction.action === "task";
+                  const processingNote =
+                    processingCaptureAction?.captureId === capture.id &&
+                    processingCaptureAction.action === "note";
+                  const processingArchive =
+                    processingCaptureAction?.captureId === capture.id &&
+                    processingCaptureAction.action === "archive";
+                  const disabled = processingCaptureAction !== null;
+
+                  return (
+                    <Card key={capture.id} className="p-4 sm:p-5">
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge>{preview.detectedType}</Badge>
+                            <Badge>{captureSourceLabel(source)}</Badge>
+                            <Badge variant={confidenceBadgeVariant(preview.confidence)}>
+                              {preview.confidence.label} confidence
+                            </Badge>
+                            <span className="text-xs font-medium text-zinc-400 dark:text-zinc-600">
+                              {capture.createdAt.slice(0, 10)}
+                            </span>
+                          </div>
+
+                          <h3 className="mt-3 text-base font-semibold text-zinc-950 dark:text-white">
+                            {preview.suggestedTitle}
+                          </h3>
+                          <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                            {capture.text}
+                          </p>
+
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <Badge>{preview.suggestedWorkspace}</Badge>
+                            {preview.suggestedTags.slice(0, 4).map((tag) => (
+                              <Badge key={tag}>{tag}</Badge>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="gap-2"
+                            disabled={disabled}
+                            onClick={() =>
+                              void handleProcessQueuedCapture(capture, "task")
+                            }
+                          >
+                            {processingTask ? (
+                              <Loader2
+                                className="h-4 w-4 animate-spin"
+                                aria-hidden
+                              />
+                            ) : (
+                              <CheckSquare className="h-4 w-4" aria-hidden />
+                            )}
+                            Convert to Task
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="gap-2"
+                            disabled={disabled}
+                            onClick={() =>
+                              void handleProcessQueuedCapture(capture, "note")
+                            }
+                          >
+                            {processingNote ? (
+                              <Loader2
+                                className="h-4 w-4 animate-spin"
+                                aria-hidden
+                              />
+                            ) : (
+                              <FileText className="h-4 w-4" aria-hidden />
+                            )}
+                            Convert to Note
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="gap-2"
+                            disabled={disabled}
+                            onClick={() =>
+                              void handleProcessQueuedCapture(
+                                capture,
+                                "archive",
+                              )
+                            }
+                          >
+                            {processingArchive ? (
+                              <Loader2
+                                className="h-4 w-4 animate-spin"
+                                aria-hidden
+                              />
+                            ) : (
+                              <Archive className="h-4 w-4" aria-hidden />
+                            )}
+                            Archive
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </section>
 
           <Card className="p-0">
             <div className="p-5 sm:p-6">
@@ -318,11 +485,11 @@ export default function InboxPage() {
                 </span>
                 <div>
                   <h2 className="text-base font-semibold text-zinc-950 dark:text-white">
-                    Capture
+                    Add to Inbox
                   </h2>
                   <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
-                    Thoughts, reminders, research, car notes, finance context,
-                    and loose ideas can start here.
+                    Save anything unfinished here before deciding whether it is
+                    a task, note, or something to archive.
                   </p>
                 </div>
               </div>
@@ -365,11 +532,11 @@ export default function InboxPage() {
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                      Analyzing
+                      Previewing
                     </>
                   ) : (
                     <>
-                      Analyze capture
+                      Preview capture
                       <ArrowRight className="h-4 w-4" aria-hidden />
                     </>
                   )}
@@ -386,7 +553,7 @@ export default function InboxPage() {
                     Capture preview
                   </h2>
                   <p className="mt-1 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
-                    Review the suggested structure before creating anything.
+                    Review the suggested structure, then create a task or note.
                   </p>
                 </div>
 
@@ -473,135 +640,6 @@ export default function InboxPage() {
             </Card>
           ) : null}
 
-          <section className="mt-8">
-            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-zinc-950 dark:text-white">
-                  Processing queue
-                </h2>
-                <p className="mt-1 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
-                  {queueDescription}
-                </p>
-              </div>
-              <Badge>{queuedCaptures.length} waiting</Badge>
-            </div>
-
-            {queueError ? (
-              <div
-                role="alert"
-                className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 ring-1 ring-red-200/70 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/20"
-              >
-                {queueError}
-              </div>
-            ) : null}
-
-            {queueStatus ? (
-              <div
-                role="status"
-                className="mb-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 ring-1 ring-emerald-200/70 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20"
-              >
-                {queueStatus}
-              </div>
-            ) : null}
-
-            {queuedCaptures.length === 0 ? (
-              <EmptyState
-                icon={Inbox}
-                size="sm"
-                title="Inbox zero"
-                description="No captures are waiting. Drop a thought here or use + Capture when something needs a home."
-              />
-            ) : (
-              <div className="space-y-3">
-                {queuedCaptures.map(({ capture, preview, source }) => {
-                  const processing = processingCaptureId === capture.id;
-                  const disabled = processingCaptureId !== null;
-
-                  return (
-                    <Card key={capture.id} className="p-4 sm:p-5">
-                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge>{preview.detectedType}</Badge>
-                            <Badge>{captureSourceLabel(source)}</Badge>
-                            <Badge variant={confidenceBadgeVariant(preview.confidence)}>
-                              {preview.confidence.label} confidence
-                            </Badge>
-                            <span className="text-xs font-medium text-zinc-400 dark:text-zinc-600">
-                              {capture.createdAt.slice(0, 10)}
-                            </span>
-                          </div>
-
-                          <h3 className="mt-3 text-base font-semibold text-zinc-950 dark:text-white">
-                            {preview.suggestedTitle}
-                          </h3>
-                          <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                            {capture.text}
-                          </p>
-
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            <Badge>{preview.suggestedWorkspace}</Badge>
-                            {preview.suggestedTags.slice(0, 4).map((tag) => (
-                              <Badge key={tag}>{tag}</Badge>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            className="gap-2"
-                            disabled={disabled}
-                            onClick={() =>
-                              void handleProcessQueuedCapture(capture, "task")
-                            }
-                          >
-                            {processing ? (
-                              <Loader2
-                                className="h-4 w-4 animate-spin"
-                                aria-hidden
-                              />
-                            ) : (
-                              <CheckSquare className="h-4 w-4" aria-hidden />
-                            )}
-                            Convert to Task
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            className="gap-2"
-                            disabled={disabled}
-                            onClick={() =>
-                              void handleProcessQueuedCapture(capture, "note")
-                            }
-                          >
-                            <FileText className="h-4 w-4" aria-hidden />
-                            Convert to Note
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="gap-2"
-                            disabled={disabled}
-                            onClick={() =>
-                              void handleProcessQueuedCapture(
-                                capture,
-                                "archive",
-                              )
-                            }
-                          >
-                            <Archive className="h-4 w-4" aria-hidden />
-                            Archive
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </section>
         </div>
       </main>
     </AppShell>

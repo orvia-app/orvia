@@ -71,7 +71,7 @@ export default function RegisterPage() {
               Create an Orvia account
             </h1>
             <p className="text-sm text-zinc-500 dark:text-zinc-500">
-              Account setup only. Local data is not migrated or synced yet.
+              Start a workspace for capturing ideas, organizing context, and planning the day.
             </p>
           </div>
         </div>
