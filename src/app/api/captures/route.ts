@@ -8,6 +8,7 @@ import {
   type SupabaseCaptureStatus,
 } from "@/lib/supabase";
 import { authenticateApiRequest } from "@/server/api/auth";
+import { logSupabaseQueryError } from "@/server/api/supabase-error";
 
 const CAPTURE_CONTENT_MAX_LENGTH = 10000;
 const CAPTURE_SOURCES = [
@@ -158,7 +159,10 @@ export async function GET(request: Request) {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Failed to fetch captures from Supabase.", error.message);
+    logSupabaseQueryError("Failed to fetch captures from Supabase.", error, {
+      operation: "captures.GET",
+      table: "captures",
+    });
 
     return NextResponse.json(
       { ok: false, error: "Failed to fetch captures." },
@@ -215,7 +219,10 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    console.error("Failed to create capture in Supabase.", error.message);
+    logSupabaseQueryError("Failed to create capture in Supabase.", error, {
+      operation: "captures.POST",
+      table: "captures",
+    });
 
     return NextResponse.json(
       { ok: false, error: "Failed to create capture." },
@@ -227,4 +234,3 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ ok: true, capture: data }, { status: 201 });
 }
-

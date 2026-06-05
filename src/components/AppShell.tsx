@@ -222,13 +222,24 @@ function AuthStatus() {
   const { authError, isAuthenticated, loading, signOut, user } =
     useAuthSession();
   const [signOutError, setSignOutError] = useState<string | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
 
   async function handleSignOut(): Promise<void> {
-    setSignOutError(null);
-    const result = await signOut();
+    if (signingOut) {
+      return;
+    }
 
-    if (!result.ok) {
-      setSignOutError(result.error);
+    setSignOutError(null);
+    setSigningOut(true);
+
+    try {
+      const result = await signOut();
+
+      if (!result.ok) {
+        setSignOutError(result.error);
+      }
+    } finally {
+      setSigningOut(false);
     }
   }
 
@@ -254,10 +265,11 @@ function AuthStatus() {
           </div>
           <button
             type="button"
+            disabled={signingOut}
             onClick={handleSignOut}
-            className="shrink-0 text-[11px] font-medium text-zinc-500 hover:text-violet-700 dark:text-zinc-500 dark:hover:text-violet-300"
+            className="shrink-0 text-[11px] font-medium text-zinc-500 hover:text-violet-700 disabled:cursor-wait disabled:text-zinc-400 dark:text-zinc-500 dark:hover:text-violet-300 dark:disabled:text-zinc-600"
           >
-            Sign out
+            {signingOut ? "Signing out..." : "Sign out"}
           </button>
         </div>
         {signOutError ? (

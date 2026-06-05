@@ -8,7 +8,11 @@ import { BrandMark } from "@/components/BrandMark";
 import { useAuthSession } from "@/components/auth/useAuthSession";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { getSupabaseBrowserAuthClient } from "@/lib/supabase/auth";
+import {
+  clearSupabaseBrowserAuthSession,
+  getSupabaseBrowserAuthClient,
+  isInvalidSupabaseRefreshTokenError,
+} from "@/lib/supabase/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,9 +23,37 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!loading && isAuthenticated) {
-      router.replace("/app");
+    let cancelled = false;
+
+    if (loading || !isAuthenticated) {
+      return () => {
+        cancelled = true;
+      };
     }
+
+    async function redirectIfSessionExists(): Promise<void> {
+      try {
+        const supabase = getSupabaseBrowserAuthClient();
+        const { data } = await supabase.auth.getSession();
+
+        if (!cancelled && data.session) {
+          router.replace("/app");
+        }
+      } catch (error) {
+        if (isInvalidSupabaseRefreshTokenError(error)) {
+          const supabase = getSupabaseBrowserAuthClient();
+          await clearSupabaseBrowserAuthSession(supabase);
+        }
+
+        // Stay on the login page if browser auth is unavailable or stale.
+      }
+    }
+
+    void redirectIfSessionExists();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isAuthenticated, loading, router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {

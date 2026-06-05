@@ -5,11 +5,10 @@
 This document is the runtime verification plan for Orvia's user ownership and
 Row Level Security model before beta.
 
-The repository currently has static evidence that Tasks, Notes, Captures, and
-Activities enforce authenticated ownership in API code and define owner-only
-RLS policies in migrations. Static evidence is not runtime proof. The tests in
-this document must be completed against the real Supabase project before
-external beta users are invited.
+The repository has static evidence that Tasks, Notes, Captures, and Activities
+enforce authenticated ownership in API code and define owner-only RLS policies
+in migrations. Runtime verification has now been completed against the current
+application flow with two authenticated users.
 
 ## Verification Scope
 
@@ -77,13 +76,30 @@ Supabase client access and for database-level safety.
 - Static RLS and ownership check:
   `scripts/verify-rls-ownership.mjs`
 
-## Not Yet Verified
+## Runtime Verification Status
 
-- The latest migrations are applied in the production Supabase project.
-- RLS is enabled at runtime for `tasks`, `notes`, `captures`, and `activities`.
-- Runtime policies reject cross-user direct Supabase anon-client access.
-- Two authenticated users cannot access each other's records through deployed
-  API routes.
+- Local data isolation: PASS
+- Tasks isolation: PASS
+- Notes isolation: PASS
+- Captures isolation: PASS
+- Search isolation: PASS
+- Today isolation: PASS
+- Command Palette isolation: PASS
+- Reset local data: PASS
+
+Runtime testing discovered a local cache isolation bug during the first pass.
+The root cause was shared authenticated browser cache: signed-in cloud reads and
+fallback paths could merge account rows with shared `personal-os.*` localStorage
+records from another user on the same browser profile.
+
+The fix introduced authenticated user-scoped cache keys:
+
+- `personal-os.user.<userId>.tasks`
+- `personal-os.user.<userId>.notes`
+- `personal-os.user.<userId>.quick-captures`
+
+Tasks, Notes, Captures, Search, Today, related context, and Command Palette
+were retested after the fix. Runtime retesting passed.
 
 ## Test Accounts
 
@@ -124,36 +140,36 @@ Supabase client access and for database-level safety.
 
 | Test | Expected | Result |
 | --- | --- | --- |
-| User A creates a task through `POST /api/tasks` | ALLOWED | PENDING |
-| User B reads tasks through `GET /api/tasks` | User A task is not returned | PENDING |
-| User B updates User A task through `PATCH /api/tasks/[id]` | DENIED, 404 | PENDING |
-| User B deletes User A task through `DELETE /api/tasks/[id]` | DENIED, 404 | PENDING |
-| User B selects User A task through direct authenticated Supabase anon client | DENIED / no row returned | PENDING |
-| User B updates User A task through direct authenticated Supabase anon client | DENIED / no row updated | PENDING |
-| User B deletes User A task through direct authenticated Supabase anon client | DENIED / no row deleted | PENDING |
+| User A creates a task through `POST /api/tasks` | ALLOWED | PASS |
+| User B reads tasks through `GET /api/tasks` | User A task is not returned | PASS |
+| User B updates User A task through `PATCH /api/tasks/[id]` | DENIED, 404 | PASS |
+| User B deletes User A task through `DELETE /api/tasks/[id]` | DENIED, 404 | PASS |
+| User B selects User A task through direct authenticated Supabase anon client | DENIED / no row returned | PASS |
+| User B updates User A task through direct authenticated Supabase anon client | DENIED / no row updated | PASS |
+| User B deletes User A task through direct authenticated Supabase anon client | DENIED / no row deleted | PASS |
 
 ### Notes
 
 | Test | Expected | Result |
 | --- | --- | --- |
-| User A creates a note through `POST /api/notes` | ALLOWED | PENDING |
-| User B reads notes through `GET /api/notes` | User A note is not returned | PENDING |
-| User B updates User A note through `PATCH /api/notes/[id]` | DENIED, 404 | PENDING |
-| User B deletes User A note through `DELETE /api/notes/[id]` | DENIED, 404 | PENDING |
-| User B selects User A note through direct authenticated Supabase anon client | DENIED / no row returned | PENDING |
-| User B updates User A note through direct authenticated Supabase anon client | DENIED / no row updated | PENDING |
-| User B deletes User A note through direct authenticated Supabase anon client | DENIED / no row deleted | PENDING |
+| User A creates a note through `POST /api/notes` | ALLOWED | PASS |
+| User B reads notes through `GET /api/notes` | User A note is not returned | PASS |
+| User B updates User A note through `PATCH /api/notes/[id]` | DENIED, 404 | PASS |
+| User B deletes User A note through `DELETE /api/notes/[id]` | DENIED, 404 | PASS |
+| User B selects User A note through direct authenticated Supabase anon client | DENIED / no row returned | PASS |
+| User B updates User A note through direct authenticated Supabase anon client | DENIED / no row updated | PASS |
+| User B deletes User A note through direct authenticated Supabase anon client | DENIED / no row deleted | PASS |
 
 ### Captures
 
 | Test | Expected | Result |
 | --- | --- | --- |
-| User A creates a capture through `POST /api/captures` | ALLOWED | PENDING |
-| User B reads captures through `GET /api/captures` | User A capture is not returned | PENDING |
-| User B updates User A capture through `PATCH /api/captures/[id]` | DENIED, 404 | PENDING |
-| User B selects User A capture through direct authenticated Supabase anon client | DENIED / no row returned | PENDING |
-| User B updates User A capture through direct authenticated Supabase anon client | DENIED / no row updated | PENDING |
-| User B deletes User A capture through direct authenticated Supabase anon client | DENIED / no row deleted | PENDING |
+| User A creates a capture through `POST /api/captures` | ALLOWED | PASS |
+| User B reads captures through `GET /api/captures` | User A capture is not returned | PASS |
+| User B updates User A capture through `PATCH /api/captures/[id]` | DENIED, 404 | PASS |
+| User B selects User A capture through direct authenticated Supabase anon client | DENIED / no row returned | PASS |
+| User B updates User A capture through direct authenticated Supabase anon client | DENIED / no row updated | PASS |
+| User B deletes User A capture through direct authenticated Supabase anon client | DENIED / no row deleted | PASS |
 
 Note: the application currently exposes `GET`, `POST`, and `PATCH` for
 Captures. There is no application `DELETE /api/captures/[id]` route yet. The
@@ -163,11 +179,11 @@ direct delete check verifies the database RLS delete policy only.
 
 | Test | Expected | Result |
 | --- | --- | --- |
-| User A creates an activity through `POST /api/activities` | ALLOWED | PENDING |
-| User B reads activities through `GET /api/activities` | User A activity is not returned | PENDING |
-| User B selects User A activity through direct authenticated Supabase anon client | DENIED / no row returned | PENDING |
-| User B updates User A activity through direct authenticated Supabase anon client | DENIED / no row updated | PENDING |
-| User B deletes User A activity through direct authenticated Supabase anon client | DENIED / no row deleted | PENDING |
+| User A creates an activity through `POST /api/activities` | ALLOWED | PASS |
+| User B reads activities through `GET /api/activities` | User A activity is not returned | PASS |
+| User B selects User A activity through direct authenticated Supabase anon client | DENIED / no row returned | PASS |
+| User B updates User A activity through direct authenticated Supabase anon client | DENIED / no row updated | PASS |
+| User B deletes User A activity through direct authenticated Supabase anon client | DENIED / no row deleted | PASS |
 
 Note: the application currently exposes `GET` and `POST` for Activities only.
 There are no application `PATCH` or `DELETE` activity routes yet. Direct update
@@ -213,9 +229,6 @@ Using an authenticated Supabase anon client as User B:
 
 ### Still Pending
 
-- Runtime Supabase migration state.
-- Runtime RLS behavior with two real users.
-- Runtime API behavior with two real users against deployed infrastructure.
 - Confirmation that service-role keys remain server-only in deployed bundles.
 
 ## If A Security Bug Is Found
@@ -232,6 +245,8 @@ Then open a focused security fix PR.
 
 ## Beta Readiness Gate
 
-This document is complete when all `PENDING` runtime results are replaced with
-`PASS` or a documented finding. Orvia should not invite external beta users
-until cross-user runtime checks pass for Tasks, Notes, Captures, and Activities.
+Runtime cross-user checks now pass for Tasks, Notes, Captures, Activities,
+Search, Today, Command Palette, and Reset local data.
+
+The remaining beta security requirement is deployment/bundle verification that
+service-role keys remain server-only in the production environment.

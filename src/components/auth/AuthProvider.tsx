@@ -5,12 +5,17 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 
-import { getSupabaseBrowserAuthClient } from "@/lib/supabase/auth";
+import {
+  clearSupabaseBrowserAuthSession,
+  getSupabaseBrowserAuthClient,
+  isInvalidSupabaseRefreshTokenError,
+} from "@/lib/supabase/auth";
 
 type AuthActionResult =
   | { ok: true }
@@ -28,10 +33,43 @@ export type AuthSessionContextValue = {
 export const AuthSessionContext =
   createContext<AuthSessionContextValue | null>(null);
 
+function isSignedOutSession(
+  nextSession: Session | null,
+  signedOutAccessToken: string | null,
+): boolean {
+  return (
+    signedOutAccessToken !== null &&
+    nextSession?.access_token === signedOutAccessToken
+  );
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  const sessionRef = useRef<Session | null>(null);
+  const ignoredSignedOutAccessTokenRef = useRef<string | null>(null);
+
+  function commitSession(nextSession: Session | null): void {
+    if (isSignedOutSession(nextSession, ignoredSignedOutAccessTokenRef.current)) {
+      sessionRef.current = null;
+      setSession(null);
+      return;
+    }
+
+    if (nextSession) {
+      ignoredSignedOutAccessTokenRef.current = null;
+    }
+
+    sessionRef.current = nextSession;
+    setSession(nextSession);
+  }
+
+  function commitSignedOutState(): void {
+    commitSession(null);
+    setAuthError(null);
+    setLoading(false);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -40,27 +78,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const supabase = getSupabaseBrowserAuthClient();
       const { data } = supabase.auth.onAuthStateChange(
         (_event, nextSession) => {
-          setSession(nextSession);
+          commitSession(nextSession);
           setAuthError(null);
           setLoading(false);
         },
       );
 
-      void supabase.auth.getSession().then(({ data: sessionData, error }) => {
-        if (cancelled) {
-          return;
-        }
+      async function loadInitialSession(): Promise<void> {
+        try {
+          const { data: sessionData, error } =
+            await supabase.auth.getSession();
 
-        if (error) {
-          setAuthError("Could not load auth session.");
-          setSession(null);
-        } else {
+          if (cancelled) {
+            return;
+          }
+
+          if (error) {
+            if (isInvalidSupabaseRefreshTokenError(error)) {
+              await clearSupabaseBrowserAuthSession(supabase);
+              commitSignedOutState();
+            } else {
+              setAuthError("Could not load auth session.");
+              commitSession(null);
+              setLoading(false);
+            }
+
+            return;
+          }
+
           setAuthError(null);
-          setSession(sessionData.session ?? null);
-        }
+          commitSession(sessionData.session ?? null);
+          setLoading(false);
+        } catch (error) {
+          if (cancelled) {
+            return;
+          }
 
-        setLoading(false);
-      });
+          if (isInvalidSupabaseRefreshTokenError(error)) {
+            await clearSupabaseBrowserAuthSession(supabase);
+            commitSignedOutState();
+          } else {
+            setAuthError("Could not load auth session.");
+            commitSession(null);
+            setLoading(false);
+          }
+        }
+      }
+
+      void loadInitialSession();
 
       return () => {
         cancelled = true;
@@ -68,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
     } catch {
       setAuthError("Auth is not configured.");
-      setSession(null);
+      commitSession(null);
       setLoading(false);
     }
 
@@ -80,16 +145,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async (): Promise<AuthActionResult> => {
     try {
       const supabase = getSupabaseBrowserAuthClient();
+      const signedOutAccessToken = sessionRef.current?.access_token ?? null;
+
+      ignoredSignedOutAccessTokenRef.current = signedOutAccessToken;
+      commitSession(null);
+      setAuthError(null);
+      setLoading(false);
+
       const { error } = await supabase.auth.signOut();
 
       if (error) {
+        await clearSupabaseBrowserAuthSession(supabase);
+        commitSession(null);
         return { ok: false, error: "Could not sign out." };
       }
 
-      setSession(null);
+      let nextSession: Session | null = null;
+
+      try {
+        const { data } = await supabase.auth.getSession();
+        nextSession = data.session ?? null;
+      } catch (error) {
+        if (isInvalidSupabaseRefreshTokenError(error)) {
+          await clearSupabaseBrowserAuthSession(supabase);
+          commitSignedOutState();
+          return { ok: true };
+        }
+
+        throw error;
+      }
+
+      if (isSignedOutSession(nextSession, signedOutAccessToken)) {
+        await clearSupabaseBrowserAuthSession(supabase);
+        commitSession(null);
+      } else {
+        commitSession(nextSession);
+      }
+
       setAuthError(null);
       return { ok: true };
     } catch {
+      commitSession(null);
       return { ok: false, error: "Auth is not configured." };
     }
   }, []);
