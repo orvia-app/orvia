@@ -32,7 +32,7 @@ import {
   loadCapturesFromPrimarySourceWithBoundary,
   type PrimaryCaptureSource,
 } from "@/lib/captures-api";
-import { completeOnboarding, hasCompletedOnboarding } from "@/lib/onboarding";
+import { loadNotesFromPrimarySourceWithBoundary } from "@/lib/notes-api";
 import {
   loadTasksFromPrimarySourceWithBoundary,
   type PrimaryTaskSource,
@@ -233,32 +233,38 @@ export default function Home() {
   const [inboxCount, setInboxCount] = useState(0);
   const [inboxSource, setInboxSource] =
     useState<PrimaryCaptureSource>("local-only");
+  const [notesCount, setNotesCount] = useState(0);
   const [activityEvents, setActivityEvents] = useState<TimelineEvent[]>([]);
   const [activityLoaded, setActivityLoaded] = useState(false);
   const [activityError, setActivityError] = useState<string | null>(null);
   const [quickCaptureOpen, setQuickCaptureOpen] = useState(false);
-  const [onboardingLoaded, setOnboardingLoaded] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const refreshDashboardData = useCallback(async () => {
     setTasksLoaded(false);
     setActivityLoaded(false);
     setActivityError(null);
 
-    const taskResult = await loadTasksFromPrimarySourceWithBoundary({
-      accessToken,
-      ownerId,
-    });
-    const captureResult = await loadCapturesFromPrimarySourceWithBoundary({
-      accessToken,
-      ownerId,
-    });
+    const [taskResult, captureResult, noteResult] = await Promise.all([
+      loadTasksFromPrimarySourceWithBoundary({
+        accessToken,
+        ownerId,
+      }),
+      loadCapturesFromPrimarySourceWithBoundary({
+        accessToken,
+        ownerId,
+      }),
+      loadNotesFromPrimarySourceWithBoundary({
+        accessToken,
+        ownerId,
+      }),
+    ]);
 
     setTasks(taskResult.tasks);
     setTaskSource(taskResult.source);
     setTaskSourcesById(taskResult.taskSources);
     setInboxCount(captureResult.captures.length);
     setInboxSource(captureResult.source);
+    setNotesCount(noteResult.notes.length);
     setTasksLoaded(true);
 
     if (!accessToken) {
@@ -282,8 +288,6 @@ export default function Home() {
 
   useEffect(() => {
     setTodayDateKey(getTodayDateKey());
-    setShowOnboarding(!hasCompletedOnboarding());
-    setOnboardingLoaded(true);
   }, []);
 
   useEffect(() => {
@@ -351,11 +355,6 @@ export default function Home() {
     ];
   }, [tasks, todayDateKey]);
 
-  function dismissOnboarding(): void {
-    completeOnboarding();
-    setShowOnboarding(false);
-  }
-
   function handleQuickCaptureOpenChange(open: boolean): void {
     setQuickCaptureOpen(open);
 
@@ -371,6 +370,8 @@ export default function Home() {
         ? "Inbox sync is unavailable. Showing captures saved on this device."
         : null
     : "Signed out. Dashboard uses data saved on this device.";
+  const showFirstRunGuidance =
+    tasksLoaded && tasks.length === 0 && notesCount === 0 && inboxCount === 0;
 
   return (
     <AppShell>
@@ -409,29 +410,19 @@ export default function Home() {
             </Card>
           ) : null}
 
-          {onboardingLoaded && showOnboarding ? (
+          {showFirstRunGuidance ? (
             <Card className="mt-5 overflow-hidden p-0">
               <div className="border-b border-zinc-200/80 p-5 dark:border-zinc-800/80 sm:p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <Badge>Start here</Badge>
-                    <h2 className="mt-3 text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-                      Drop anything into Orvia.
-                    </h2>
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                      Capture scattered thoughts, turn them into tasks or
-                      notes, then find the context later through Search and
-                      Timeline.
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={dismissOnboarding}
-                    className="self-start"
-                  >
-                    Dismiss
-                  </Button>
+                <div>
+                  <Badge>First run</Badge>
+                  <h2 className="mt-3 text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                    Start with one capture.
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                    Orvia starts working once you give it something real:
+                    capture a thought, turn it into a task or note, then use
+                    Today to decide what to do next.
+                  </p>
                 </div>
               </div>
 
@@ -439,21 +430,21 @@ export default function Home() {
                 {[
                   {
                     step: "1",
-                    title: "Capture anything",
+                    title: "Capture into Inbox",
                     description:
-                      "Send a thought, reminder, idea, or research lead into Inbox.",
+                      "Drop a task, note, idea, or reminder before it gets lost.",
                   },
                   {
                     step: "2",
-                    title: "Organize into action",
+                    title: "Convert it",
                     description:
-                      "Convert captures into tasks or notes when you are ready.",
+                      "Process the capture into a task or note when you are ready.",
                   },
                   {
                     step: "3",
-                    title: "Recall the context",
+                    title: "Open Today",
                     description:
-                      "Use Search and Timeline to understand what changed.",
+                      "Use the daily plan to choose the next action and execute.",
                   },
                 ].map((item) => (
                   <div key={item.step} className="p-5 sm:p-6">
@@ -472,22 +463,28 @@ export default function Home() {
 
               <div className="flex flex-col gap-3 border-t border-zinc-200/80 bg-zinc-50/80 p-5 dark:border-zinc-800/80 dark:bg-zinc-950/35 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Start with capture. Sign in when you want supported data saved
-                  to your account.
+                  No demo data. Your workspace begins with what you capture.
                 </p>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Button
                     type="button"
                     variant="secondary"
-                    onClick={dismissOnboarding}
+                    onClick={() => setQuickCaptureOpen(true)}
                   >
-                    Dismiss
+                    <Plus className="mr-2 h-4 w-4" aria-hidden />
+                    Capture something
                   </Button>
                   <Link
                     href="/app/inbox"
+                    className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50 hover:text-violet-800 hover:ring-violet-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-zinc-950/60 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/25 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
+                  >
+                    Open Inbox
+                  </Link>
+                  <Link
+                    href="/app/today"
                     className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-violet-800 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-violet-600/85 dark:text-white dark:shadow-none dark:hover:bg-violet-600 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
                   >
-                    Go to Inbox
+                    Open Today
                   </Link>
                 </div>
               </div>
