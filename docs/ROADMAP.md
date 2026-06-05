@@ -63,9 +63,11 @@
 - Complete any remaining trademark, App Store, Telegram handle, and SEO/searchability checks before public beta.
 - Connect the `/landing` waitlist form to an approved backend or email provider before using it for real collection.
 - Future PR: Harden App Route Protection:
-  - Replace the current client-side app gate with middleware or server-aware route protection when session handling supports it cleanly.
+  - Replace the current client-side app gate with server-aware middleware protection when session handling supports it cleanly.
+  - Current `middleware.ts` only matches `/app/*` as a foundation; it does not validate Supabase sessions because browser auth is still stored client-side.
+  - Move Supabase auth to a server-readable cookie/session pattern before enforcing middleware redirects for authenticated users.
   - Decide whether legacy top-level app routes should redirect permanently to `/app/*`.
-  - Signed-out app access should redirect to login or onboarding instead of rendering a client-side gate.
+  - Signed-out `/app/*` access currently redirects to `/login` through the AppShell client gate after auth state resolves.
 
 ## AI Layer Phase
 
