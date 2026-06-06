@@ -14,6 +14,7 @@ import {
 
 import { AppShell } from "@/components/AppShell";
 import { useAuthSession } from "@/components/auth/useAuthSession";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { QuickCapture } from "@/components/quick-capture/QuickCapture";
 import { TimelineEventCard } from "@/components/timeline/TimelineEventCard";
 import { Badge } from "@/components/ui/Badge";
@@ -40,6 +41,7 @@ import {
 } from "@/lib/tasks-api";
 import {
   getPrioritizedTasks,
+  type PriorityReason,
   type PrioritizedTask,
 } from "@/lib/priority-engine";
 import {
@@ -47,6 +49,7 @@ import {
   type TimelineEvent,
 } from "@/lib/timeline";
 import type { Task, TaskPriority } from "@/types";
+import type { TranslationKey } from "@/lib/i18n";
 
 type FocusBucket = {
   description: string;
@@ -85,27 +88,55 @@ function getTaskFilterUrl(task: Task): string {
   return `/app/tasks?${params.toString()}`;
 }
 
-function formatTaskStatus(status: Task["status"]): string {
+function taskStatusKey(status: Task["status"]): TranslationKey {
   switch (status) {
     case "in-progress":
-      return "In progress";
+      return "status.inProgress";
     case "done":
-      return "Done";
+      return "status.done";
     case "todo":
-      return "Todo";
+      return "status.todo";
   }
 }
 
-function formatTaskPriority(priority: TaskPriority): string {
-  return priority.charAt(0).toUpperCase() + priority.slice(1);
+function taskPriorityKey(priority: TaskPriority): TranslationKey {
+  switch (priority) {
+    case "critical":
+      return "priority.critical";
+    case "high":
+      return "priority.high";
+    case "medium":
+      return "priority.medium";
+    case "low":
+      return "priority.low";
+  }
 }
 
-function taskSourceLabel(source: PrimaryTaskSource): string {
+function taskSourceKey(source: PrimaryTaskSource): TranslationKey {
   if (source === "local-fallback") {
-    return "Saved on this device";
+    return "source.savedDevice";
   }
 
-  return "On this device";
+  return "source.savedDevice";
+}
+
+function priorityReasonKey(reason: PriorityReason): TranslationKey {
+  switch (reason) {
+    case "Overdue":
+      return "reason.overdue";
+    case "Due today":
+      return "reason.dueToday";
+    case "Critical priority":
+      return "reason.critical";
+    case "High priority":
+      return "reason.high";
+    case "Already in progress":
+      return "reason.inProgress";
+    case "Recently created":
+      return "reason.recent";
+    case "Waiting too long":
+      return "reason.waiting";
+  }
 }
 
 function shouldShowTaskSource(source: PrimaryTaskSource): boolean {
@@ -146,11 +177,13 @@ function TaskSignalList({
   emptyTitle,
   taskSources,
   tasks,
+  t,
 }: {
   emptyDescription: string;
   emptyTitle: string;
   taskSources: TaskSourceById;
   tasks: PrioritizedTask[];
+  t: (key: TranslationKey) => string;
 }) {
   if (tasks.length === 0) {
     return (
@@ -181,16 +214,16 @@ function TaskSignalList({
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
                     <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800">
-                      {formatTaskPriority(task.priority)}
+                      {t(taskPriorityKey(task.priority))}
                     </span>
                     <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800">
-                      {formatTaskStatus(task.status)}
+                      {t(taskStatusKey(task.status))}
                     </span>
                     {shouldShowTaskSource(
                       taskSources[task.id] ?? "local-only",
                     ) ? (
                       <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800">
-                        {taskSourceLabel(taskSources[task.id] ?? "local-only")}
+                        {t(taskSourceKey(taskSources[task.id] ?? "local-only"))}
                       </span>
                     ) : null}
                     {dueDate ? (
@@ -203,7 +236,7 @@ function TaskSignalList({
                         key={reason}
                         className="rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 ring-1 ring-violet-200/70 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20"
                       >
-                        {reason}
+                        {t(priorityReasonKey(reason))}
                       </span>
                     ))}
                   </div>
@@ -223,6 +256,7 @@ function TaskSignalList({
 
 export default function Home() {
   const { loading: authLoading, session } = useAuthSession();
+  const { t } = useI18n();
   const accessToken = session?.access_token;
   const ownerId = session?.user.id;
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -303,12 +337,12 @@ export default function Home() {
       );
     } catch {
       setActivityEvents([]);
-      setActivityError("Recent activity could not be loaded.");
+      setActivityError(t("dashboard.activityError"));
     } finally {
       dashboardActivityLoadedRef.current = true;
       setActivityLoaded(true);
     }
-  }, [accessToken, ownerId]);
+  }, [accessToken, ownerId, t]);
 
   useEffect(() => {
     setTodayDateKey(getTodayDateKey());
@@ -353,31 +387,31 @@ export default function Home() {
 
     return [
       {
-        title: "High priority",
-        description: "Open high-priority tasks.",
-        emptyTitle: "No urgent tasks today.",
-        emptyDescription: "High-priority work will appear here.",
+        title: t("dashboard.highPriority"),
+        description: t("dashboard.highPriorityDescription"),
+        emptyTitle: t("dashboard.noUrgent"),
+        emptyDescription: t("dashboard.highPriorityEmpty"),
         icon: TriangleAlert,
         tasks: prioritizedTasks.filter(({ task }) => isHighPriorityTask(task)),
       },
       {
-        title: "Overdue",
-        description: "Tasks with past due dates.",
-        emptyTitle: "Nothing overdue.",
-        emptyDescription: "No past-due work needs attention.",
+        title: t("dashboard.overdue"),
+        description: t("dashboard.overdueDescription"),
+        emptyTitle: t("dashboard.nothingOverdue"),
+        emptyDescription: t("dashboard.overdueEmpty"),
         icon: Clock,
         tasks: overdueTasks,
       },
       {
-        title: "Due today",
-        description: "Tasks scheduled for today.",
-        emptyTitle: "Nothing due today.",
-        emptyDescription: "Your dated task lane is clear.",
+        title: t("dashboard.dueToday"),
+        description: t("dashboard.dueTodayDescription"),
+        emptyTitle: t("dashboard.nothingDueToday"),
+        emptyDescription: t("dashboard.dueTodayEmpty"),
         icon: CheckCircle2,
         tasks: todayTasks,
       },
     ];
-  }, [tasks, todayDateKey]);
+  }, [tasks, t, todayDateKey]);
 
   function handleQuickCaptureOpenChange(open: boolean): void {
     setQuickCaptureOpen(open);
@@ -389,11 +423,11 @@ export default function Home() {
 
   const dashboardBoundaryMessage = accessToken
     ? taskSource === "local-fallback"
-      ? "Task sync is unavailable. Showing tasks saved on this device."
+      ? t("source.tasksFallback")
       : inboxSource === "local-fallback"
-        ? "Inbox sync is unavailable. Showing captures saved on this device."
+        ? t("source.inboxFallback")
         : null
-    : "Signed out. Dashboard uses data saved on this device.";
+    : t("source.dashboardDevice");
   const showFirstRunGuidance =
     tasksLoaded && tasks.length === 0 && notesCount === 0 && inboxCount === 0;
 
@@ -401,9 +435,9 @@ export default function Home() {
     <AppShell>
       <Page>
         <PageHeader
-          eyebrow="Daily focus"
-          title="Priorities, context, and what changed."
-          description="See what needs attention, clear captured context, and decide the next action."
+          eyebrow={t("dashboard.eyebrow")}
+          title={t("dashboard.title")}
+          description={t("dashboard.description")}
           actions={
             <>
               <Button
@@ -412,14 +446,14 @@ export default function Home() {
                 onClick={() => setQuickCaptureOpen(true)}
               >
                 <Plus className="mr-2 h-4 w-4" aria-hidden />
-                Capture
+                {t("common.capture")}
               </Button>
               <Link
                 href="/app/search"
                 className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-violet-800 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-violet-600/85 dark:text-white dark:shadow-none dark:hover:bg-violet-600 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
               >
                 <Search className="mr-2 h-4 w-4" aria-hidden />
-                Search context
+                {t("dashboard.searchContext")}
               </Link>
             </>
           }
@@ -438,14 +472,12 @@ export default function Home() {
             <Card className="mt-5 overflow-hidden p-0">
               <div className="border-b border-zinc-200/80 p-5 dark:border-zinc-800/80 sm:p-6">
                 <div>
-                  <Badge>First run</Badge>
+                  <Badge>{t("dashboard.firstRun")}</Badge>
                   <h2 className="mt-3 text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-                    Start with one real capture.
+                    {t("dashboard.firstRunTitle")}
                   </h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                    Orvia starts working once you give it something real. Save
-                    one thought to Inbox, process it into a task or note, then
-                    open Today to choose the next action.
+                    {t("dashboard.firstRunDescription")}
                   </p>
                 </div>
               </div>
@@ -454,20 +486,18 @@ export default function Home() {
                 {[
                   {
                     step: "1",
-                    title: "Capture something",
-                    description: "Save a thought, reminder, or loose task to Inbox.",
+                    title: t("dashboard.firstRunStep1"),
+                    description: t("dashboard.firstRunStep1Description"),
                   },
                   {
                     step: "2",
-                    title: "Process Inbox",
-                    description:
-                      "Turn the capture into a task or note when you are ready.",
+                    title: t("dashboard.firstRunStep2"),
+                    description: t("dashboard.firstRunStep2Description"),
                   },
                   {
                     step: "3",
-                    title: "Open Today",
-                    description:
-                      "Use the daily plan to choose the next action and execute.",
+                    title: t("dashboard.firstRunStep3"),
+                    description: t("dashboard.firstRunStep3Description"),
                   },
                 ].map((item) => (
                   <div key={item.step} className="p-5 sm:p-6">
@@ -486,7 +516,7 @@ export default function Home() {
 
               <div className="flex flex-col gap-3 border-t border-zinc-200/80 bg-zinc-50/80 p-5 dark:border-zinc-800/80 dark:bg-zinc-950/35 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Best first step: capture one real thing you need to remember.
+                  {t("dashboard.bestFirstStep")}
                 </p>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Button
@@ -494,13 +524,13 @@ export default function Home() {
                     onClick={() => setQuickCaptureOpen(true)}
                   >
                     <Plus className="mr-2 h-4 w-4" aria-hidden />
-                    Capture something
+                    {t("dashboard.captureSomething")}
                   </Button>
                   <Link
                     href="/app/inbox"
                     className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50 hover:text-violet-800 hover:ring-violet-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-zinc-950/60 dark:text-zinc-300 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/25 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
                   >
-                    Go to Inbox
+                    {t("dashboard.goToInbox")}
                   </Link>
                 </div>
               </div>
@@ -509,8 +539,8 @@ export default function Home() {
 
           <PageSection>
             <PageSectionHeader
-              title="What matters today"
-              description="Priority, overdue, and due-today work."
+              title={t("dashboard.whatMatters")}
+              description={t("dashboard.whatMattersDescription")}
             />
             {!tasksLoaded ? (
               <div className="grid gap-3 lg:grid-cols-3">
@@ -552,6 +582,7 @@ export default function Home() {
                           taskSources={taskSourcesById}
                           emptyTitle={bucket.emptyTitle}
                           emptyDescription={bucket.emptyDescription}
+                          t={t}
                         />
                       </div>
                     </Card>
@@ -566,14 +597,14 @@ export default function Home() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-lg font-semibold tracking-tight text-zinc-950 dark:text-white">
-                    Inbox
+                    {t("dashboard.inboxTitle")}
                   </h2>
                   <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
                     {inboxSource === "cloud"
-                      ? "Captures saved to your account."
+                      ? t("source.savedAccount")
                       : inboxSource === "local-fallback"
-                        ? "Sync is unavailable. Showing captures on this device."
-                        : "Captures saved on this device."}
+                        ? t("source.inboxFallback")
+                        : t("source.savedDevice")}
                   </p>
                 </div>
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 text-violet-700 ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
@@ -588,10 +619,10 @@ export default function Home() {
                 {inboxCount === 0 ? (
                   <>
                     <p className="text-sm font-semibold text-zinc-950 dark:text-white">
-                      Inbox clear
+                      {t("dashboard.inboxClear")}
                     </p>
                     <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
-                      Nothing waiting for review.
+                      {t("dashboard.nothingWaiting")}
                     </p>
                   </>
                 ) : (
@@ -600,7 +631,7 @@ export default function Home() {
                       {inboxCount}
                     </p>
                     <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
-                      Captures ready for review.
+                      {t("dashboard.capturesReady")}
                     </p>
                   </>
                 )}
@@ -609,7 +640,7 @@ export default function Home() {
                 href="/app/inbox"
                 className="mt-4 inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50 hover:text-violet-800 hover:ring-violet-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-zinc-950/60 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/25 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
               >
-                Open Inbox
+                {t("common.openInbox")}
                 <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
               </Link>
             </Card>
@@ -618,26 +649,26 @@ export default function Home() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <h2 className="text-lg font-semibold tracking-tight text-zinc-950 dark:text-white">
-                    Find context
+                    {t("dashboard.findContext")}
                   </h2>
                   <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
-                    Search tasks, Inbox captures, notes, and activity.
+                    {t("dashboard.findContextDescription")}
                   </p>
                 </div>
                 <Link
                   href="/app/search"
                   className="inline-flex w-fit shrink-0 cursor-pointer items-center justify-center rounded-lg bg-violet-800 px-3 py-2 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-violet-600/85 dark:text-white dark:shadow-none dark:hover:bg-violet-600 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
                 >
-                  Open Search
+                  {t("dashboard.openSearch")}
                   <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
                 </Link>
               </div>
               <div className="mt-4 border-t border-zinc-200/70 pt-3 dark:border-zinc-800/70">
                 <p className="text-sm font-semibold text-zinc-950 dark:text-white">
-                  Find the thing you half-remember.
+                  {t("dashboard.findHalfRemembered")}
                 </p>
                 <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
-                  Jump into saved notes, tasks, captures, and recent changes.
+                  {t("dashboard.findHalfRememberedDescription")}
                 </p>
               </div>
             </Card>
@@ -645,19 +676,22 @@ export default function Home() {
 
           <PageSection>
             <PageSectionHeader
-              title="Recent activity"
-              description="Latest recorded task, note, and import events."
+              title={t("dashboard.recentActivity")}
+              description={t("dashboard.recentActivityDescription")}
             />
             <Card className="p-4">
               {!accessToken && !authLoading ? (
                 <EmptyState
                   icon={Clock}
                   size="sm"
-                  title="Activity appears after sign in."
-                  description="Once authenticated, task and note changes are recorded here so the dashboard can show recent changes."
+                  title={t("dashboard.activitySignInTitle")}
+                  description={t("dashboard.activitySignInDescription")}
                 />
               ) : !activityLoaded ? (
-                <div className="space-y-3" aria-label="Loading recent activity">
+                <div
+                  className="space-y-3"
+                  aria-label={t("today.loadingRecentChanges")}
+                >
                   {[0, 1, 2].map((item) => (
                     <div
                       key={item}
@@ -676,10 +710,10 @@ export default function Home() {
                 <EmptyState
                   icon={CheckCircle2}
                   size="sm"
-                  title="No recent activity yet."
+                  title={t("dashboard.noRecentActivity")}
                   description={
                     activityError ??
-                    "Create or update a task or note to start your activity feed."
+                    t("dashboard.noRecentActivityDescription")
                   }
                 />
               ) : (
@@ -696,17 +730,17 @@ export default function Home() {
 
           <PageSection>
             <PageSectionHeader
-              title="Next action"
-              description="Capture something before it turns into overhead."
+              title={t("dashboard.nextAction")}
+              description={t("dashboard.nextActionDescription")}
             />
             <Card className="p-4 sm:p-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-base font-semibold text-zinc-950 dark:text-white">
-                    Add the next piece of context.
+                    {t("dashboard.addContext")}
                   </h2>
                   <p className="mt-1 max-w-2xl text-sm leading-5 text-zinc-500 dark:text-zinc-500">
-                    Capture a thought into Inbox without leaving the dashboard.
+                    {t("dashboard.addContextDescription")}
                   </p>
                 </div>
                 <Button
@@ -715,7 +749,7 @@ export default function Home() {
                   className="shrink-0"
                 >
                   <Plus className="mr-2 h-4 w-4" aria-hidden />
-                  Capture now
+                  {t("dashboard.captureNow")}
                 </Button>
               </div>
             </Card>

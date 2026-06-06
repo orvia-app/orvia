@@ -3,8 +3,10 @@
 import { useEffect, type RefObject } from "react";
 import { Search, X } from "lucide-react";
 
+import { useI18n } from "@/components/i18n/I18nProvider";
 import type { CommandItem } from "@/lib/commands/types";
 import type { CommandPaletteSection } from "@/components/command-palette/useCommandPalette";
+import type { TranslationKey } from "@/lib/i18n";
 
 type CommandPaletteProps = {
   activeIndex: number;
@@ -19,6 +21,68 @@ type CommandPaletteProps = {
   query: string;
 };
 
+function getCommandTitleKey(commandId: string): TranslationKey | null {
+  const key = `command.${commandId}`;
+
+  switch (key) {
+    case "command.route-dashboard":
+    case "command.route-today":
+    case "command.route-inbox":
+    case "command.route-search":
+    case "command.route-timeline":
+    case "command.route-tasks":
+    case "command.route-notes":
+    case "command.route-ai-chat":
+    case "command.route-settings":
+    case "command.action-create-task":
+    case "command.action-create-note":
+    case "command.action-open-inbox":
+      return key;
+    default:
+      return null;
+  }
+}
+
+function getCommandGroupKey(label: string): TranslationKey | null {
+  switch (label) {
+    case "Recent":
+      return "command.group.recent";
+    case "Capture":
+      return "command.group.capture";
+    case "Actions":
+      return "command.group.actions";
+    case "Search":
+      return "command.group.search";
+    case "Navigation":
+      return "command.group.navigation";
+    case "AI":
+      return "command.group.ai";
+    default:
+      return null;
+  }
+}
+
+function getCommandSubtitleKey(commandId: string): TranslationKey | null {
+  switch (commandId) {
+    case "action-create-task":
+      return "command.subtitle-create-task";
+    case "action-create-note":
+      return "command.subtitle-create-note";
+    case "action-open-inbox":
+      return "command.subtitle-open-inbox";
+    case "route-today":
+      return "command.subtitle-today";
+    case "route-inbox":
+      return "command.subtitle-inbox";
+    case "route-search":
+      return "command.subtitle-search";
+    case "route-timeline":
+      return "command.subtitle-timeline";
+    default:
+      return null;
+  }
+}
+
 export function CommandPalette({
   activeIndex,
   commandSections,
@@ -31,6 +95,7 @@ export function CommandPalette({
   open,
   query,
 }: CommandPaletteProps) {
+  const { t } = useI18n();
   const activeCommandId =
     commands[activeIndex] ? `command-option-${activeIndex}` : undefined;
 
@@ -74,16 +139,16 @@ export function CommandPalette({
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300">
-                Orvia Command Center
+                {t("command.eyebrow")}
               </p>
               <p className="mt-1 truncate text-sm text-zinc-600 dark:text-zinc-400">
-                Capture, navigate, and recall context from one place.
+                {t("command.description")}
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
               <button
                 type="button"
-                aria-label="Close"
+                aria-label={t("common.close")}
                 onClick={() => onOpenChange(false)}
                 className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-zinc-500 ring-1 ring-zinc-200/70 transition-colors hover:bg-violet-50 hover:text-violet-700 hover:ring-violet-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 dark:text-zinc-400 dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/25 dark:focus-visible:ring-violet-400"
               >
@@ -97,17 +162,17 @@ export function CommandPalette({
               className="h-4.5 w-4.5 shrink-0 text-violet-600 dark:text-violet-300"
             />
             <label id="command-palette-title" className="sr-only">
-              Command palette
+              {t("command.label")}
             </label>
             <input
               ref={inputRef}
               aria-activedescendant={activeCommandId}
               aria-autocomplete="list"
               aria-controls="command-palette-results"
-              aria-label="Search commands"
+              aria-label={t("command.searchLabel")}
               className="h-full min-w-0 flex-1 bg-transparent text-[15px] text-zinc-950 outline-none placeholder:text-zinc-500 dark:text-white dark:placeholder:text-zinc-600"
               onChange={(event) => onQueryChange(event.target.value)}
-              placeholder="Search commands..."
+              placeholder={t("command.placeholder")}
               role="combobox"
               spellCheck={false}
               value={query}
@@ -126,7 +191,11 @@ export function CommandPalette({
                 <div key={section.id}>
                   <div className="flex items-center justify-between px-2.5 pb-1.5 pt-1">
                     <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
-                      {section.label}
+                      {(() => {
+                        const groupKey = getCommandGroupKey(section.label);
+
+                        return groupKey ? t(groupKey) : section.label;
+                      })()}
                     </div>
                   </div>
                   <div className="space-y-1">
@@ -141,6 +210,12 @@ export function CommandPalette({
                         section.id === "recent" && command.metadata?.recentLabel
                           ? command.metadata.recentLabel
                           : command.title;
+                      const titleKey = getCommandTitleKey(command.id);
+                      const translatedTitle = titleKey ? t(titleKey) : title;
+                      const subtitleKey = getCommandSubtitleKey(command.id);
+                      const translatedSubtitle = subtitleKey
+                        ? t(subtitleKey)
+                        : command.subtitle;
                       commandIndex += 1;
 
                       return (
@@ -173,9 +248,9 @@ export function CommandPalette({
                           </span>
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm font-medium">
-                              {title}
+                              {translatedTitle}
                             </span>
-                            {command.subtitle ? (
+                            {translatedSubtitle ? (
                               <span
                                 className={
                                   active
@@ -183,7 +258,7 @@ export function CommandPalette({
                                     : "mt-0.5 block truncate text-xs text-zinc-500 dark:text-zinc-500"
                                 }
                               >
-                                {command.subtitle}
+                                {translatedSubtitle}
                               </span>
                             ) : null}
                           </span>
@@ -197,10 +272,10 @@ export function CommandPalette({
           ) : (
             <div className="px-6 py-14 text-center">
               <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                No matching commands
+                {t("command.noMatches")}
               </p>
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
-                Try “task”, “inbox”, “timeline”, or “search”.
+                {t("command.noMatchesHint")}
               </p>
             </div>
           )}

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { BrandMark } from "@/components/BrandMark";
 import { useAuthSession } from "@/components/auth/useAuthSession";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { getSupabaseBrowserAuthClient } from "@/lib/supabase/auth";
@@ -13,6 +14,7 @@ import { getSupabaseBrowserAuthClient } from "@/lib/supabase/auth";
 export default function RegisterPage() {
   const router = useRouter();
   const { isAuthenticated, loading } = useAuthSession();
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -44,16 +46,14 @@ export default function RegisterPage() {
       });
 
       if (signUpError) {
-        setError("Could not create an account with those details.");
+        setError(t("register.error"));
         return;
       }
 
-      setSuccess(
-        "Account created. Check your email if confirmation is required, then log in.",
-      );
+      setSuccess(t("register.success"));
       setPassword("");
     } catch {
-      setError("Auth is not configured for this environment.");
+      setError(t("login.errorConfig"));
     } finally {
       setSubmitting(false);
     }
@@ -68,10 +68,10 @@ export default function RegisterPage() {
           </div>
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-              Create an Orvia account
+              {t("register.title")}
             </h1>
             <p className="text-sm text-zinc-500 dark:text-zinc-500">
-              Start a workspace for capturing ideas, organizing context, and planning the day.
+              {t("register.subtitle")}
             </p>
           </div>
         </div>
@@ -82,7 +82,7 @@ export default function RegisterPage() {
               htmlFor="register-email"
               className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
             >
-              Email
+              {t("common.email")}
             </label>
             <input
               id="register-email"
@@ -101,7 +101,7 @@ export default function RegisterPage() {
               htmlFor="register-password"
               className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
             >
-              Password
+              {t("common.password")}
             </label>
             <input
               id="register-password"
@@ -112,7 +112,7 @@ export default function RegisterPage() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
-              placeholder="At least 8 characters"
+              placeholder={t("register.passwordPlaceholder")}
             />
           </div>
 
@@ -132,17 +132,17 @@ export default function RegisterPage() {
           ) : null}
 
           <Button type="submit" disabled={submitting} className="w-full">
-            {submitting ? "Creating account..." : "Create account"}
+            {submitting ? t("register.submitting") : t("register.submit")}
           </Button>
         </form>
 
         <p className="mt-5 text-center text-sm text-zinc-500 dark:text-zinc-500">
-          Already have an account?{" "}
+          {t("register.alreadyHaveAccount")}{" "}
           <Link
             href="/login"
             className="font-medium text-zinc-800 hover:text-zinc-950 dark:text-zinc-200 dark:hover:text-white"
           >
-            Log in
+            {t("login.submit")}
           </Link>
         </p>
       </Card>

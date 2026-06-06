@@ -3,6 +3,7 @@
 import type { FormEvent, RefObject } from "react";
 import { X } from "lucide-react";
 
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { Button } from "@/components/ui/Button";
 import type { CommandAction } from "@/lib/commands/types";
 
@@ -36,15 +37,17 @@ export function CommandActionDialog({
   onTaskTitleChange,
   taskTitle,
 }: CommandActionDialogProps) {
+  const { t } = useI18n();
+
   if (!action) {
     return null;
   }
 
   const isTask = action.type === "create-task";
-  const title = isTask ? "Create task" : "Create note";
+  const title = isTask ? t("command.dialogCreateTask") : t("command.dialogCreateNote");
   const description = isTask
-    ? "Add a task to Orvia."
-    : "Capture a note in Orvia.";
+    ? t("command.dialogTaskDescription")
+    : t("command.dialogNoteDescription");
 
   return (
     <div
@@ -75,7 +78,7 @@ export function CommandActionDialog({
             </p>
           </div>
           <Button
-            aria-label="Close"
+            aria-label={t("common.close")}
             className="h-8 w-8 p-0 text-zinc-700 hover:text-zinc-950 dark:text-zinc-200 dark:hover:text-white"
             onClick={onClose}
             type="button"
@@ -92,7 +95,7 @@ export function CommandActionDialog({
                 htmlFor="command-task-title"
                 className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
               >
-                Title <span className="text-red-400">*</span>
+                {t("common.title")} <span className="text-red-400">*</span>
               </label>
               <input
                 id="command-task-title"
@@ -101,7 +104,7 @@ export function CommandActionDialog({
                 value={taskTitle}
                 onChange={(event) => onTaskTitleChange(event.target.value)}
                 className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
-                placeholder="What needs to be done?"
+                placeholder={t("tasks.titlePlaceholder")}
               />
             </div>
           ) : (
@@ -111,7 +114,7 @@ export function CommandActionDialog({
                   htmlFor="command-note-title"
                   className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
                 >
-                  Title <span className="text-red-400">*</span>
+                  {t("common.title")} <span className="text-red-400">*</span>
                 </label>
                 <input
                   id="command-note-title"
@@ -120,7 +123,7 @@ export function CommandActionDialog({
                   value={noteTitle}
                   onChange={(event) => onNoteTitleChange(event.target.value)}
                   className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
-                  placeholder="Note title"
+                  placeholder={t("notes.titlePlaceholder")}
                 />
               </div>
               <div>
@@ -128,7 +131,7 @@ export function CommandActionDialog({
                   htmlFor="command-note-content"
                   className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
                 >
-                  Content <span className="text-red-400">*</span>
+                  {t("common.content")} <span className="text-red-400">*</span>
                 </label>
                 <textarea
                   id="command-note-content"
@@ -139,7 +142,7 @@ export function CommandActionDialog({
                     onNoteContentChange(event.target.value)
                   }
                   className="mt-1.5 w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
-                  placeholder="Write anything worth remembering..."
+                  placeholder={t("notes.contentPlaceholder")}
                 />
               </div>
             </>
@@ -147,9 +150,11 @@ export function CommandActionDialog({
 
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="secondary" onClick={onClose}>
-              Cancel
+              {t("common.cancel")}
             </Button>
-            <Button type="submit">{isTask ? "Create task" : "Create note"}</Button>
+            <Button type="submit">
+              {isTask ? t("command.dialogCreateTask") : t("command.dialogCreateNote")}
+            </Button>
           </div>
         </form>
       </div>

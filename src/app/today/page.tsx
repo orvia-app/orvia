@@ -13,6 +13,7 @@ import {
 
 import { AppShell } from "@/components/AppShell";
 import { useAuthSession } from "@/components/auth/useAuthSession";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { Card } from "@/components/ui/Card";
 import {
   Page,
@@ -33,6 +34,7 @@ import {
 } from "@/lib/tasks-api";
 import {
   getPrioritizedTasks,
+  type PriorityReason,
   type PrioritizedTask,
 } from "@/lib/priority-engine";
 import {
@@ -40,12 +42,7 @@ import {
   type TimelineEvent,
 } from "@/lib/timeline";
 import type { Task, TaskPriority, TaskStatus } from "@/types";
-
-const STATUS_LABELS: Record<TaskStatus, string> = {
-  done: "Done",
-  "in-progress": "In progress",
-  todo: "Todo",
-};
+import type { TranslationKey } from "@/lib/i18n";
 
 function getTodayDateKey(): string {
   const now = new Date();
@@ -68,16 +65,55 @@ function getTaskUrl(task: Task): string {
   return `/app/tasks?${params.toString()}`;
 }
 
-function formatPriority(priority: TaskPriority): string {
-  return priority.charAt(0).toUpperCase() + priority.slice(1);
+function priorityLabelKey(priority: TaskPriority): TranslationKey {
+  switch (priority) {
+    case "critical":
+      return "priority.critical";
+    case "high":
+      return "priority.high";
+    case "medium":
+      return "priority.medium";
+    case "low":
+      return "priority.low";
+  }
 }
 
-function taskSourceLabel(source: PrimaryTaskSource): string {
+function statusLabelKey(status: TaskStatus): TranslationKey {
+  switch (status) {
+    case "in-progress":
+      return "status.inProgress";
+    case "done":
+      return "status.done";
+    case "todo":
+      return "status.todo";
+  }
+}
+
+function taskSourceLabelKey(source: PrimaryTaskSource): TranslationKey {
   if (source === "local-fallback") {
-    return "Saved on this device";
+    return "source.savedDevice";
   }
 
-  return "On this device";
+  return "source.savedDevice";
+}
+
+function priorityReasonKey(reason: PriorityReason): TranslationKey {
+  switch (reason) {
+    case "Overdue":
+      return "reason.overdue";
+    case "Due today":
+      return "reason.dueToday";
+    case "Critical priority":
+      return "reason.critical";
+    case "High priority":
+      return "reason.high";
+    case "Already in progress":
+      return "reason.inProgress";
+    case "Recently created":
+      return "reason.recent";
+    case "Waiting too long":
+      return "reason.waiting";
+  }
 }
 
 function shouldShowTaskSource(source: PrimaryTaskSource): boolean {
@@ -94,9 +130,11 @@ function formatTimestamp(timestamp: string): string {
 function TaskMeta({
   prioritizedTask,
   source,
+  t,
 }: {
   prioritizedTask: PrioritizedTask;
   source: PrimaryTaskSource;
+  t: (key: TranslationKey) => string;
 }) {
   const { reasons, task } = prioritizedTask;
   const dueDate = getTaskDueDateKey(task);
@@ -104,14 +142,14 @@ function TaskMeta({
   return (
     <div className="mt-2 flex flex-wrap items-center gap-1.5">
       <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800">
-        {formatPriority(task.priority)}
+        {t(priorityLabelKey(task.priority))}
       </span>
       <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800">
-        {STATUS_LABELS[task.status]}
+        {t(statusLabelKey(task.status))}
       </span>
       {shouldShowTaskSource(source) ? (
         <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800">
-          {taskSourceLabel(source)}
+          {t(taskSourceLabelKey(source))}
         </span>
       ) : null}
       {dueDate ? (
@@ -124,27 +162,32 @@ function TaskMeta({
           key={reason}
           className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800"
         >
-          {reason}
+          {t(priorityReasonKey(reason))}
         </span>
       ))}
     </div>
   );
 }
 
-function getReasonSentence(reasons: readonly string[]): string {
+function getReasonSentence(
+  reasons: readonly PriorityReason[],
+  t: (key: TranslationKey) => string,
+): string {
   if (reasons.length === 0) {
-    return "Recommended because it is the next active task in your queue.";
+    return t("today.reasonDefault");
   }
 
-  const formattedReasons = reasons.map((reason) => reason.toLowerCase());
+  const formattedReasons = reasons.map((reason) =>
+    t(priorityReasonKey(reason)).toLowerCase(),
+  );
 
   if (formattedReasons.length === 1) {
-    return `Recommended because it is ${formattedReasons[0]}.`;
+    return t("today.reasonSingle").replace("{reason}", formattedReasons[0]);
   }
 
-  return `Recommended because it is ${formattedReasons
-    .slice(0, -1)
-    .join(", ")} and ${formattedReasons[formattedReasons.length - 1]}.`;
+  return t("today.reasonMultiple")
+    .replace("{reasons}", formattedReasons.slice(0, -1).join(", "))
+    .replace("{lastReason}", formattedReasons[formattedReasons.length - 1]);
 }
 
 function EmptyInline({
@@ -176,6 +219,7 @@ function EmptyInline({
 
 export default function TodayPage() {
   const { loading: authLoading, session } = useAuthSession();
+  const { t } = useI18n();
   const accessToken = session?.access_token;
   const ownerId = session?.user.id;
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -246,12 +290,12 @@ export default function TodayPage() {
       );
     } catch {
       setActivityEvents([]);
-      setActivityError("Recent changes could not be loaded.");
+      setActivityError(t("today.activityError"));
     } finally {
       todayActivityLoadedRef.current = true;
       setActivityLoaded(true);
     }
-  }, [accessToken, ownerId]);
+  }, [accessToken, ownerId, t]);
 
   useEffect(() => {
     setTodayDateKey(getTodayDateKey());
@@ -288,19 +332,19 @@ export default function TodayPage() {
   const focusQueue = prioritizedTasks.slice(1, 6);
   const todayBoundaryMessage = accessToken
     ? taskSource === "local-fallback"
-      ? "Task sync is unavailable. Today's plan is using tasks saved on this device."
+      ? t("source.todayTasksFallback")
       : inboxSource === "local-fallback"
-        ? "Inbox sync is unavailable. Showing captures saved on this device."
+        ? t("source.inboxFallback")
         : null
-    : "Signed out. Today's plan uses data saved on this device.";
+    : t("source.todayDevice");
 
   return (
     <AppShell>
       <Page>
         <PageHeader
-          eyebrow="Today"
-          title="Today's plan"
-          description="Focus on the highest-impact work first."
+          eyebrow={t("today.eyebrow")}
+          title={t("today.title")}
+          description={t("today.description")}
         />
 
           {todayBoundaryMessage ? (
@@ -316,12 +360,12 @@ export default function TodayPage() {
             <div className="space-y-7">
               <PageSection className="mt-0">
                 <PageSectionHeader
-                  title="Do this first"
-                  description="The highest-impact next action from your active tasks."
+                  title={t("today.doFirst")}
+                  description={t("today.doFirstDescription")}
                 />
                 <Card className="p-5 sm:p-6">
                   {!tasksLoaded ? (
-                    <div aria-label="Loading top priority">
+                    <div aria-label={t("today.loadingTopPriority")}>
                       <Skeleton className="h-5 w-44" />
                       <Skeleton className="mt-3 h-4 w-full max-w-lg" />
                       <Skeleton className="mt-4 h-8 w-48" />
@@ -339,7 +383,7 @@ export default function TodayPage() {
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                               <p className="text-xs font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300">
-                                Recommended next
+                                {t("today.recommendedNext")}
                               </p>
                               <h2 className="mt-1 truncate text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">
                                 {topPriorityTask.task.title}
@@ -351,7 +395,7 @@ export default function TodayPage() {
                             />
                           </div>
                           <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                            {getReasonSentence(topPriorityTask.reasons)}
+                            {getReasonSentence(topPriorityTask.reasons, t)}
                           </p>
                           {topPriorityTask.task.description ? (
                             <p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-500 dark:text-zinc-500">
@@ -360,6 +404,7 @@ export default function TodayPage() {
                           ) : null}
                           <TaskMeta
                             prioritizedTask={topPriorityTask}
+                            t={t}
                             source={
                               taskSourcesById[topPriorityTask.task.id] ??
                               taskSource
@@ -370,8 +415,8 @@ export default function TodayPage() {
                     </Link>
                   ) : (
                     <EmptyInline
-                      title="No urgent work today."
-                      description="Add or prioritize tasks when something needs focus."
+                      title={t("today.noUrgent")}
+                      description={t("today.noUrgentDescription")}
                     />
                   )}
                 </Card>
@@ -379,14 +424,14 @@ export default function TodayPage() {
 
               <PageSection className="mt-0">
                 <PageSectionHeader
-                  title="Focus queue"
-                  description="Up to five actionable tasks for today."
+                  title={t("today.focusQueue")}
+                  description={t("today.focusQueueDescription")}
                 />
                 <Card className="p-0">
                   {!tasksLoaded ? (
                     <div
                       className="space-y-3 p-4"
-                      aria-label="Loading focus queue"
+                      aria-label={t("today.loadingFocusQueue")}
                     >
                       {[0, 1, 2].map((item) => (
                         <div key={item}>
@@ -398,8 +443,8 @@ export default function TodayPage() {
                   ) : focusQueue.length === 0 ? (
                     <div className="p-4">
                       <EmptyInline
-                        title="No actionable tasks."
-                        description="Your active task list is clear."
+                        title={t("today.noActionable")}
+                        description={t("today.noActionableDescription")}
                       />
                     </div>
                   ) : (
@@ -425,6 +470,7 @@ export default function TodayPage() {
                               </div>
                               <TaskMeta
                                 prioritizedTask={prioritizedTask}
+                                t={t}
                                 source={
                                   taskSourcesById[prioritizedTask.task.id] ??
                                   taskSource
@@ -443,13 +489,13 @@ export default function TodayPage() {
             <div className="space-y-5">
               <PageSection className="mt-0">
                 <PageSectionHeader
-                  title="Inbox waiting"
+                  title={t("today.inboxWaiting")}
                   description={
                     inboxSource === "cloud"
-                      ? "Captures saved to your account."
+                      ? t("source.savedAccount")
                       : inboxSource === "local-fallback"
-                        ? "Sync is unavailable. Showing captures on this device."
-                        : "Captures saved on this device."
+                        ? t("source.inboxFallback")
+                        : t("source.savedDevice")
                   }
                 />
                 <Card variant="secondary" className="p-3.5">
@@ -458,10 +504,10 @@ export default function TodayPage() {
                       {inboxCount === 0 ? (
                         <>
                           <p className="text-sm font-semibold text-zinc-950 dark:text-white">
-                            Inbox clear
+                            {t("today.inboxClear")}
                           </p>
                           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
-                            Nothing waiting for review.
+                            {t("today.nothingWaiting")}
                           </p>
                         </>
                       ) : (
@@ -470,7 +516,7 @@ export default function TodayPage() {
                             {inboxCount}
                           </p>
                           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
-                            Captures waiting.
+                            {t("today.capturesWaiting")}
                           </p>
                         </>
                       )}
@@ -487,7 +533,7 @@ export default function TodayPage() {
                     href="/app/inbox"
                     className="mt-3 inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50 hover:text-violet-800 hover:ring-violet-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-zinc-950/60 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/25 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
                   >
-                    Open Inbox
+                    {t("common.openInbox")}
                     <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
                   </Link>
                 </Card>
@@ -495,8 +541,8 @@ export default function TodayPage() {
 
               <PageSection className="mt-0">
                 <PageSectionHeader
-                  title="Recent changes"
-                  description="Latest recorded activity."
+                  title={t("today.recentChanges")}
+                  description={t("today.recentChangesDescription")}
                 />
                 <Card variant="secondary" className="p-3.5">
                   {!accessToken && !authLoading ? (
@@ -507,17 +553,17 @@ export default function TodayPage() {
                       />
                       <div>
                         <p className="text-sm font-semibold text-zinc-950 dark:text-white">
-                          Sign in to see changes.
+                          {t("today.signInChangesTitle")}
                         </p>
                         <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
-                          Activity is recorded for authenticated workflows.
+                          {t("today.signInChangesDescription")}
                         </p>
                       </div>
                     </div>
                   ) : !activityLoaded ? (
                     <div
                       className="space-y-3"
-                      aria-label="Loading recent changes"
+                      aria-label={t("today.loadingRecentChanges")}
                     >
                       {[0, 1, 2].map((item) => (
                         <div key={item}>
@@ -534,11 +580,11 @@ export default function TodayPage() {
                       />
                       <div>
                         <p className="text-sm font-semibold text-zinc-950 dark:text-white">
-                          No recent changes.
+                          {t("today.noRecentChanges")}
                         </p>
                         <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
                           {activityError ??
-                            "Task and note updates will appear here."}
+                            t("today.noRecentChangesDescription")}
                         </p>
                       </div>
                     </div>
@@ -566,8 +612,8 @@ export default function TodayPage() {
 
               <PageSection className="mt-0">
                 <PageSectionHeader
-                  title="Wrap up"
-                  description="Mark finished work as done when the day moves forward."
+                  title={t("today.wrapUp")}
+                  description={t("today.wrapUpDescription")}
                 />
                 <Card variant="secondary" className="p-3.5">
                   <div className="flex items-start gap-2.5">
@@ -577,10 +623,10 @@ export default function TodayPage() {
                     />
                     <div>
                       <p className="text-sm font-semibold text-zinc-950 dark:text-white">
-                        Close the loop in Tasks.
+                        {t("today.wrapUpTitle")}
                       </p>
                       <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
-                        Open Tasks and move completed work to Done.
+                        {t("today.wrapUpBody")}
                       </p>
                     </div>
                   </div>

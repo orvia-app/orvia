@@ -4,14 +4,13 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 
 import { BrandMark } from "@/components/BrandMark";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { getSupabaseBrowserAuthClient } from "@/lib/supabase/auth";
 
-const RESET_EMAIL_SUCCESS_MESSAGE =
-  "If an Orvia account exists for that email, a reset link will be sent.";
-
 export default function ForgotPasswordPage() {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -41,13 +40,13 @@ export default function ForgotPasswordPage() {
         });
 
       if (resetError) {
-        setError("Could not send a reset email right now.");
+        setError(t("forgot.sendError"));
         return;
       }
 
-      setSuccess(RESET_EMAIL_SUCCESS_MESSAGE);
+      setSuccess(t("forgot.success"));
     } catch {
-      setError("Auth is not configured for this environment.");
+      setError(t("login.errorConfig"));
     } finally {
       setSubmitting(false);
     }
@@ -62,10 +61,10 @@ export default function ForgotPasswordPage() {
           </div>
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-              Reset your password
+              {t("forgot.title")}
             </h1>
             <p className="text-sm text-zinc-500 dark:text-zinc-500">
-              Send a secure recovery link to your email.
+              {t("forgot.subtitle")}
             </p>
           </div>
         </div>
@@ -76,7 +75,7 @@ export default function ForgotPasswordPage() {
               htmlFor="forgot-password-email"
               className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
             >
-              Email
+              {t("common.email")}
             </label>
             <input
               id="forgot-password-email"
@@ -106,17 +105,17 @@ export default function ForgotPasswordPage() {
           ) : null}
 
           <Button type="submit" disabled={submitting} className="w-full">
-            {submitting ? "Sending reset link..." : "Send reset link"}
+            {submitting ? t("forgot.submitting") : t("forgot.submit")}
           </Button>
         </form>
 
         <p className="mt-5 text-center text-sm text-zinc-500 dark:text-zinc-500">
-          Remembered your password?{" "}
+          {t("forgot.remembered")}{" "}
           <Link
             href="/login"
             className="font-medium text-zinc-800 hover:text-zinc-950 dark:text-zinc-200 dark:hover:text-white"
           >
-            Log in
+            {t("login.submit")}
           </Link>
         </p>
       </Card>

@@ -13,6 +13,7 @@ import {
 
 import { AppShell } from "@/components/AppShell";
 import { useAuthSession } from "@/components/auth/useAuthSession";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -41,12 +42,6 @@ import {
 } from "@/lib/quick-capture";
 import { ORVIA_CAPTURE_CREATED_EVENT } from "@/lib/capture-events";
 
-const exampleLines = [
-  "Remind me to call John tomorrow",
-  "Research customer onboarding flow",
-  "Idea for weekly planning ritual",
-];
-
 type ProcessingCaptureAction = {
   action: "archive" | "note" | "task";
   captureId: string;
@@ -64,20 +59,24 @@ function confidenceBadgeVariant(confidence: InboxParseResult["confidence"]) {
   return "default";
 }
 
-function captureSourceLabel(source: PrimaryCaptureSource): string {
+function captureSourceLabel(
+  source: PrimaryCaptureSource,
+  t: ReturnType<typeof useI18n>["t"],
+): string {
   if (source === "cloud") {
-    return "Account";
+    return t("common.account");
   }
 
   if (source === "local-fallback") {
-    return "On this device";
+    return t("common.device");
   }
 
-  return "On this device";
+  return t("common.device");
 }
 
 export default function InboxPage() {
   const { loading: authLoading, session } = useAuthSession();
+  const { t } = useI18n();
   const accessToken = session?.access_token;
   const ownerId = session?.user.id;
   const signedIn = Boolean(accessToken);
@@ -107,26 +106,31 @@ export default function InboxPage() {
       })),
     [captureSource, captureSourcesById, captures],
   );
+  const exampleLines = [
+    t("inbox.example1"),
+    t("inbox.example2"),
+    t("inbox.example3"),
+  ];
 
   const inboxBoundaryMessage = signedIn
     ? captureSource === "local-fallback"
-      ? "Inbox sync is unavailable. Showing captures saved on this device."
-      : "Inbox captures are saved to your account."
-    : "Signed out. Inbox captures are saved on this device.";
+      ? t("source.inboxFallback")
+      : t("source.savedAccount")
+    : t("source.inboxDevice");
 
   const queueDescription =
     captureSource === "local-fallback"
-      ? "Review captures saved on this device while sync is unavailable."
+      ? t("inbox.queueFallback")
       : signedIn
-        ? "Process account captures into tasks or notes, or archive what no longer needs action."
-        : "Process captures saved on this device into tasks or notes, or archive what no longer needs action.";
+        ? t("inbox.queueCloud")
+        : t("inbox.queueDevice");
 
   const queueBadge =
     captureSource === "local-fallback"
-      ? "Device queue"
+      ? t("inbox.deviceQueue")
       : signedIn
-        ? "Account queue"
-        : "Device queue";
+        ? t("inbox.accountQueue")
+        : t("inbox.deviceQueue");
 
   const handleProcess = useCallback(() => {
     const trimmedInput = input.trim();
@@ -225,24 +229,24 @@ export default function InboxPage() {
       if (processingResult.action === "task") {
         setQueueStatus(
           processingResult.source === "api"
-            ? "Converted to task."
+            ? t("inbox.convertedTask")
             : selectedCaptureSource === "cloud"
-              ? "Sync is unavailable. Created a task on this device and kept the capture in Inbox."
-              : "Converted to task on this device.",
+              ? t("inbox.convertedTaskFallback")
+              : t("inbox.convertedTaskDevice"),
         );
       } else if (processingResult.action === "note") {
         setQueueStatus(
           processingResult.source === "api"
-            ? "Converted to note."
+            ? t("inbox.convertedNote")
             : selectedCaptureSource === "cloud"
-              ? "Sync is unavailable. Created a note on this device and kept the capture in Inbox."
-              : "Converted to note on this device.",
+              ? t("inbox.convertedNoteFallback")
+              : t("inbox.convertedNoteDevice"),
         );
       } else {
-        setQueueStatus("Archived.");
+        setQueueStatus(t("inbox.archived"));
       }
     } catch {
-      setQueueError("Could not process this inbox item. Please try again.");
+      setQueueError(t("inbox.processError"));
     } finally {
       setProcessingCaptureAction(null);
     }
@@ -298,17 +302,15 @@ export default function InboxPage() {
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <div className="mb-3 inline-flex rounded-full bg-white px-3 py-1 text-xs font-medium text-zinc-600 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:text-zinc-400 dark:shadow-none dark:ring-zinc-800">
-                Universal capture
+                  {t("inbox.eyebrow")}
               </div>
 
               <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
-                Orvia Inbox
+                {t("inbox.title")}
               </h1>
 
               <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400 sm:text-base">
-                Inbox is the processing queue for loose thoughts, reminders,
-                and ideas. Capture first, then turn the useful ones into tasks
-                or notes.
+                {t("inbox.description")}
               </p>
             </div>
 
@@ -321,21 +323,26 @@ export default function InboxPage() {
           >
             {inboxBoundaryMessage}
             {signedIn
-              ? " Processing a capture moves it out of Inbox."
-              : " Sign in before processing captures you want saved to your account."}
+              ? ` ${t("inbox.processingMoves")}`
+              : ` ${t("inbox.signInBeforeProcessing")}`}
           </Card>
 
           <section className="mb-6">
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-zinc-950 dark:text-white">
-                  Waiting to process
+                  {t("inbox.waitingToProcess")}
                 </h2>
                 <p className="mt-1 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
                   {queueDescription}
                 </p>
               </div>
-              <Badge>{queuedCaptures.length} waiting</Badge>
+              <Badge>
+                {t("inbox.waitingCount").replace(
+                  "{count}",
+                  String(queuedCaptures.length),
+                )}
+              </Badge>
             </div>
 
             {queueError ? (
@@ -360,8 +367,8 @@ export default function InboxPage() {
               <EmptyState
                 icon={Inbox}
                 size="sm"
-                title="Inbox zero"
-                description="No captures are waiting. Save a thought here or use + Capture when something needs a home."
+                title={t("inbox.zeroTitle")}
+                description={t("inbox.zeroDescription")}
               />
             ) : (
               <div className="space-y-3">
@@ -383,9 +390,16 @@ export default function InboxPage() {
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <Badge>{preview.detectedType}</Badge>
-                            <Badge>{captureSourceLabel(source)}</Badge>
+                            <Badge>{captureSourceLabel(source, t)}</Badge>
                             <Badge variant={confidenceBadgeVariant(preview.confidence)}>
-                              {preview.confidence.label} confidence
+                              {t(
+                                preview.confidence.label === "high"
+                                  ? "inbox.confidenceHigh"
+                                  : preview.confidence.label === "medium"
+                                    ? "inbox.confidenceMedium"
+                                    : "inbox.confidenceLow",
+                              )}{" "}
+                              {t("inbox.confidence")}
                             </Badge>
                             <span className="text-xs font-medium text-zinc-400 dark:text-zinc-600">
                               {capture.createdAt.slice(0, 10)}
@@ -425,7 +439,7 @@ export default function InboxPage() {
                             ) : (
                               <CheckSquare className="h-4 w-4" aria-hidden />
                             )}
-                            Convert to Task
+                            {t("inbox.convertTask")}
                           </Button>
                           <Button
                             type="button"
@@ -444,7 +458,7 @@ export default function InboxPage() {
                             ) : (
                               <FileText className="h-4 w-4" aria-hidden />
                             )}
-                            Convert to Note
+                            {t("inbox.convertNote")}
                           </Button>
                           <Button
                             type="button"
@@ -466,7 +480,7 @@ export default function InboxPage() {
                             ) : (
                               <Archive className="h-4 w-4" aria-hidden />
                             )}
-                            Archive
+                            {t("inbox.archive")}
                           </Button>
                         </div>
                       </div>
@@ -485,11 +499,10 @@ export default function InboxPage() {
                 </span>
                 <div>
                   <h2 className="text-base font-semibold text-zinc-950 dark:text-white">
-                    Add to Inbox
+                    {t("inbox.addTitle")}
                   </h2>
                   <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
-                    Save anything unfinished here before deciding whether it is
-                    a task, note, or something to archive.
+                    {t("inbox.addDescription")}
                   </p>
                 </div>
               </div>
@@ -499,7 +512,7 @@ export default function InboxPage() {
               <textarea
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
-                placeholder="Remind me to call John tomorrow"
+                placeholder={t("inbox.example1")}
                 rows={4}
                 className="min-h-32 w-full resize-y rounded-2xl bg-zinc-50 p-4 text-base leading-7 text-zinc-950 outline-none ring-1 ring-zinc-200/80 transition placeholder:text-zinc-400 focus:bg-white focus:ring-2 focus:ring-zinc-300 dark:bg-black/70 dark:text-white dark:ring-zinc-800 dark:placeholder:text-zinc-600 dark:focus:ring-zinc-700"
               />
@@ -519,8 +532,7 @@ export default function InboxPage() {
 
               <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="max-w-xl text-sm leading-6 text-zinc-500 dark:text-zinc-400">
-                  Orvia previews a structure for your capture. No AI service is
-                  contacted, and you choose whether to create the task or note.
+                  {t("inbox.previewNote")}
                 </p>
 
                 <Button
@@ -532,11 +544,11 @@ export default function InboxPage() {
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                      Previewing
+                      {t("inbox.previewing")}
                     </>
                   ) : (
                     <>
-                      Preview capture
+                      {t("inbox.previewCapture")}
                       <ArrowRight className="h-4 w-4" aria-hidden />
                     </>
                   )}
@@ -550,17 +562,24 @@ export default function InboxPage() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-zinc-950 dark:text-white">
-                    Capture preview
+                    {t("inbox.capturePreview")}
                   </h2>
                   <p className="mt-1 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
-                    Review the suggested structure, then create a task or note.
+                    {t("inbox.capturePreviewDescription")}
                   </p>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
                   <Badge>{result.source}</Badge>
                   <Badge variant={confidenceBadgeVariant(result.confidence)}>
-                    {result.confidence.label} confidence ·{" "}
+                    {t(
+                      result.confidence.label === "high"
+                        ? "inbox.confidenceHigh"
+                        : result.confidence.label === "medium"
+                          ? "inbox.confidenceMedium"
+                          : "inbox.confidenceLow",
+                    )}{" "}
+                    {t("inbox.confidence")} ·{" "}
                     {result.confidence.score}%
                   </Badge>
                 </div>
@@ -569,7 +588,7 @@ export default function InboxPage() {
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <div className="rounded-xl bg-zinc-100/60 p-4 dark:bg-zinc-900/40">
                   <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
-                    Title
+                    {t("common.title")}
                   </p>
                   <p className="mt-2 text-sm font-medium text-zinc-950 dark:text-white">
                     {result.suggestedTitle}
@@ -578,7 +597,7 @@ export default function InboxPage() {
 
                 <div className="rounded-xl bg-zinc-100/60 p-4 dark:bg-zinc-900/40">
                   <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
-                    Detected type
+                    {t("inbox.detectedType")}
                   </p>
                   <p className="mt-2 text-sm font-medium text-zinc-950 dark:text-white">
                     {result.detectedType}
@@ -587,7 +606,7 @@ export default function InboxPage() {
 
                 <div className="rounded-xl bg-zinc-100/60 p-4 dark:bg-zinc-900/40">
                   <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
-                    Suggested workspace
+                    {t("inbox.suggestedWorkspace")}
                   </p>
                   <p className="mt-2 text-sm font-medium text-zinc-950 dark:text-white">
                     {result.suggestedWorkspace}
@@ -596,7 +615,7 @@ export default function InboxPage() {
 
                 <div className="rounded-xl bg-zinc-100/60 p-4 dark:bg-zinc-900/40">
                   <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
-                    Suggested tags
+                    {t("inbox.suggestedTags")}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {result.suggestedTags.map((tag) => (
@@ -609,7 +628,7 @@ export default function InboxPage() {
               <div className="mt-4 rounded-xl bg-zinc-100/60 p-4 dark:bg-zinc-900/40">
                 <div className="flex items-center gap-2 text-xs font-medium text-zinc-500 dark:text-zinc-500">
                   <Tags className="h-3.5 w-3.5" aria-hidden />
-                  Summary
+                  {t("inbox.summary")}
                 </div>
                 <p className="mt-2 text-sm leading-6 text-zinc-700 dark:text-zinc-300">
                   {result.summary}
@@ -622,7 +641,7 @@ export default function InboxPage() {
                     role="status"
                     className="text-sm font-medium text-emerald-600 dark:text-emerald-400"
                   >
-                    Item created successfully.
+                    {t("inbox.itemCreated")}
                   </div>
                 ) : (
                   <div />
@@ -634,7 +653,12 @@ export default function InboxPage() {
                   disabled={itemCreated}
                   onClick={handleCreateItem}
                 >
-                  Create {result.actionKind}
+                  {t("inbox.createAction").replace(
+                    "{type}",
+                    result.actionKind === "task"
+                      ? t("common.tasks").toLowerCase()
+                      : t("common.notes").toLowerCase(),
+                  )}
                 </Button>
               </div>
             </Card>

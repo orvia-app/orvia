@@ -1,3 +1,5 @@
+"use client";
+
 import {
   CheckSquare,
   CircleDot,
@@ -10,38 +12,36 @@ import type { LucideIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import type { TimelineEvent } from "@/lib/timeline";
+import type { TranslationKey } from "@/lib/i18n";
 
 type TimelineEventCardProps = {
   event: TimelineEvent;
 };
 
-function getEventLabel(event: TimelineEvent): string {
+function getEventLabelKey(event: TimelineEvent): TranslationKey {
   switch (event.type) {
     case "task_created":
-      return "Task created";
+      return "timeline.taskCreated";
     case "task_updated":
-      return "Task updated";
+      return "timeline.taskUpdated";
     case "task_deleted":
-      return "Task deleted";
+      return "timeline.taskDeleted";
     case "note_created":
-      return "Note created";
+      return "timeline.noteCreated";
     case "note_updated":
-      return "Note updated";
+      return "timeline.noteUpdated";
     case "note_deleted":
-      return "Note deleted";
+      return "timeline.noteDeleted";
     case "quick_capture_created":
-      return "Capture created";
+      return "timeline.captureCreated";
     case "inbox_processed":
-      return "Inbox processed";
+      return "timeline.inboxProcessed";
     case "local_import_completed":
-      return "Local import";
+      return "timeline.localImport";
     default:
-      return event.type
-        .split("_")
-        .filter(Boolean)
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(" ") || "Activity";
+      return "timeline.genericActivity";
   }
 }
 
@@ -74,6 +74,7 @@ function getEventTimestampLabel(timestamp: string): string {
 }
 
 export function TimelineEventCard({ event }: TimelineEventCardProps) {
+  const { t } = useI18n();
   const Icon = getEventIcon(event);
 
   return (
@@ -84,7 +85,7 @@ export function TimelineEventCard({ event }: TimelineEventCardProps) {
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge>{getEventLabel(event)}</Badge>
+            <Badge>{t(getEventLabelKey(event))}</Badge>
             <span className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
               {getEventTimestampLabel(event.timestamp)}
             </span>

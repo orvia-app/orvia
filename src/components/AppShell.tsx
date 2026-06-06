@@ -28,36 +28,38 @@ import type { LucideIcon } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { useAuthSession } from "@/components/auth/useAuthSession";
 import { CommandCenter } from "@/components/command-palette/CommandCenter";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { QuickCapture } from "@/components/quick-capture/QuickCapture";
 import { useTheme, type Theme } from "@/components/ThemeProvider";
+import type { TranslationKey } from "@/lib/i18n";
 
 type NavItem = {
-  label: string;
+  labelKey: TranslationKey;
   href: string;
   icon: LucideIcon;
 };
 
 const focusNavItems: NavItem[] = [
-  { label: "Dashboard", href: "/app", icon: House },
-  { label: "Today", href: "/app/today", icon: CalendarDays },
+  { labelKey: "common.dashboard", href: "/app", icon: House },
+  { labelKey: "common.today", href: "/app/today", icon: CalendarDays },
 ];
 
 const workflowNavItems: NavItem[] = [
-  { label: "Inbox", href: "/app/inbox", icon: Inbox },
-  { label: "Tasks", href: "/app/tasks", icon: CheckSquare },
-  { label: "Notes", href: "/app/notes", icon: FileText },
-  { label: "Search", href: "/app/search", icon: Search },
-  { label: "Timeline", href: "/app/timeline", icon: CircleDot },
+  { labelKey: "common.inbox", href: "/app/inbox", icon: Inbox },
+  { labelKey: "common.tasks", href: "/app/tasks", icon: CheckSquare },
+  { labelKey: "common.notes", href: "/app/notes", icon: FileText },
+  { labelKey: "common.search", href: "/app/search", icon: Search },
+  { labelKey: "common.timeline", href: "/app/timeline", icon: CircleDot },
 ];
 
 const settingsNavItems: NavItem[] = [
-  { label: "Settings", href: "/app/settings", icon: Settings },
+  { labelKey: "common.settings", href: "/app/settings", icon: Settings },
 ];
 
 const labsNavItems: NavItem[] = [
-  { label: "Cars", href: "/app/cars", icon: Car },
-  { label: "Finance", href: "/app/finance", icon: Wallet },
-  { label: "Automation", href: "/app/automation", icon: Zap },
+  { labelKey: "nav.cars", href: "/app/cars", icon: Car },
+  { labelKey: "nav.finance", href: "/app/finance", icon: Wallet },
+  { labelKey: "nav.automation", href: "/app/automation", icon: Zap },
 ];
 
 const navItems: NavItem[] = [
@@ -67,10 +69,14 @@ const navItems: NavItem[] = [
   ...labsNavItems,
 ];
 
-const themeOptions: { value: Theme; label: string; icon: LucideIcon }[] = [
-  { value: "dark", label: "Dark", icon: Moon },
-  { value: "light", label: "Light", icon: Sun },
-  { value: "system", label: "System", icon: Monitor },
+const themeOptions: {
+  value: Theme;
+  labelKey: TranslationKey;
+  icon: LucideIcon;
+}[] = [
+  { value: "dark", labelKey: "nav.dark", icon: Moon },
+  { value: "light", labelKey: "nav.light", icon: Sun },
+  { value: "system", labelKey: "nav.systemTheme", icon: Monitor },
 ];
 
 function isNavActive(pathname: string, href: string) {
@@ -82,14 +88,15 @@ function isNavActive(pathname: string, href: string) {
 
 function ThemeSwitcher() {
   const { hydrated, theme, setTheme } = useTheme();
+  const { t } = useI18n();
 
   return (
     <div>
       <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
-        Theme
+        {t("nav.theme")}
       </p>
       <div className="grid grid-cols-3 gap-1.5">
-        {themeOptions.map(({ value, label, icon: Icon }) => {
+        {themeOptions.map(({ value, labelKey, icon: Icon }) => {
           const active = hydrated && theme === value;
           return (
             <button
@@ -103,7 +110,7 @@ function ThemeSwitcher() {
               }
             >
               <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              {label}
+              {t(labelKey)}
             </button>
           );
         })}
@@ -124,7 +131,7 @@ function NavLinkItem({
   active,
   href,
   icon: Icon,
-  label,
+  labelKey,
   minHeight = false,
   refCallback,
 }: NavItem & {
@@ -132,6 +139,7 @@ function NavLinkItem({
   minHeight?: boolean;
   refCallback?: (element: HTMLAnchorElement | null) => void;
 }) {
+  const { t } = useI18n();
   const linkClassName = active
     ? [
         "group flex cursor-pointer items-center gap-3 rounded-xl border border-violet-200/80 bg-violet-50 px-3 text-sm font-medium text-violet-950 shadow-sm shadow-violet-950/[0.025] dark:border-violet-500/25 dark:bg-violet-500/10 dark:text-violet-100 dark:shadow-none",
@@ -152,7 +160,7 @@ function NavLinkItem({
       className={linkClassName}
     >
       <Icon className={iconClassName} aria-hidden />
-      <span>{label}</span>
+      <span>{t(labelKey)}</span>
     </Link>
   );
 }
@@ -170,6 +178,8 @@ function LabsNavSection({
   setOpen: (open: boolean) => void;
   setRef?: (href: string, element: HTMLAnchorElement | null) => void;
 }) {
+  const { t } = useI18n();
+
   return (
     <div className={mobile ? "mt-3" : "mt-2"}>
       <button
@@ -183,9 +193,9 @@ function LabsNavSection({
         }
       >
         <span>
-          Labs
+          {t("nav.labs")}
           <span className="ml-2 align-middle text-[10px] font-normal text-zinc-400 dark:text-zinc-600">
-            Experimental
+            {t("nav.experimental")}
           </span>
         </span>
         <ChevronDown
@@ -199,13 +209,13 @@ function LabsNavSection({
 
       {open ? (
         <div className={mobile ? "mt-1 grid gap-1" : "mt-1 grid gap-1"}>
-          {labsNavItems.map(({ label, href, icon }) => (
+          {labsNavItems.map(({ labelKey, href, icon }) => (
             <NavLinkItem
               key={href}
               active={isNavActive(pathname, href)}
               href={href}
               icon={icon}
-              label={label}
+              labelKey={labelKey}
               minHeight={mobile}
               refCallback={
                 setRef ? (element) => setRef(href, element) : undefined
@@ -221,6 +231,7 @@ function LabsNavSection({
 function AuthStatus() {
   const { authError, isAuthenticated, loading, signOut, user } =
     useAuthSession();
+  const { t } = useI18n();
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -246,7 +257,7 @@ function AuthStatus() {
   if (loading) {
     return (
       <div className="rounded-lg bg-white/65 px-2.5 py-2 text-[11px] text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-900/45 dark:text-zinc-500 dark:ring-zinc-800/70">
-        Checking account...
+        {t("auth.checkingAccount")}
       </div>
     );
   }
@@ -257,10 +268,10 @@ function AuthStatus() {
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <p className="truncate text-[11px] font-medium text-zinc-800 dark:text-zinc-200">
-              {user?.email ?? "Signed in"}
+              {user?.email ?? t("auth.signedIn")}
             </p>
             <p className="mt-0.5 truncate text-[10px] text-zinc-500 dark:text-zinc-500">
-              Account active. Sync is still limited.
+              {t("auth.accountActive")}
             </p>
           </div>
           <button
@@ -269,7 +280,7 @@ function AuthStatus() {
             onClick={handleSignOut}
             className="shrink-0 text-[11px] font-medium text-zinc-500 hover:text-violet-700 disabled:cursor-wait disabled:text-zinc-400 dark:text-zinc-500 dark:hover:text-violet-300 dark:disabled:text-zinc-600"
           >
-            {signingOut ? "Signing out..." : "Sign out"}
+            {signingOut ? t("auth.signingOut") : t("common.signOut")}
           </button>
         </div>
         {signOutError ? (
@@ -284,23 +295,23 @@ function AuthStatus() {
   return (
     <div className="rounded-xl bg-white/60 px-3 py-3 ring-1 ring-zinc-200/75 dark:bg-zinc-900/35 dark:ring-zinc-800/75">
       <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
-        Create your workspace
+        {t("auth.createWorkspace")}
       </p>
       <p className="mt-1 text-[11px] leading-4 text-zinc-500 dark:text-zinc-500">
-        Sync across devices.
+        {t("auth.syncAcrossDevices")}
       </p>
       <div className="mt-3 grid gap-2">
         <Link
           href="/login"
           className="inline-flex h-8 items-center justify-center rounded-lg bg-violet-800 px-2 text-[11px] font-medium text-white shadow-sm shadow-violet-950/10 hover:bg-violet-700 dark:bg-violet-600/85 dark:hover:bg-violet-600"
         >
-          Sign In
+          {t("common.signIn")}
         </Link>
         <Link
           href="/register"
           className="inline-flex h-8 items-center justify-center rounded-lg px-2 text-[11px] font-medium text-zinc-600 ring-1 ring-zinc-200/80 hover:bg-white hover:text-violet-800 dark:text-zinc-400 dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:text-violet-200"
         >
-          Create Account
+          {t("common.createAccount")}
         </Link>
       </div>
       {authError ? (
@@ -316,6 +327,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { isAuthenticated, loading, session } = useAuthSession();
+  const { t } = useI18n();
   const navItemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [quickCaptureOpen, setQuickCaptureOpen] = useState(false);
@@ -402,7 +414,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-100 px-4 text-zinc-950 dark:bg-zinc-950 dark:text-white">
         <div className="rounded-2xl bg-white/85 px-5 py-4 text-sm text-zinc-600 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/75 dark:bg-zinc-900/70 dark:text-zinc-400 dark:ring-zinc-800/75">
-          Checking account...
+          {t("auth.checkingAccount")}
         </div>
       </div>
     );
@@ -416,31 +428,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <BrandMark className="h-6 w-6" />
           </div>
           <h1 className="mt-5 text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-            Sign in to continue
+            {t("auth.signInToContinue")}
           </h1>
           <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-            The Orvia app preview is available after sign in. You can still
-            view the public landing page.
+            {t("auth.appPreviewAfterSignIn")}
           </p>
           <div className="mt-6 grid gap-2 sm:grid-cols-2">
             <Link
               href="/login"
               className="inline-flex h-10 items-center justify-center rounded-xl bg-violet-800 px-4 text-sm font-medium text-white shadow-sm shadow-violet-950/10 transition hover:bg-violet-700 dark:bg-violet-600/85 dark:hover:bg-violet-600"
             >
-              Sign in
+              {t("common.signIn")}
             </Link>
             <Link
               href="/register"
               className="inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-medium text-zinc-700 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50/70 hover:text-violet-800 hover:ring-violet-200/70 dark:bg-zinc-950/60 dark:text-zinc-200 dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/20"
             >
-              Create account
+              {t("common.createAccount")}
             </Link>
           </div>
           <Link
             href="/"
             className="mt-4 inline-flex text-sm font-medium text-zinc-500 hover:text-violet-800 dark:text-zinc-500 dark:hover:text-violet-200"
           >
-            Back to landing
+            {t("auth.backToLanding")}
           </Link>
         </div>
       </div>
@@ -467,50 +478,50 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               Orvia
             </p>
             <p className="text-[11px] text-zinc-500 dark:text-zinc-500">
-              Capture. Organize. Execute.
+              {t("app.tagline")}
             </p>
           </div>
         </div>
 
         <nav
           className="app-scrollbar app-scrollbar-quiet mt-7 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-5 pb-4"
-          aria-label="Main"
+          aria-label={t("nav.main")}
         >
-          {focusNavItems.map(({ label, href, icon }) => (
+                  {focusNavItems.map(({ labelKey, href, icon }) => (
             <NavLinkItem
               key={href}
               active={isNavActive(pathname, href)}
               href={href}
               icon={icon}
-              label={label}
+                      labelKey={labelKey}
               refCallback={(element) => {
                 navItemRefs.current[href] = element;
               }}
             />
           ))}
 
-          <NavSectionLabel>Workflow</NavSectionLabel>
-          {workflowNavItems.map(({ label, href, icon }) => (
+          <NavSectionLabel>{t("nav.workflow")}</NavSectionLabel>
+                    {workflowNavItems.map(({ labelKey, href, icon }) => (
             <NavLinkItem
               key={href}
               active={isNavActive(pathname, href)}
               href={href}
               icon={icon}
-              label={label}
+                        labelKey={labelKey}
               refCallback={(element) => {
                 navItemRefs.current[href] = element;
               }}
             />
           ))}
 
-          <NavSectionLabel>System</NavSectionLabel>
-          {settingsNavItems.map(({ label, href, icon }) => (
+          <NavSectionLabel>{t("nav.system")}</NavSectionLabel>
+                      {settingsNavItems.map(({ labelKey, href, icon }) => (
             <NavLinkItem
               key={href}
               active={isNavActive(pathname, href)}
               href={href}
               icon={icon}
-              label={label}
+                          labelKey={labelKey}
               refCallback={(element) => {
                 navItemRefs.current[href] = element;
               }}
@@ -534,7 +545,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             className="mb-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-800 px-3 py-2.5 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 dark:bg-violet-600/85 dark:text-white dark:shadow-none dark:hover:bg-violet-600 dark:focus-visible:ring-violet-400"
           >
             <Plus className="h-4 w-4" aria-hidden />
-            Capture
+            {t("common.capture")}
           </button>
           <div className="mb-3">
             <AuthStatus />
@@ -551,12 +562,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <BrandMark className="h-4.5 w-4.5" />
               </span>
               <p className="truncate text-sm font-semibold text-zinc-950 dark:text-white">
-                Orvia
+                {t("common.orvia")}
               </p>
             </div>
             <button
               type="button"
-              aria-label="Open navigation menu"
+              aria-label={t("nav.openNavigation")}
               aria-expanded={mobileMenuOpen}
               onClick={() => setMobileMenuOpen(true)}
               className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/80 text-zinc-700 ring-1 ring-zinc-200/80 hover:bg-white hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 dark:bg-zinc-900/70 dark:text-zinc-300 dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:text-violet-300 dark:focus-visible:ring-violet-400"
@@ -579,7 +590,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div
               role="dialog"
               aria-modal="true"
-              aria-label="Navigation menu"
+              aria-label={t("nav.navigationMenu")}
               className="app-scrollbar ml-auto flex h-full w-full max-w-sm flex-col overflow-y-auto bg-zinc-50 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] shadow-2xl shadow-zinc-950/20 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:shadow-black/40 dark:ring-zinc-800"
               onMouseDown={(event) => event.stopPropagation()}
             >
@@ -593,13 +604,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       Orvia
                     </p>
                     <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-500">
-                      Capture. Organize. Execute.
+                      {t("app.tagline")}
                     </p>
                   </div>
                 </div>
                 <button
                   type="button"
-                  aria-label="Close"
+                  aria-label={t("common.close")}
                   onClick={() => setMobileMenuOpen(false)}
                   className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-zinc-600 ring-1 ring-zinc-200/80 hover:bg-white hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 dark:text-zinc-300 dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:text-violet-300 dark:focus-visible:ring-violet-400"
                 >
@@ -607,38 +618,38 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </button>
               </div>
 
-              <nav className="mt-6 grid gap-1" aria-label="Mobile main">
-                {focusNavItems.map(({ label, href, icon }) => (
+              <nav className="mt-6 grid gap-1" aria-label={t("nav.mobileMain")}>
+                    {focusNavItems.map(({ labelKey, href, icon }) => (
                   <NavLinkItem
                     key={href}
                     active={isNavActive(pathname, href)}
                     href={href}
                     icon={icon}
-                    label={label}
+                        labelKey={labelKey}
                     minHeight
                   />
                 ))}
 
-                <NavSectionLabel>Workflow</NavSectionLabel>
-                {workflowNavItems.map(({ label, href, icon }) => (
+                <NavSectionLabel>{t("nav.workflow")}</NavSectionLabel>
+                    {workflowNavItems.map(({ labelKey, href, icon }) => (
                   <NavLinkItem
                     key={href}
                     active={isNavActive(pathname, href)}
                     href={href}
                     icon={icon}
-                    label={label}
+                        labelKey={labelKey}
                     minHeight
                   />
                 ))}
 
-                <NavSectionLabel>System</NavSectionLabel>
-                {settingsNavItems.map(({ label, href, icon }) => (
+                <NavSectionLabel>{t("nav.system")}</NavSectionLabel>
+                    {settingsNavItems.map(({ labelKey, href, icon }) => (
                   <NavLinkItem
                     key={href}
                     active={isNavActive(pathname, href)}
                     href={href}
                     icon={icon}
-                    label={label}
+                        labelKey={labelKey}
                     minHeight
                   />
                 ))}
@@ -676,7 +687,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           type="button"
           onClick={openQuickCapture}
           className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-40 inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-violet-800 px-4 text-sm font-medium text-white shadow-lg shadow-violet-950/20 transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 dark:bg-violet-600/85 dark:text-white dark:shadow-black/30 dark:hover:bg-violet-600 dark:focus-visible:ring-violet-400 lg:hidden"
-          aria-label="Open quick capture"
+          aria-label={t("nav.openQuickCapture")}
         >
           <Plus className="h-5 w-5" aria-hidden />
           Capture

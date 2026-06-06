@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { useAuthSession } from "@/components/auth/useAuthSession";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -25,8 +26,55 @@ import {
   type UnifiedSearchCounts,
   type UnifiedSearchResult,
 } from "@/lib/unified-search";
+import type { TranslationKey } from "@/lib/i18n";
 
-function SearchResultCard({ result }: { result: UnifiedSearchResult }) {
+function groupLabelKey(groupKey: UnifiedSearchResult["type"]): TranslationKey {
+  switch (groupKey) {
+    case "task":
+      return "search.groupTasks";
+    case "note":
+      return "search.groupNotes";
+    case "inbox":
+      return "search.groupInbox";
+    case "timeline":
+      return "search.groupTimeline";
+  }
+}
+
+function sourceLabelKey(source: string): TranslationKey {
+  switch (source) {
+    case "Cloud task":
+      return "search.sourceCloudTask";
+    case "Local fallback task":
+      return "search.sourceLocalFallbackTask";
+    case "Local task":
+      return "search.sourceLocalTask";
+    case "Cloud note":
+      return "search.sourceCloudNote";
+    case "Local fallback note":
+      return "search.sourceLocalFallbackNote";
+    case "Local note":
+      return "search.sourceLocalNote";
+    case "Cloud inbox":
+      return "search.sourceCloudInbox";
+    case "Local fallback":
+      return "search.sourceLocalFallback";
+    case "Local inbox":
+      return "search.sourceLocalInbox";
+    case "Activity":
+      return "search.sourceActivity";
+    default:
+      return "search.sourceActivity";
+  }
+}
+
+function SearchResultCard({
+  result,
+  t,
+}: {
+  result: UnifiedSearchResult;
+  t: (key: TranslationKey) => string;
+}) {
   const content = (
     <Card
       variant={result.type === "timeline" ? "secondary" : "primary"}
@@ -34,9 +82,9 @@ function SearchResultCard({ result }: { result: UnifiedSearchResult }) {
     >
       <div className="flex min-w-0 flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge>{result.source}</Badge>
+          <Badge>{t(sourceLabelKey(result.source))}</Badge>
           <span className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
-            {result.createdAt ? result.createdAt.slice(0, 10) : "Local"}
+            {result.createdAt ? result.createdAt.slice(0, 10) : t("search.local")}
           </span>
         </div>
         <div className="min-w-0">
@@ -64,12 +112,18 @@ function SearchResultCard({ result }: { result: UnifiedSearchResult }) {
   );
 }
 
-function SearchGuidance({ counts }: { counts: UnifiedSearchCounts | null }) {
+function SearchGuidance({
+  counts,
+  t,
+}: {
+  counts: UnifiedSearchCounts | null;
+  t: (key: TranslationKey) => string;
+}) {
   return (
     <div className="space-y-4">
       <EmptyState
-        title="Search your workspace"
-        description="Type a keyword to find the work, notes, captures, and activity that matter now."
+        title={t("search.guidanceTitle")}
+        description={t("search.guidanceDescription")}
       />
 
       {counts ? (
@@ -80,7 +134,7 @@ function SearchGuidance({ counts }: { counts: UnifiedSearchCounts | null }) {
                 {counts[group.key]}
               </p>
               <p className="mt-1 text-sm font-medium text-zinc-500 dark:text-zinc-500">
-                {group.label}
+                {t(groupLabelKey(group.key))}
               </p>
             </Card>
           ))}
@@ -92,6 +146,7 @@ function SearchGuidance({ counts }: { counts: UnifiedSearchCounts | null }) {
 
 export default function SearchPage() {
   const { session } = useAuthSession();
+  const { t } = useI18n();
   const accessToken = session?.access_token;
   const ownerId = session?.user.id;
   const [query, setQuery] = useState("");
@@ -146,8 +201,8 @@ export default function SearchPage() {
     <AppShell>
       <Page>
         <PageHeader
-          title="Search"
-          description="Find tasks, notes, captures, and activity across your workspace."
+          title={t("search.title")}
+          description={t("search.description")}
         />
 
           <Card
@@ -155,8 +210,8 @@ export default function SearchPage() {
             className="mt-5 p-3 text-sm text-zinc-600 dark:text-zinc-400"
           >
             {accessToken
-              ? "Search includes tasks, notes, Inbox captures, and activity available to this workspace."
-              : "Signed out. Search uses data saved on this device."}
+              ? t("search.accountMessage")
+              : t("search.deviceMessage")}
           </Card>
 
           <div className="relative mt-7">
@@ -167,7 +222,7 @@ export default function SearchPage() {
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search tasks, notes, inbox, timeline..."
+              placeholder={t("search.placeholder")}
               className="w-full rounded-2xl bg-white/90 py-4 pl-12 pr-4 text-base text-zinc-950 shadow-sm shadow-zinc-950/[0.035] outline-none ring-1 ring-zinc-200/80 transition placeholder:text-zinc-500 focus:ring-2 focus:ring-violet-300 dark:bg-zinc-900/70 dark:text-white dark:shadow-none dark:ring-zinc-800 dark:focus:ring-violet-500/40"
             />
           </div>
@@ -175,14 +230,14 @@ export default function SearchPage() {
           <div className="mt-7">
             {!loaded ? (
               <Card className="text-sm text-zinc-500 dark:text-zinc-400">
-                Preparing your search index...
+                {t("search.preparing")}
               </Card>
             ) : !hasQuery ? (
-              <SearchGuidance counts={counts} />
+              <SearchGuidance counts={counts} t={t} />
             ) : !hasResults ? (
               <EmptyState
-                title="No results found"
-                description="Try a different keyword, or capture something new to make it searchable."
+                title={t("search.noResults")}
+                description={t("search.noResultsDescription")}
               />
             ) : (
               <div className="space-y-7">
@@ -196,14 +251,20 @@ export default function SearchPage() {
                   return (
                     <PageSection key={group.key} className="mt-0">
                       <PageSectionHeader
-                        title={group.label}
-                        description={`${groupItems.length} result${
-                          groupItems.length === 1 ? "" : "s"
+                        title={t(groupLabelKey(group.key))}
+                        description={`${groupItems.length} ${
+                          groupItems.length === 1
+                            ? t("common.result")
+                            : t("common.results")
                         }`}
                       />
                       <div className="space-y-2.5">
                         {groupItems.map((result) => (
-                          <SearchResultCard key={result.id} result={result} />
+                          <SearchResultCard
+                            key={result.id}
+                            result={result}
+                            t={t}
+                          />
                         ))}
                       </div>
                     </PageSection>
