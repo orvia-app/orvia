@@ -669,7 +669,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   className="mb-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-violet-800 px-3 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 dark:bg-violet-600/85 dark:text-white dark:shadow-none dark:hover:bg-violet-600 dark:focus-visible:ring-violet-400"
                 >
                   <Plus className="h-4 w-4" aria-hidden />
-                  Capture
+                  {t("common.capture")}
                 </button>
                 <div className="mb-4">
                   <AuthStatus />
@@ -690,7 +690,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           aria-label={t("nav.openQuickCapture")}
         >
           <Plus className="h-5 w-5" aria-hidden />
-          Capture
+          {t("common.capture")}
         </button>
       </div>
     </div>
