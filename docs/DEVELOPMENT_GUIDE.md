@@ -46,6 +46,20 @@ Use the combined check when appropriate:
 npm run check
 ```
 
+## Automated Tests
+
+Run the current lightweight test suite with:
+
+```bash
+npm run test
+```
+
+The test foundation is intentionally narrow. It currently covers only
+`src/lib/priority-engine.ts`, including overdue and due-today ranking,
+completed-task exclusion, priority scoring, recommendation reasons, and
+deterministic ordering. There are no browser, API, Supabase, auth, or E2E tests
+yet.
+
 ## Workflow
 
 1. Read `AGENTS.md`.
