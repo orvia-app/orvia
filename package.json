@@ -8,7 +8,7 @@
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm run build",
     "test": "npm run test:run",
-    "test:run": "node --test tests/priority-engine.test.mjs",
+    "test:run": "node --test tests/*.test.mjs",
     "security:guard": "node scripts/security-guard.mjs",
     "verify:rls": "node scripts/verify-rls-ownership.mjs",
     "start": "next start",
