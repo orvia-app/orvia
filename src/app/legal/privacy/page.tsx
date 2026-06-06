@@ -1,55 +1,67 @@
+"use client";
+
+import { useI18n } from "@/components/i18n/I18nProvider";
+import { PublicInfoNav } from "@/components/public/PublicInfoNav";
 import { Card } from "@/components/ui/Card";
 import { Page, PageHeader, PageSection } from "@/components/ui/Page";
+import type { TranslationKey } from "@/lib/i18n";
 
-const sections = [
+const sections: {
+  bodyKey: TranslationKey;
+  titleKey: TranslationKey;
+}[] = [
   {
-    title: "Overview",
-    body: "This Privacy Policy describes how Orvia handles data during the early beta. Orvia is still evolving, and some features save data on this device while others save supported records to your account.",
+    titleKey: "legal.privacy.overviewTitle",
+    bodyKey: "legal.privacy.overviewBody",
   },
   {
-    title: "Data You Provide",
-    body: "You may create tasks, notes, captures, and activity through the product. Signed-in cloud-backed records are associated with your account. Signed-out and fallback records may remain in this browser.",
+    titleKey: "legal.privacy.dataTitle",
+    bodyKey: "legal.privacy.dataBody",
   },
   {
-    title: "Local Data",
-    body: "Some data remains in browser storage, including theme preference, onboarding state, command history, Labs data, and device recovery/cache data. Clearing browser storage or using Settings reset can remove local data.",
+    titleKey: "legal.privacy.localTitle",
+    bodyKey: "legal.privacy.localBody",
   },
   {
-    title: "Cloud Data",
-    body: "When signed in, supported tasks, notes, captures, and activities are stored with your Orvia account. Orvia uses account ownership checks and Supabase row-level security policies for supported cloud records.",
+    titleKey: "legal.privacy.cloudTitle",
+    bodyKey: "legal.privacy.cloudBody",
   },
   {
-    title: "AI And Integrations",
-    body: "Production AI and third-party integrations are not active unless clearly introduced later. Orvia does not currently send your workspace data to AI providers from the browser.",
+    titleKey: "legal.privacy.aiTitle",
+    bodyKey: "legal.privacy.aiBody",
   },
   {
-    title: "Backups And Reset",
-    body: "Create Backup exports supported workspace data saved on this device to an Orvia backup file. Local reset clears Orvia browser data only. Cloud account deletion/export controls are planned for a later backend phase.",
+    titleKey: "legal.privacy.backupsTitle",
+    bodyKey: "legal.privacy.backupsBody",
   },
   {
-    title: "Contact",
-    body: "For early beta privacy questions, use the support or invite channel through which you received access to Orvia.",
+    titleKey: "legal.privacy.contactTitle",
+    bodyKey: "legal.privacy.contactBody",
   },
-] as const;
+];
 
 export default function PrivacyPolicyPage() {
+  const { t } = useI18n();
+
   return (
     <main className="min-h-screen bg-zinc-100 text-zinc-950 dark:bg-zinc-950 dark:text-white">
       <Page>
         <PageHeader
-          title="Privacy Policy"
-          description="Early beta privacy terms for Orvia."
+          title={t("legal.privacyTitle")}
+          description={t("legal.privacyDescription")}
         />
 
-        <PageSection>
+        <PageSection className="space-y-4">
+          <PublicInfoNav />
+
           <Card className="space-y-6 p-6">
             {sections.map((section) => (
-              <section key={section.title}>
+              <section key={section.titleKey}>
                 <h2 className="text-base font-semibold text-zinc-950 dark:text-white">
-                  {section.title}
+                  {t(section.titleKey)}
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                  {section.body}
+                  {t(section.bodyKey)}
                 </p>
               </section>
             ))}
