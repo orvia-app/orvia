@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { I18nProvider } from "@/components/i18n/I18nProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { STORAGE_KEYS } from "@/lib/storage";
 import "./globals.css";
@@ -58,7 +59,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-zinc-50 text-zinc-950 dark:bg-black dark:text-white">
         <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <I18nProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </I18nProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { useAuthSession } from "@/components/auth/useAuthSession";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -37,6 +38,7 @@ import {
   getRelatedContextSubtitle,
   type EntityContext,
 } from "@/lib/memory/context";
+import type { TranslationKey } from "@/lib/i18n";
 
 type FilterValue = "all" | NoteType;
 
@@ -61,13 +63,13 @@ function buildNoteContextById(notes: readonly Note[]): NoteContextById {
   );
 }
 
-const FILTERS: { label: string; value: FilterValue }[] = [
-  { label: "All", value: "all" },
-  { label: "Notes", value: "note" },
-  { label: "Ideas", value: "idea" },
-  { label: "Books", value: "book" },
-  { label: "Courses", value: "course" },
-  { label: "Links", value: "link" },
+const FILTERS: { labelKey: TranslationKey; value: FilterValue }[] = [
+  { labelKey: "notes.filterAll", value: "all" },
+  { labelKey: "notes.typeNote", value: "note" },
+  { labelKey: "notes.typeIdea", value: "idea" },
+  { labelKey: "notes.typeBook", value: "book" },
+  { labelKey: "notes.typeCourse", value: "course" },
+  { labelKey: "notes.typeLink", value: "link" },
 ];
 
 const EMPTY_FORM: NoteFormState = {
@@ -76,39 +78,40 @@ const EMPTY_FORM: NoteFormState = {
   type: "note",
 };
 
-function getTypeBadgeLabel(type: NoteType): string {
+function noteTypeLabelKey(type: NoteType): TranslationKey {
   switch (type) {
     case "note":
-      return "Note";
+      return "notes.typeNote";
 
     case "idea":
-      return "Idea";
+      return "notes.typeIdea";
 
     case "book":
-      return "Book";
+      return "notes.typeBook";
 
     case "course":
-      return "Course";
+      return "notes.typeCourse";
 
     case "link":
-      return "Link";
+      return "notes.typeLink";
   }
 }
 
-function noteSourceLabel(source: PrimaryNoteSource): string {
+function noteSourceLabelKey(source: PrimaryNoteSource): TranslationKey {
   if (source === "cloud") {
-    return "Cloud";
+    return "source.cloud";
   }
 
   if (source === "local-fallback") {
-    return "Local fallback";
+    return "source.localFallback";
   }
 
-  return "Local only";
+  return "source.localOnly";
 }
 
 export default function NotesPage() {
   const { session } = useAuthSession();
+  const { t } = useI18n();
   const accessToken = session?.access_token;
   const ownerId = session?.user.id;
   const [notes, setNotes] = useState<Note[]>([]);
@@ -161,9 +164,9 @@ export default function NotesPage() {
   }, [notes, typeFilter]);
   const noteBoundaryMessage = accessToken
     ? noteSource === "local-fallback"
-      ? "Note sync is unavailable. Showing notes saved on this device."
-      : "Notes are saved to your account. Device-only notes may appear until you import them from Settings."
-    : "Signed out. Notes are saved on this device.";
+      ? t("source.notesFallback")
+      : t("notes.accountMessage")
+    : t("source.notesDevice");
 
   function openModal(): void {
     setModalOpen(true);
@@ -267,7 +270,7 @@ export default function NotesPage() {
     if (accessToken && result.source === "api") {
       void recordNoteCreatedActivity(result.note, { accessToken });
     } else if (accessToken && result.source === "local") {
-      setNoteActionError("Cloud create failed. Saved this note locally.");
+      setNoteActionError(t("notes.createFallback"));
     }
   }
 
@@ -327,7 +330,7 @@ export default function NotesPage() {
 
       syncNotes(nextNotes, { [note.id]: "local-fallback" });
       cancelEditingNote();
-      setNoteActionError("Cloud update failed. Saved this change locally.");
+      setNoteActionError(t("notes.updateFallback"));
     } finally {
       setNotePending(note.id, false);
     }
@@ -355,7 +358,7 @@ export default function NotesPage() {
       }
     } catch {
       syncNotes(notes.filter((currentNote) => currentNote.id !== note.id));
-      setNoteActionError("Cloud delete failed. Removed this note locally.");
+      setNoteActionError(t("notes.deleteFallback"));
     } finally {
       setNotePending(note.id, false);
       setNoteToDelete(null);
@@ -369,12 +372,12 @@ export default function NotesPage() {
     <AppShell>
       <Page>
         <PageHeader
-          eyebrow="Recall"
-          title="Notes"
-          description="Capture ideas, books, courses, and useful knowledge."
+          eyebrow={t("notes.eyebrow")}
+          title={t("notes.title")}
+          description={t("notes.description")}
           actions={
             <Button type="button" onClick={openModal} variant="secondary">
-              + New Note
+              {t("notes.new")}
             </Button>
           }
         />
@@ -387,7 +390,7 @@ export default function NotesPage() {
           </Card>
 
           <div className="app-scrollbar -mx-4 mt-7 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
-            {FILTERS.map(({ label, value }) => {
+            {FILTERS.map(({ labelKey, value }) => {
               const active = typeFilter === value;
 
               return (
@@ -401,7 +404,7 @@ export default function NotesPage() {
                       : "rounded-xl bg-white px-4 py-2 text-sm font-medium text-zinc-600 shadow-sm shadow-zinc-950/[0.02] ring-1 ring-zinc-200/80 transition hover:bg-violet-50/70 hover:text-violet-800 hover:ring-violet-200/70 dark:bg-zinc-900/60 dark:text-zinc-400 dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/20"
                   }
                 >
-                  {label}
+                  {t(labelKey)}
                 </button>
               );
             })}
@@ -440,7 +443,7 @@ export default function NotesPage() {
                           className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
                           htmlFor={`edit-note-title-${note.id}`}
                         >
-                          Title <span className="text-red-400">*</span>
+                          {t("common.title")} <span className="text-red-400">*</span>
                         </label>
                         <input
                           className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
@@ -462,7 +465,7 @@ export default function NotesPage() {
                           className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
                           htmlFor={`edit-note-content-${note.id}`}
                         >
-                          Content <span className="text-red-400">*</span>
+                          {t("common.content")} <span className="text-red-400">*</span>
                         </label>
                         <textarea
                           className="mt-1.5 w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
@@ -485,7 +488,7 @@ export default function NotesPage() {
                           className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
                           htmlFor={`edit-note-type-${note.id}`}
                         >
-                          Type
+                          {t("common.type")}
                         </label>
                         <select
                           className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
@@ -501,7 +504,7 @@ export default function NotesPage() {
                         >
                           {NOTE_TYPES.map((type) => (
                             <option key={type} value={type}>
-                              {getTypeBadgeLabel(type)}
+                              {t(noteTypeLabelKey(type))}
                             </option>
                           ))}
                         </select>
@@ -514,14 +517,14 @@ export default function NotesPage() {
                           onClick={cancelEditingNote}
                           variant="secondary"
                         >
-                          Cancel
+                          {t("common.cancel")}
                         </Button>
                         <Button
                           className="w-full sm:w-auto"
                           disabled={notePending}
                           type="submit"
                         >
-                          {notePending ? "Saving..." : "Save changes"}
+                          {notePending ? t("common.saving") : t("common.saveChanges")}
                         </Button>
                       </div>
                     </form>
@@ -533,11 +536,9 @@ export default function NotesPage() {
                         </h2>
 
                         <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
-                          <Badge>{getTypeBadgeLabel(note.type)}</Badge>
+                          <Badge>{t(noteTypeLabelKey(note.type))}</Badge>
                           <Badge className="bg-zinc-100/80 text-zinc-500 ring-zinc-200/70 dark:bg-zinc-900/75 dark:text-zinc-400 dark:ring-zinc-800/80">
-                            {noteSourceLabel(
-                              noteSourcesById[note.id] ?? noteSource,
-                            )}
+                            {t(noteSourceLabelKey(noteSourcesById[note.id] ?? noteSource))}
                           </Badge>
                         </div>
                       </div>
@@ -553,7 +554,7 @@ export default function NotesPage() {
                           ))}
                           {context.relatedCount > 0 ? (
                             <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-500 dark:bg-zinc-900/70 dark:text-zinc-400">
-                              Connected context
+                              {t("notes.connectedContext")}
                             </span>
                           ) : null}
                         </div>
@@ -565,7 +566,7 @@ export default function NotesPage() {
                       {context && context.relatedItems.length > 0 ? (
                         <div className="mt-4 rounded-xl bg-zinc-100/60 px-3 py-2.5 ring-1 ring-inset ring-zinc-200/60 dark:bg-zinc-900/35 dark:ring-zinc-800/70">
                           <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
-                            Connected to
+                            {t("notes.connectedTo")}
                           </p>
                           <div className="mt-2 space-y-1.5">
                             {context.relatedItems.slice(0, 2).map((item) => (
@@ -591,7 +592,7 @@ export default function NotesPage() {
                           onClick={() => startEditingNote(note)}
                           variant="secondary"
                         >
-                          Edit
+                          {t("common.edit")}
                         </Button>
                         <Button
                           className="w-full border border-red-200/70 px-3 py-1.5 text-xs text-red-700 shadow-none hover:bg-red-50 hover:text-red-800 hover:ring-red-200/70 dark:border-red-500/20 dark:text-red-300 dark:hover:bg-red-500/10 dark:hover:text-red-200 dark:hover:ring-red-500/25 sm:w-auto"
@@ -599,7 +600,7 @@ export default function NotesPage() {
                           onClick={() => setNoteToDelete(note)}
                           variant="ghost"
                         >
-                          Delete
+                          {t("common.delete")}
                         </Button>
                       </div>
                     </>
@@ -612,8 +613,8 @@ export default function NotesPage() {
           {filteredNotes.length === 0 ? (
             <div className="mt-8">
               <EmptyState
-                title="No notes here"
-                description="Create a note or switch filters to see saved knowledge."
+                title={t("notes.emptyTitle")}
+                description={t("notes.emptyDescription")}
               />
             </div>
           ) : null}
@@ -641,12 +642,12 @@ export default function NotesPage() {
                 id="new-note-title"
                 className="text-lg font-semibold text-zinc-950 dark:text-white"
               >
-                New note
+                {t("notes.newNote")}
               </h2>
 
               <button
                 type="button"
-                aria-label="Close"
+                aria-label={t("common.close")}
                 onClick={closeModal}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white dark:focus-visible:ring-zinc-600"
               >
@@ -660,7 +661,7 @@ export default function NotesPage() {
                   htmlFor="note-title"
                   className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
                 >
-                  Title <span className="text-red-400">*</span>
+                  {t("common.title")} <span className="text-red-400">*</span>
                 </label>
 
                 <input
@@ -674,7 +675,7 @@ export default function NotesPage() {
                     }))
                   }
                   className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
-                  placeholder="Note title"
+                  placeholder={t("notes.titlePlaceholder")}
                 />
               </div>
 
@@ -683,7 +684,7 @@ export default function NotesPage() {
                   htmlFor="note-content"
                   className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
                 >
-                  Content <span className="text-red-400">*</span>
+                  {t("common.content")} <span className="text-red-400">*</span>
                 </label>
 
                 <textarea
@@ -698,7 +699,7 @@ export default function NotesPage() {
                     }))
                   }
                   className="mt-1.5 w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
-                  placeholder="Write anything worth remembering..."
+                  placeholder={t("notes.contentPlaceholder")}
                 />
               </div>
 
@@ -707,7 +708,7 @@ export default function NotesPage() {
                   htmlFor="note-type"
                   className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
                 >
-                  Type
+                  {t("common.type")}
                 </label>
 
                 <select
@@ -723,7 +724,7 @@ export default function NotesPage() {
                 >
                   {NOTE_TYPES.map((type) => (
                     <option key={type} value={type}>
-                      {getTypeBadgeLabel(type)}
+                      {t(noteTypeLabelKey(type))}
                     </option>
                   ))}
                 </select>
@@ -735,14 +736,14 @@ export default function NotesPage() {
                   onClick={closeModal}
                   className="rounded-xl border border-zinc-300 bg-transparent px-4 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
 
                 <button
                   type="submit"
                   className="rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
                 >
-                  Create
+                  {t("common.create")}
                 </button>
               </div>
             </form>
@@ -751,13 +752,13 @@ export default function NotesPage() {
       ) : null}
 
       <ConfirmDialog
-        cancelLabel="Cancel"
-        confirmLabel="Delete note"
+        cancelLabel={t("common.cancel")}
+        confirmLabel={t("notes.deleteNote")}
         confirming={noteToDelete ? pendingNoteIds.has(noteToDelete.id) : false}
         description={
           noteToDelete
-            ? `This removes "${noteToDelete.title}" from your notes.`
-            : "This note will be removed from your notes."
+            ? t("notes.deleteDescription").replace("{title}", noteToDelete.title)
+            : t("notes.deleteFallbackDescription")
         }
         onCancel={() => {
           if (!noteToDelete || !pendingNoteIds.has(noteToDelete.id)) {
@@ -766,7 +767,7 @@ export default function NotesPage() {
         }}
         onConfirm={confirmDeleteNote}
         open={noteToDelete !== null}
-        title="Delete note?"
+        title={t("notes.deleteTitle")}
         tone="danger"
       />
     </AppShell>

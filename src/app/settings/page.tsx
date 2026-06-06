@@ -6,6 +6,7 @@ import { Monitor, Moon, Sun } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { useAuthSession } from "@/components/auth/useAuthSession";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { useTheme, type Theme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -25,6 +26,7 @@ import {
   type LocalCloudImportSummary,
 } from "@/lib/local-cloud-sync";
 import { resetOnboarding } from "@/lib/onboarding";
+import type { TranslationKey } from "@/lib/i18n";
 
 type SettingsSectionId =
   | "profile"
@@ -33,73 +35,70 @@ type SettingsSectionId =
   | "data-privacy";
 
 const settingsSections: {
+  descriptionKey: TranslationKey;
+  detailKey: TranslationKey;
   id: SettingsSectionId;
-  title: string;
-  status: string;
-  description: string;
-  detail: string;
+  statusKey: TranslationKey;
+  titleKey: TranslationKey;
 }[] = [
   {
     id: "profile",
-    title: "Profile",
-    status: "Coming in Beta",
-    description: "Name, avatar, and personal workspace identity.",
-    detail:
-      "Profile controls will let you manage account identity and workspace defaults once account settings are fully cloud-backed.",
+    titleKey: "settings.profile",
+    statusKey: "settings.profileStatus",
+    descriptionKey: "settings.profileDescription",
+    detailKey: "settings.profileDetail",
   },
   {
     id: "integrations",
-    title: "Integrations",
-    status: "Coming in Beta",
-    description: "Calendar, email, and messaging connections.",
-    detail:
-      "Calendar, email, Telegram, and other integrations are planned for a future release after backend linking and consent controls are ready.",
+    titleKey: "settings.integrations",
+    statusKey: "settings.integrationsStatus",
+    descriptionKey: "settings.integrationsDescription",
+    detailKey: "settings.integrationsDetail",
   },
   {
     id: "billing",
-    title: "Billing",
-    status: "Future release",
-    description: "Plans, invoices, and payment management.",
-    detail:
-      "Billing will be added when Orvia introduces paid plans. Payment details will be handled by a payment provider, not stored directly by Orvia.",
+    titleKey: "settings.billing",
+    statusKey: "settings.billingStatus",
+    descriptionKey: "settings.billingDescription",
+    detailKey: "settings.billingDetail",
   },
   {
     id: "data-privacy",
-    title: "Data & Privacy",
-    status: "In progress",
-    description: "Export, local reset, and future account controls.",
-    detail:
-      "Available now: create a local backup, reset browser-local Orvia data, and keep cloud account data protected by account authentication. Coming later: full cloud account export, account deletion, and retention controls.",
+    titleKey: "settings.dataPrivacy",
+    statusKey: "settings.dataPrivacyStatus",
+    descriptionKey: "settings.dataPrivacyDescription",
+    detailKey: "settings.dataPrivacyDetail",
   },
 ];
 
 const appearanceOptions: {
   value: Theme;
-  label: string;
-  description: string;
+  labelKey: TranslationKey;
+  descriptionKey: TranslationKey;
   icon: typeof Moon;
 }[] = [
   {
     value: "dark",
-    label: "Dark",
-    description: "Easier on the eyes at night.",
+    labelKey: "nav.dark",
+    descriptionKey: "settings.darkDescription",
     icon: Moon,
   },
   {
     value: "light",
-    label: "Light",
-    description: "Bright interface for daytime.",
+    labelKey: "nav.light",
+    descriptionKey: "settings.lightDescription",
     icon: Sun,
   },
   {
     value: "system",
-    label: "System",
-    description: "Match your OS preference.",
+    labelKey: "nav.systemTheme",
+    descriptionKey: "settings.systemDescription",
     icon: Monitor,
   },
 ];
 
 export default function SettingsPage() {
+  const { locale, setLocale, t } = useI18n();
   const { hydrated, theme, resolvedTheme, setTheme } = useTheme();
   const { isAuthenticated, loading: authLoading, session } = useAuthSession();
   const accessToken = session?.access_token;
@@ -133,26 +132,26 @@ export default function SettingsPage() {
   }, [authLoading, importing, importPlan, isAuthenticated, planLoading]);
   const importButtonLabel = useMemo(() => {
     if (importing) {
-      return "Importing...";
+      return t("common.importing");
     }
 
     if (!isAuthenticated) {
-      return "Sign in to import";
+      return t("settings.signInToImport");
     }
 
     if (planLoading || authLoading) {
-      return "Checking...";
+      return t("common.checking");
     }
 
     if (
       importPlan?.status === "ready" &&
       importPlan.taskCount + importPlan.noteCount === 0
     ) {
-      return "Nothing to import";
+      return t("settings.nothingToImport");
     }
 
-    return "Import local data to cloud";
-  }, [authLoading, importPlan, importing, isAuthenticated, planLoading]);
+    return t("settings.importLocalData");
+  }, [authLoading, importPlan, importing, isAuthenticated, planLoading, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -237,32 +236,34 @@ export default function SettingsPage() {
       <div className="px-4 py-6 sm:p-10">
         <div className="mx-auto max-w-3xl">
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
-            Settings
+            {t("settings.title")}
           </h1>
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">
-            Manage your account and workspace defaults.
+            {t("settings.subtitle")}
           </p>
 
           <Section className="mt-10">
             <Card>
               <SectionHeader
-                title="Appearance"
+                title={t("settings.appearance")}
                 subtitle={
                   <>
-                    Current selection:{" "}
+                    {t("settings.currentSelection")}{" "}
                     <span className="font-medium text-zinc-950 dark:text-white">
                       {!hydrated
-                        ? "Loading"
+                        ? t("common.loading")
                         : theme === "system"
-                        ? `System (${resolvedTheme})`
-                        : theme.charAt(0).toUpperCase() + theme.slice(1)}
+                        ? `${t("nav.systemTheme")} (${t(
+                            resolvedTheme === "dark" ? "nav.dark" : "nav.light",
+                          )})`
+                        : t(theme === "dark" ? "nav.dark" : "nav.light")}
                     </span>
                   </>
                 }
               />
               <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                 {appearanceOptions.map(
-                  ({ value, label, description, icon: Icon }) => {
+                  ({ value, labelKey, descriptionKey, icon: Icon }) => {
                     const active = hydrated && theme === value;
 
                     return (
@@ -277,7 +278,9 @@ export default function SettingsPage() {
                         }
                       >
                         <Icon className="h-5 w-5" aria-hidden />
-                        <span className="text-sm font-semibold">{label}</span>
+                        <span className="text-sm font-semibold">
+                          {t(labelKey)}
+                        </span>
                         <span
                           className={
                             active
@@ -285,7 +288,7 @@ export default function SettingsPage() {
                               : "text-xs text-zinc-600 dark:text-zinc-400"
                           }
                         >
-                          {description}
+                          {t(descriptionKey)}
                         </span>
                       </button>
                     );
@@ -298,21 +301,65 @@ export default function SettingsPage() {
           <Section className="mt-8">
             <Card>
               <SectionHeader
-                title="Backup & Restore"
-                subtitle="Protect your workspace by creating a backup and restoring it later if needed."
+                title={t("settings.language")}
+                subtitle={t("settings.languageSubtitle")}
+              />
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {[
+                  {
+                    description: t("settings.englishDescription"),
+                    label: t("settings.english"),
+                    value: "en" as const,
+                  },
+                  {
+                    description: t("settings.ukrainianDescription"),
+                    label: t("settings.ukrainian"),
+                    value: "ua" as const,
+                  },
+                ].map((option) => {
+                  const active = locale === option.value;
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setLocale(option.value)}
+                      className={
+                        active
+                          ? "rounded-xl border border-violet-200/80 bg-violet-50 p-4 text-left text-violet-950 ring-1 ring-violet-200/60 dark:border-violet-500/25 dark:bg-violet-500/10 dark:text-violet-100 dark:ring-violet-500/15"
+                          : "rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-left transition hover:border-violet-200 hover:bg-white dark:border-zinc-800 dark:bg-zinc-900/40 dark:hover:border-violet-500/25 dark:hover:bg-zinc-900"
+                      }
+                    >
+                      <span className="text-sm font-semibold">
+                        {option.label}
+                      </span>
+                      <span className="mt-1 block text-xs leading-5 text-zinc-500 dark:text-zinc-500">
+                        {option.description}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </Card>
+          </Section>
+
+          <Section className="mt-8">
+            <Card>
+              <SectionHeader
+                title={t("settings.backupRestore")}
+                subtitle={t("settings.backupRestoreDescription")}
               />
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 <div className="flex min-h-[190px] flex-col rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
                   <div>
                     <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
-                      Create Backup
+                      {t("settings.createBackup")}
                     </h3>
                     <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                      Export your tasks, notes, and supported workspace data
-                      saved on this device into a backup file.
+                      {t("settings.createBackupDescription")}
                     </p>
                     <p className="mt-2 text-xs font-medium text-zinc-500 dark:text-zinc-500">
-                      Supported format: Orvia backup file (.json)
+                      {t("settings.supportedBackup")}
                     </p>
                   </div>
                   <div className="mt-auto pt-4">
@@ -320,7 +367,7 @@ export default function SettingsPage() {
                       className="h-9 w-full px-3 text-sm sm:w-auto"
                       onClick={exportData}
                     >
-                      Create backup
+                      {t("settings.createBackupButton")}
                     </Button>
                   </div>
                 </div>
@@ -328,14 +375,13 @@ export default function SettingsPage() {
                 <div className="flex min-h-[190px] flex-col rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
                   <div>
                     <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
-                      Restore Backup
+                      {t("settings.restoreBackup")}
                     </h3>
                     <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                      Import a previously exported Orvia backup. Restore is not
-                      available yet.
+                      {t("settings.restoreBackupDescription")}
                     </p>
                     <p className="mt-2 text-xs font-medium text-zinc-500 dark:text-zinc-500">
-                      Supported format: Orvia backup file (.json)
+                      {t("settings.supportedBackup")}
                     </p>
                   </div>
                   <div className="mt-auto pt-4">
@@ -344,7 +390,7 @@ export default function SettingsPage() {
                       disabled
                       variant="secondary"
                     >
-                      Coming Soon
+                      {t("common.comingSoon")}
                     </Button>
                   </div>
                 </div>
@@ -355,21 +401,20 @@ export default function SettingsPage() {
           <Section className="mt-8">
             <Card>
               <SectionHeader
-                title="Local data reset"
-                subtitle="Clear browser-local Orvia data without deleting cloud records."
+                title={t("settings.localDataReset")}
+                subtitle={t("settings.localDataResetDescription")}
               />
               <div className="mt-5 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
-                      Reset local data
+                      {t("settings.resetLocalData")}
                     </h3>
                     <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                      Remove Orvia data stored in this browser only. Cloud
-                      tasks, notes, captures, and activity are not deleted.
+                      {t("settings.resetLocalDataBody")}
                     </p>
                     <p className="mt-2 text-xs font-medium text-zinc-500 dark:text-zinc-500">
-                      This action cannot be undone.
+                      {t("settings.cannotBeUndone")}
                     </p>
                   </div>
                   <button
@@ -377,7 +422,7 @@ export default function SettingsPage() {
                     className="inline-flex h-9 w-full shrink-0 items-center justify-center rounded-xl border border-red-200/80 bg-white px-3 text-sm font-medium text-red-700 transition hover:border-red-300 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300/70 dark:border-red-500/25 dark:bg-zinc-950/40 dark:text-red-300 dark:hover:border-red-500/35 dark:hover:bg-red-500/10 dark:focus-visible:ring-red-500/30 sm:w-auto"
                     onClick={resetData}
                   >
-                    Reset local data
+                    {t("settings.resetLocalData")}
                   </button>
                 </div>
               </div>
@@ -387,33 +432,31 @@ export default function SettingsPage() {
           <Section className="mt-8">
             <Card>
               <SectionHeader
-                title="Workspace"
-                subtitle="Module organization and workspace customization."
+                title={t("settings.workspace")}
+                subtitle={t("settings.workspaceDescription")}
               />
               <div className="mt-3 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
                 <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
-                  Workspace customization
+                  {t("settings.workspaceCustomization")}
                 </h3>
                 <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                  Workspace customization is planned for a future release.
-                  Future versions of Orvia will allow enabling, disabling, and
-                  organizing workspace modules.
+                  {t("settings.workspaceCustomizationDescription")}
                 </p>
               </div>
 
               <div className="mt-3 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
                 <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
-                  Onboarding
+                  {t("settings.onboarding")}
                 </h3>
                 <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                  Show the Dashboard onboarding panel again for this browser.
+                  {t("settings.onboardingDescription")}
                 </p>
                 <Button
                   className="mt-4 w-full sm:w-auto"
                   onClick={resetOnboardingState}
                   variant="secondary"
                 >
-                  Reset onboarding
+                  {t("settings.resetOnboarding")}
                 </Button>
               </div>
             </Card>
@@ -422,44 +465,43 @@ export default function SettingsPage() {
           <Section className="mt-8">
             <Card>
               <SectionHeader
-                title="Local data sync"
-                subtitle="Move supported device-only tasks and notes into your account."
+                title={t("settings.localDataSync")}
+                subtitle={t("settings.localDataSyncDescription")}
               />
               <div className="mt-5 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
-                      One-time local import
+                      {t("settings.oneTimeImport")}
                     </h3>
                     <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
                       {authLoading
-                        ? "Checking sign-in status..."
+                        ? t("settings.checkingSignIn")
                         : isAuthenticated
-                        ? "Signed in. Import is manual, does not delete data saved on this device, and only supports tasks and notes."
-                        : "Sign in to import supported device-only tasks and notes to your account."}
+                        ? t("settings.importSignedIn")
+                        : t("settings.importSignedOut")}
                     </p>
                     <p className="mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-500">
-                      Orvia does not auto-import on login. Inbox captures,
-                      settings, and Labs data stay on this device for now.
+                      {t("settings.noAutoImport")}
                     </p>
                     <div className="mt-3 grid gap-2 text-sm text-zinc-700 dark:text-zinc-300 sm:grid-cols-2">
                       <div className="rounded-lg bg-white px-3 py-2 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:ring-zinc-800">
                         <span className="block text-xs text-zinc-500 dark:text-zinc-500">
-                          Task candidates
+                          {t("settings.taskCandidates")}
                         </span>
                         <span className="font-semibold">
                           {planLoading || !importPlan
-                            ? "Loading"
+                            ? t("common.loading")
                             : importPlan.taskCount}
                         </span>
                       </div>
                       <div className="rounded-lg bg-white px-3 py-2 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:ring-zinc-800">
                         <span className="block text-xs text-zinc-500 dark:text-zinc-500">
-                          Note candidates
+                          {t("settings.noteCandidates")}
                         </span>
                         <span className="font-semibold">
                           {planLoading || !importPlan
-                            ? "Loading"
+                            ? t("common.loading")
                             : importPlan.noteCount}
                         </span>
                       </div>
@@ -471,19 +513,35 @@ export default function SettingsPage() {
                     ) : null}
                     {importSummary ? (
                       <div className="mt-3 rounded-xl border border-emerald-200/80 bg-emerald-50/80 px-3 py-2.5 text-sm leading-6 text-emerald-900 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200">
-                        <p className="font-medium">Import completed.</p>
+                        <p className="font-medium">
+                          {t("settings.importCompleted")}
+                        </p>
                         <p className="mt-0.5">
-                          Supported device-only tasks and notes were copied to
-                          your account. Imported {importSummary.importedTasks}{" "}
-                          tasks and {importSummary.importedNotes} notes. Skipped{" "}
-                          {importSummary.skippedTasks} tasks and{" "}
-                          {importSummary.skippedNotes} notes.
+                          {t("settings.importCompletedBody")}{" "}
+                          {t("settings.importedTasksNotes")
+                            .replace(
+                              "{tasks}",
+                              String(importSummary.importedTasks),
+                            )
+                            .replace(
+                              "{notes}",
+                              String(importSummary.importedNotes),
+                            )
+                            .replace(
+                              "{skippedTasks}",
+                              String(importSummary.skippedTasks),
+                            )
+                            .replace(
+                              "{skippedNotes}",
+                              String(importSummary.skippedNotes),
+                            )}
                         </p>
                         {importSummary.errors.length > 0 ? (
                           <p className="mt-1 text-red-700 dark:text-red-300">
-                            {importSummary.errors.length} item
-                            {importSummary.errors.length === 1 ? "" : "s"} could
-                            not be imported.
+                            {t("settings.importErrors").replace(
+                              "{count}",
+                              String(importSummary.errors.length),
+                            )}
                           </p>
                         ) : null}
                       </div>
@@ -504,8 +562,8 @@ export default function SettingsPage() {
           <Section className="mt-8">
             <Card>
               <SectionHeader
-                title="Account settings"
-                subtitle="These areas are intentionally staged for beta."
+                title={t("settings.accountSettings")}
+                subtitle={t("settings.accountSettingsDescription")}
               />
               <div className="mt-5 grid gap-3 sm:grid-cols-[220px_minmax(0,1fr)]">
                 <div className="grid gap-2">
@@ -524,10 +582,10 @@ export default function SettingsPage() {
                         }
                       >
                         <span className="block text-sm font-semibold text-zinc-950 dark:text-white">
-                          {section.title}
+                          {t(section.titleKey)}
                         </span>
                         <span className="mt-1 block text-xs text-zinc-500 dark:text-zinc-500">
-                          {section.status}
+                          {t(section.statusKey)}
                         </span>
                       </button>
                     );
@@ -536,16 +594,16 @@ export default function SettingsPage() {
 
                 <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-5 dark:border-zinc-800/80 dark:bg-zinc-900/40">
                   <p className="text-xs font-medium uppercase tracking-wide text-violet-700 dark:text-violet-300">
-                    {selectedSettingsSection.status}
+                    {t(selectedSettingsSection.statusKey)}
                   </p>
                   <h3 className="mt-2 text-base font-semibold text-zinc-950 dark:text-white">
-                    {selectedSettingsSection.title}
+                    {t(selectedSettingsSection.titleKey)}
                   </h3>
                   <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                    {selectedSettingsSection.description}
+                    {t(selectedSettingsSection.descriptionKey)}
                   </p>
                   <p className="mt-3 text-sm leading-6 text-zinc-500 dark:text-zinc-500">
-                    {selectedSettingsSection.detail}
+                    {t(selectedSettingsSection.detailKey)}
                   </p>
                 </div>
               </div>
@@ -555,27 +613,27 @@ export default function SettingsPage() {
           <Section className="mt-8">
             <Card>
               <SectionHeader
-                title="Help & Legal"
-                subtitle="Learn how Orvia works and review early beta policies."
+                title={t("settings.helpLegal")}
+                subtitle={t("settings.helpLegalDescription")}
               />
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
                 <Link
                   href="/help-center"
                   className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 text-sm font-medium text-zinc-800 transition hover:bg-white hover:text-violet-800 hover:ring-1 hover:ring-violet-200/70 dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:text-zinc-200 dark:hover:bg-zinc-900 dark:hover:text-violet-200 dark:hover:ring-violet-500/20"
                 >
-                  Help Center
+                  {t("settings.helpCenter")}
                 </Link>
                 <Link
                   href="/legal/privacy"
                   className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 text-sm font-medium text-zinc-800 transition hover:bg-white hover:text-violet-800 hover:ring-1 hover:ring-violet-200/70 dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:text-zinc-200 dark:hover:bg-zinc-900 dark:hover:text-violet-200 dark:hover:ring-violet-500/20"
                 >
-                  Privacy Policy
+                  {t("settings.privacyPolicy")}
                 </Link>
                 <Link
                   href="/legal/terms"
                   className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 text-sm font-medium text-zinc-800 transition hover:bg-white hover:text-violet-800 hover:ring-1 hover:ring-violet-200/70 dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:text-zinc-200 dark:hover:bg-zinc-900 dark:hover:text-violet-200 dark:hover:ring-violet-500/20"
                 >
-                  Terms of Service
+                  {t("settings.termsService")}
                 </Link>
               </div>
             </Card>
@@ -584,10 +642,10 @@ export default function SettingsPage() {
       </div>
 
       <ConfirmDialog
-        cancelLabel="Cancel"
-        confirmLabel="Reset local data"
+        cancelLabel={t("common.cancel")}
+        confirmLabel={t("settings.resetLocalData")}
         confirming={resettingLocalData}
-        description="This clears Orvia data stored in this browser only. Account data remains safe. Device-only unsynced data will be lost."
+        description={t("settings.resetDialogDescription")}
         onCancel={() => {
           if (!resettingLocalData) {
             setResetDialogOpen(false);
@@ -595,15 +653,15 @@ export default function SettingsPage() {
         }}
         onConfirm={confirmResetData}
         open={resetDialogOpen}
-        title="Reset local browser data?"
+        title={t("settings.resetDialogTitle")}
         tone="danger"
       />
 
       <ConfirmDialog
-        cancelLabel="Cancel"
-        confirmLabel="Reset onboarding"
+        cancelLabel={t("common.cancel")}
+        confirmLabel={t("settings.resetOnboarding")}
         confirming={resettingOnboarding}
-        description="This shows the Dashboard onboarding panel again on this browser. Your tasks, notes, and account data are not changed."
+        description={t("settings.resetOnboardingDialogDescription")}
         onCancel={() => {
           if (!resettingOnboarding) {
             setOnboardingDialogOpen(false);
@@ -611,7 +669,7 @@ export default function SettingsPage() {
         }}
         onConfirm={confirmResetOnboarding}
         open={onboardingDialogOpen}
-        title="Show onboarding again?"
+        title={t("settings.resetOnboardingDialogTitle")}
         tone="default"
       />
     </AppShell>

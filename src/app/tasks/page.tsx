@@ -12,6 +12,7 @@ import { ChevronDown, X } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { useAuthSession } from "@/components/auth/useAuthSession";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { Badge } from "@/components/ui/Badge";
 import type { BadgeVariant } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -44,11 +45,9 @@ import {
   getRelatedContextSubtitle,
   type EntityContext,
 } from "@/lib/memory/context";
-import {
-  getLegacyWorkspaceId,
-  getWorkspaceLabel,
-} from "@/lib/workspaces/workspaces";
+import { getLegacyWorkspaceId } from "@/lib/workspaces/workspaces";
 import type { Task, TaskPriority, TaskStatus } from "@/types";
+import type { TranslationKey } from "@/lib/i18n";
 
 type FilterValue = "all" | TaskStatus;
 const taskWorkspaceKeys = ["personal", "work"] as const;
@@ -84,11 +83,11 @@ function buildTaskContextById(tasks: readonly Task[]): TaskContextById {
   );
 }
 
-const filters: { label: string; value: FilterValue }[] = [
-  { label: "All", value: "all" },
-  { label: "Todo", value: "todo" },
-  { label: "In Progress", value: "in-progress" },
-  { label: "Done", value: "done" },
+const filters: { labelKey: TranslationKey; value: FilterValue }[] = [
+  { labelKey: "tasks.filterAll", value: "all" },
+  { labelKey: "status.todo", value: "todo" },
+  { labelKey: "status.inProgress", value: "in-progress" },
+  { labelKey: "status.done", value: "done" },
 ];
 
 const emptyForm: TaskFormState = {
@@ -99,12 +98,29 @@ const emptyForm: TaskFormState = {
   workspace: "personal",
 };
 
-function statusLabel(status: TaskStatus): string {
+function statusLabelKey(status: TaskStatus): TranslationKey {
   if (status === "in-progress") {
-    return "In Progress";
+    return "status.inProgress";
   }
 
-  return status.charAt(0).toUpperCase() + status.slice(1);
+  if (status === "done") {
+    return "status.done";
+  }
+
+  return "status.todo";
+}
+
+function priorityLabelKey(priority: TaskPriority): TranslationKey {
+  switch (priority) {
+    case "critical":
+      return "priority.critical";
+    case "high":
+      return "priority.high";
+    case "medium":
+      return "priority.medium";
+    case "low":
+      return "priority.low";
+  }
 }
 
 function priorityVariant(priority: TaskPriority): BadgeVariant {
@@ -113,16 +129,20 @@ function priorityVariant(priority: TaskPriority): BadgeVariant {
   return "default";
 }
 
-function taskSourceLabel(source: PrimaryTaskSource): string {
+function taskSourceLabelKey(source: PrimaryTaskSource): TranslationKey {
   if (source === "cloud") {
-    return "Cloud";
+    return "source.cloud";
   }
 
   if (source === "local-fallback") {
-    return "Local fallback";
+    return "source.localFallback";
   }
 
-  return "Local only";
+  return "source.localOnly";
+}
+
+function workspaceLabelKey(workspace: WorkspaceChoice): TranslationKey {
+  return workspace === "work" ? "workspace.work" : "workspace.personal";
 }
 
 function isFilterValue(value: string | null): value is FilterValue {
@@ -144,6 +164,7 @@ function getTaskPageContextFromSearchParams(
 function TasksContent() {
   const searchParams = useSearchParams();
   const { session } = useAuthSession();
+  const { t } = useI18n();
   const accessToken = session?.access_token;
   const ownerId = session?.user.id;
   const initialPageContext = useMemo(
@@ -222,9 +243,9 @@ function TasksContent() {
   }, [statusFilter, tasks]);
   const taskBoundaryMessage = accessToken
     ? taskSource === "local-fallback"
-      ? "Task sync is unavailable. Showing tasks saved on this device."
-      : "Tasks are saved to your account. Device-only tasks may appear until you import them from Settings."
-    : "Signed out. Tasks are saved on this device.";
+      ? t("source.tasksFallback")
+      : t("tasks.accountMessage")
+    : t("source.tasksDevice");
 
   function openModal(): void {
     setCreateError(null);
@@ -339,7 +360,7 @@ function TasksContent() {
       }
     } catch {
       if (!accessToken) {
-        setCreateError("Could not create task. Please try again.");
+        setCreateError(t("tasks.createError"));
         return;
       }
 
@@ -348,7 +369,7 @@ function TasksContent() {
 
       syncTasks(nextTasks, { [localTask.id]: "local-fallback" });
       closeModal();
-      setTaskActionError("Cloud create failed. Saved this task locally.");
+      setTaskActionError(t("tasks.createFallback"));
     } finally {
       setIsCreatingTask(false);
     }
@@ -403,7 +424,7 @@ function TasksContent() {
       );
 
       syncTasks(nextTasks, { [task.id]: "local-fallback" });
-      setTaskActionError("Cloud update failed. Saved this change locally.");
+      setTaskActionError(t("tasks.updateFallback"));
     } finally {
       setTaskPending(task.id, false);
     }
@@ -443,7 +464,7 @@ function TasksContent() {
       );
 
       syncTasks(nextTasks);
-      setTaskActionError("Cloud delete failed. Removed this task locally.");
+      setTaskActionError(t("tasks.deleteFallback"));
     } finally {
       setTaskPending(task.id, false);
       setTaskToDelete(null);
@@ -454,12 +475,12 @@ function TasksContent() {
     <AppShell>
       <Page>
         <PageHeader
-          eyebrow="Organize"
-          title="Tasks"
-          description="Prioritized work with connected local context."
+          eyebrow={t("tasks.eyebrow")}
+          title={t("tasks.title")}
+          description={t("tasks.description")}
           actions={
             <Button variant="secondary" onClick={openModal}>
-              + New Task
+              {t("tasks.new")}
             </Button>
           }
         />
@@ -472,7 +493,7 @@ function TasksContent() {
           </Card>
 
           <div className="app-scrollbar -mx-4 mt-7 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
-            {filters.map(({ label, value }) => {
+            {filters.map(({ labelKey, value }) => {
               const active = statusFilter === value;
 
               return (
@@ -485,7 +506,7 @@ function TasksContent() {
                   }}
                   className="px-4 py-2"
                 >
-                  {label}
+                  {t(labelKey)}
                 </Button>
               );
             })}
@@ -530,18 +551,16 @@ function TasksContent() {
 
                       <div className="mt-4 flex flex-wrap gap-2">
                         <Badge variant={priorityVariant(task.priority)}>
-                          {task.priority}
+                          {t(priorityLabelKey(task.priority))}
                         </Badge>
                         <Badge className="bg-zinc-100/80 text-zinc-500 ring-zinc-200/70 dark:bg-zinc-900/75 dark:text-zinc-400 dark:ring-zinc-800/80">
-                          {taskSourceLabel(
-                            taskSourcesById[task.id] ?? taskSource,
-                          )}
+                          {t(taskSourceLabelKey(taskSourcesById[task.id] ?? taskSource))}
                         </Badge>
                       </div>
                       {context && context.relatedItems.length > 0 ? (
                         <div className="mt-4 rounded-xl bg-zinc-100/60 px-3 py-2.5 ring-1 ring-inset ring-zinc-200/60 dark:bg-zinc-900/35 dark:ring-zinc-800/70">
                           <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
-                            Connected to
+                            {t("tasks.connectedTo")}
                           </p>
                           <div className="mt-2 space-y-1.5">
                             {context.relatedItems.slice(0, 2).map((item) => (
@@ -566,7 +585,7 @@ function TasksContent() {
                         className="sr-only"
                         id={`task-status-${task.id}`}
                       >
-                        Update task status
+                        {t("tasks.updateStatus")}
                       </span>
                       <div className="relative inline-flex">
                         <select
@@ -587,8 +606,8 @@ function TasksContent() {
                               value={status}
                             >
                               {status === "in-progress"
-                                ? "Progress"
-                                : statusLabel(status)}
+                                ? t("status.progress")
+                                : t(statusLabelKey(status))}
                             </option>
                           ))}
                         </select>
@@ -606,7 +625,7 @@ function TasksContent() {
                         }}
                         type="button"
                       >
-                        Delete
+                        {t("common.delete")}
                       </button>
                     </div>
                   </div>
@@ -616,8 +635,8 @@ function TasksContent() {
 
             {filteredTasks.length === 0 ? (
               <EmptyState
-                title="No tasks here"
-                description="Create a task or switch filters to review another queue."
+                title={t("tasks.emptyTitle")}
+                description={t("tasks.emptyDescription")}
               />
             ) : null}
           </div>
@@ -645,11 +664,11 @@ function TasksContent() {
                 id="new-task-title"
                 className="text-lg font-semibold text-zinc-950 dark:text-white"
               >
-                New task
+                {t("tasks.newTask")}
               </h2>
 
               <Button
-                aria-label="Close"
+                aria-label={t("common.close")}
                 className="h-8 w-8 p-0 text-zinc-700 hover:text-zinc-950 dark:text-zinc-200 dark:hover:text-white"
                 onClick={closeModal}
                 type="button"
@@ -665,7 +684,7 @@ function TasksContent() {
                   htmlFor="task-title"
                   className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
                 >
-                  Title <span className="text-red-400">*</span>
+                  {t("common.title")} <span className="text-red-400">*</span>
                 </label>
 
                 <input
@@ -679,7 +698,7 @@ function TasksContent() {
                     }))
                   }
                   className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
-                  placeholder="What needs to be done?"
+                  placeholder={t("tasks.titlePlaceholder")}
                 />
               </div>
 
@@ -688,7 +707,7 @@ function TasksContent() {
                   htmlFor="task-description"
                   className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
                 >
-                  Description
+                  {t("common.description")}
                 </label>
 
                 <textarea
@@ -702,7 +721,7 @@ function TasksContent() {
                     }))
                   }
                   className="mt-1.5 w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
-                  placeholder="Optional details"
+                  placeholder={t("tasks.descriptionPlaceholder")}
                 />
               </div>
 
@@ -711,7 +730,7 @@ function TasksContent() {
                   htmlFor="task-priority"
                   className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
                 >
-                  Priority
+                  {t("common.priority")}
                 </label>
 
                 <select
@@ -727,7 +746,7 @@ function TasksContent() {
                 >
                   {TASK_PRIORITIES.map((priority) => (
                     <option key={priority} value={priority}>
-                      {priority}
+                      {t(priorityLabelKey(priority))}
                     </option>
                   ))}
                 </select>
@@ -738,7 +757,7 @@ function TasksContent() {
                   htmlFor="task-status"
                   className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
                 >
-                  Status
+                  {t("common.status")}
                 </label>
 
                 <select
@@ -754,7 +773,7 @@ function TasksContent() {
                 >
                   {TASK_STATUSES.map((status) => (
                     <option key={status} value={status}>
-                      {statusLabel(status)}
+                      {t(statusLabelKey(status))}
                     </option>
                   ))}
                 </select>
@@ -765,7 +784,7 @@ function TasksContent() {
                   htmlFor="task-workspace"
                   className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
                 >
-                  Workspace
+                  {t("common.workspace")}
                 </label>
 
                 <select
@@ -781,7 +800,7 @@ function TasksContent() {
                 >
                   {taskWorkspaceKeys.map((workspaceKey) => (
                     <option key={workspaceKey} value={workspaceKey}>
-                      {getWorkspaceLabel(workspaceKey)}
+                      {t(workspaceLabelKey(workspaceKey))}
                     </option>
                   ))}
                 </select>
@@ -789,11 +808,11 @@ function TasksContent() {
 
               <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
                 <Button variant="secondary" onClick={closeModal}>
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
 
                 <Button type="submit" disabled={isCreatingTask}>
-                  Create
+                  {t("common.create")}
                 </Button>
               </div>
 
@@ -811,13 +830,13 @@ function TasksContent() {
       ) : null}
 
       <ConfirmDialog
-        cancelLabel="Cancel"
-        confirmLabel="Delete task"
+        cancelLabel={t("common.cancel")}
+        confirmLabel={t("tasks.deleteTask")}
         confirming={taskToDelete ? pendingTaskIds.has(taskToDelete.id) : false}
         description={
           taskToDelete
-            ? `This removes "${taskToDelete.title}" from your active task list.`
-            : "This task will be removed from your active task list."
+            ? t("tasks.deleteDescription").replace("{title}", taskToDelete.title)
+            : t("tasks.deleteFallbackDescription")
         }
         onCancel={() => {
           if (!taskToDelete || !pendingTaskIds.has(taskToDelete.id)) {
@@ -826,7 +845,7 @@ function TasksContent() {
         }}
         onConfirm={confirmDeleteTask}
         open={taskToDelete !== null}
-        title="Delete task?"
+        title={t("tasks.deleteTitle")}
         tone="danger"
       />
     </AppShell>

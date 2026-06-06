@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { BrandMark } from "@/components/BrandMark";
 import { useAuthSession } from "@/components/auth/useAuthSession";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import {
@@ -17,6 +18,7 @@ import {
 export default function LoginPage() {
   const router = useRouter();
   const { isAuthenticated, loading } = useAuthSession();
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -75,13 +77,13 @@ export default function LoginPage() {
         });
 
       if (signInError) {
-        setError("Could not sign in with those credentials.");
+        setError(t("login.errorCredentials"));
         return;
       }
 
       router.replace("/app");
     } catch {
-      setError("Auth is not configured for this environment.");
+      setError(t("login.errorConfig"));
     } finally {
       setSubmitting(false);
     }
@@ -96,10 +98,10 @@ export default function LoginPage() {
           </div>
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-              Log in to Orvia
+              {t("login.title")}
             </h1>
             <p className="text-sm text-zinc-500 dark:text-zinc-500">
-              Access your workspace and keep moving from capture to action.
+              {t("login.subtitle")}
             </p>
           </div>
         </div>
@@ -110,7 +112,7 @@ export default function LoginPage() {
               htmlFor="login-email"
               className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
             >
-              Email
+              {t("common.email")}
             </label>
             <input
               id="login-email"
@@ -130,13 +132,13 @@ export default function LoginPage() {
                 htmlFor="login-password"
                 className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
               >
-                Password
+                {t("common.password")}
               </label>
               <Link
                 href="/forgot-password"
                 className="text-xs font-medium text-zinc-500 hover:text-violet-800 dark:text-zinc-500 dark:hover:text-violet-200"
               >
-                Forgot password?
+                {t("login.forgotPassword")}
               </Link>
             </div>
             <input
@@ -147,7 +149,7 @@ export default function LoginPage() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
-              placeholder="Password"
+              placeholder={t("common.password")}
             />
           </div>
 
@@ -158,17 +160,17 @@ export default function LoginPage() {
           ) : null}
 
           <Button type="submit" disabled={submitting} className="w-full">
-            {submitting ? "Signing in..." : "Log in"}
+            {submitting ? t("login.submitting") : t("login.submit")}
           </Button>
         </form>
 
         <p className="mt-5 text-center text-sm text-zinc-500 dark:text-zinc-500">
-          New to Orvia?{" "}
+          {t("login.newToOrvia")}{" "}
           <Link
             href="/register"
             className="font-medium text-zinc-800 hover:text-zinc-950 dark:text-zinc-200 dark:hover:text-white"
           >
-            Create an account
+            {t("common.createAccount")}
           </Link>
         </p>
       </Card>

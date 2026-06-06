@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 
 import { BrandMark } from "@/components/BrandMark";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { getSupabaseBrowserAuthClient } from "@/lib/supabase/auth";
@@ -11,6 +12,7 @@ import { getSupabaseBrowserAuthClient } from "@/lib/supabase/auth";
 const PASSWORD_MIN_LENGTH = 8;
 
 export default function ResetPasswordPage() {
+  const { t } = useI18n();
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -27,7 +29,12 @@ export default function ResetPasswordPage() {
     setSuccess(null);
 
     if (password.length < PASSWORD_MIN_LENGTH) {
-      setError(`Password must be at least ${PASSWORD_MIN_LENGTH} characters.`);
+      setError(
+        t("reset.passwordMin").replace(
+          "{count}",
+          String(PASSWORD_MIN_LENGTH),
+        ),
+      );
       return;
     }
 
@@ -40,14 +47,14 @@ export default function ResetPasswordPage() {
       });
 
       if (updateError) {
-        setError("Could not update your password. Open a fresh reset link and try again.");
+        setError(t("reset.updateError"));
         return;
       }
 
       setPassword("");
-      setSuccess("Your password has been updated. You can continue to Orvia.");
+      setSuccess(t("reset.success"));
     } catch {
-      setError("Auth is not configured for this environment.");
+      setError(t("login.errorConfig"));
     } finally {
       setSubmitting(false);
     }
@@ -62,10 +69,10 @@ export default function ResetPasswordPage() {
           </div>
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-              Choose a new password
+              {t("reset.title")}
             </h1>
             <p className="text-sm text-zinc-500 dark:text-zinc-500">
-              Use the recovery link from your email to update access.
+              {t("reset.subtitle")}
             </p>
           </div>
         </div>
@@ -76,7 +83,7 @@ export default function ResetPasswordPage() {
               htmlFor="reset-password"
               className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
             >
-              New password
+              {t("reset.newPassword")}
             </label>
             <input
               id="reset-password"
@@ -87,7 +94,10 @@ export default function ResetPasswordPage() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
-              placeholder={`At least ${PASSWORD_MIN_LENGTH} characters`}
+              placeholder={t("reset.placeholder").replace(
+                "{count}",
+                String(PASSWORD_MIN_LENGTH),
+              )}
             />
           </div>
 
@@ -107,7 +117,7 @@ export default function ResetPasswordPage() {
           ) : null}
 
           <Button type="submit" disabled={submitting} className="w-full">
-            {submitting ? "Updating password..." : "Update password"}
+            {submitting ? t("reset.submitting") : t("reset.submit")}
           </Button>
         </form>
 
@@ -116,13 +126,13 @@ export default function ResetPasswordPage() {
             href="/login"
             className="font-medium text-zinc-800 hover:text-zinc-950 dark:text-zinc-200 dark:hover:text-white"
           >
-            Log in
+            {t("login.submit")}
           </Link>
           <Link
             href="/app"
             className="font-medium text-zinc-800 hover:text-zinc-950 dark:text-zinc-200 dark:hover:text-white"
           >
-            Go to dashboard
+            {t("reset.goDashboard")}
           </Link>
         </div>
       </Card>

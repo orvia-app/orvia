@@ -5,6 +5,7 @@ export const STORAGE_KEYS = {
   cars: "personal-os.cars",
   quickCaptures: "personal-os.quick-captures",
   theme: "personal-os.theme",
+  language: "personal-os.language",
   localResetCompleted: "personal-os.local-reset-completed",
   onboardingCompleted: "personal-os.onboarding.completed",
   commandHistory: "personal-os.command-history",

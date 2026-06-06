@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/Page";
 import { TimelineEventCard } from "@/components/timeline/TimelineEventCard";
 import { useAuthSession } from "@/components/auth/useAuthSession";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { fetchActivitiesViaApi } from "@/lib/activities-api";
 import {
   createTimelineEventsFromActivities,
@@ -19,6 +20,7 @@ import {
 
 export default function TimelinePage() {
   const { loading: authLoading, session } = useAuthSession();
+  const { t } = useI18n();
   const accessToken = session?.access_token;
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -50,7 +52,7 @@ export default function TimelinePage() {
         }
 
         setEvents([]);
-        setLoadError("Could not load your activity timeline.");
+        setLoadError(t("timeline.loadError"));
       } finally {
         if (!cancelled) {
           setLoaded(true);
@@ -71,45 +73,47 @@ export default function TimelinePage() {
     return () => {
       cancelled = true;
     };
-  }, [accessToken, authLoading]);
+  }, [accessToken, authLoading, t]);
 
   return (
     <AppShell>
       <Page>
         <PageHeader
-          title="Timeline"
-          description="Activity history of tasks, notes, captures, and imports."
+          title={t("timeline.title")}
+          description={t("timeline.description")}
         />
 
           <div className="mt-7">
             {!loaded ? (
               <PageSection className="mt-0">
                 <PageSectionHeader
-                  title="Activity"
-                  description="Loading your activity timeline."
+                  title={t("timeline.activity")}
+                  description={t("timeline.loadingDescription")}
                 />
               </PageSection>
             ) : !accessToken ? (
               <EmptyState
-                title="Timeline is available after sign in"
-                description="Sign in to view your recorded task, note, and import activity."
+                title={t("timeline.signInTitle")}
+                description={t("timeline.signInDescription")}
               />
             ) : loadError ? (
               <EmptyState
-                title="Timeline could not load"
+                title={t("timeline.loadErrorTitle")}
                 description={loadError}
               />
             ) : events.length === 0 ? (
               <EmptyState
-                title="No activity yet"
-                description="Create tasks, notes, or captures to start building your timeline."
+                title={t("timeline.emptyTitle")}
+                description={t("timeline.emptyDescription")}
               />
             ) : (
               <PageSection className="mt-0">
                 <PageSectionHeader
-                  title="Activity"
-                  description={`${events.length} event${
-                    events.length === 1 ? "" : "s"
+                  title={t("timeline.activity")}
+                  description={`${events.length} ${
+                    events.length === 1
+                      ? t("common.event")
+                      : t("common.events")
                   }`}
                 />
                 <div className="space-y-3">
