@@ -208,10 +208,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div
-          id="demo-flow"
-          className="rounded-[1.75rem] border border-zinc-200/75 bg-white/80 p-3 shadow-xl shadow-zinc-950/[0.07] dark:border-zinc-800/75 dark:bg-zinc-950/55 dark:shadow-black/30"
-        >
+        <div className="rounded-[1.75rem] border border-zinc-200/75 bg-white/80 p-3 shadow-xl shadow-zinc-950/[0.07] dark:border-zinc-800/75 dark:bg-zinc-950/55 dark:shadow-black/30">
           <div className="rounded-[1.35rem] border border-zinc-200/70 bg-zinc-50/80 p-4 dark:border-zinc-800/70 dark:bg-zinc-900/60">
             <div className="flex items-center justify-between border-b border-zinc-200/75 pb-4 dark:border-zinc-800/75">
               <div>
@@ -283,7 +280,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
+      <section
+        id="demo-flow"
+        className="mx-auto max-w-6xl scroll-mt-8 px-4 py-16 sm:px-6 lg:px-8"
+      >
         <div className="max-w-2xl">
           <p className="text-sm font-medium uppercase tracking-wide text-violet-700 dark:text-violet-300">
             {t("landing.workflowEyebrow")}
