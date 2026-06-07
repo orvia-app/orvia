@@ -187,6 +187,22 @@ Rules:
 - restrict access to production logs
 - treat logs as in-scope for incident response and data deletion policy where applicable
 
+## Activity And Timeline Data Minimization
+
+Timeline activity records should describe product actions without duplicating
+full user-authored content.
+
+Do not copy task descriptions, note content, capture text, search queries, raw
+errors, tokens, sessions, or authorization headers into activity titles,
+descriptions, or metadata. Activity rows should use short system-generated
+titles and descriptions such as "Task created", "Created a task", or "Captured
+an inbox item".
+
+Allowed activity metadata should stay categorical or boolean where possible,
+such as priority, status, `has_due_date`, source, outcome, note type, or storage
+mode. Activity remains user personal data, but it should not become a second
+content store that complicates retention, export, deletion, or privacy review.
+
 ## Future Auth And Session Architecture
 
 Future auth should support:

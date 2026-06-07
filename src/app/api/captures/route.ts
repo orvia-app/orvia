@@ -130,8 +130,8 @@ async function recordCaptureCreatedActivity(
     type: "quick_capture_created",
     entity_type: "inbox",
     entity_id: capture.id,
-    title: "Created inbox capture",
-    description: capture.content,
+    title: "Inbox item captured",
+    description: "Captured an inbox item",
     metadata: {
       source: capture.source,
       status: capture.status,
