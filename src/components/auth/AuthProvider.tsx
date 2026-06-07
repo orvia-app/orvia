@@ -9,12 +9,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { Session, User } from "@supabase/supabase-js";
+import type { Session, Subscription, User } from "@supabase/supabase-js";
 
 import {
   clearSupabaseBrowserAuthSession,
   getSupabaseBrowserAuthClient,
-  isInvalidSupabaseRefreshTokenError,
+  isExpectedSupabaseSignedOutError,
 } from "@/lib/supabase/auth";
 
 type AuthActionResult =
@@ -73,19 +73,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
+    let subscription: Subscription | null = null;
 
     try {
       const supabase = getSupabaseBrowserAuthClient();
-      const { data } = supabase.auth.onAuthStateChange(
-        (_event, nextSession) => {
-          commitSession(nextSession);
-          setAuthError(null);
-          setLoading(false);
-        },
-      );
+
+      function subscribeToAuthStateChanges(): void {
+        if (subscription || cancelled) {
+          return;
+        }
+
+        const { data } = supabase.auth.onAuthStateChange(
+          (_event, nextSession) => {
+            if (cancelled) {
+              return;
+            }
+
+            if (isSignedOutSession(
+              nextSession,
+              ignoredSignedOutAccessTokenRef.current,
+            )) {
+              commitSession(null);
+              setAuthError(null);
+              setLoading(false);
+              return;
+            }
+
+            commitSession(nextSession);
+            setAuthError(null);
+            setLoading(false);
+          },
+        );
+
+        subscription = data.subscription;
+      }
 
       async function loadInitialSession(): Promise<void> {
         try {
+          const { error: initializeError } = await supabase.auth.initialize();
+
+          if (cancelled) {
+            return;
+          }
+
+          if (initializeError) {
+            if (isExpectedSupabaseSignedOutError(initializeError)) {
+              await clearSupabaseBrowserAuthSession(supabase);
+              commitSignedOutState();
+              subscribeToAuthStateChanges();
+            } else {
+              setAuthError("Could not load auth session.");
+              commitSession(null);
+              setLoading(false);
+            }
+
+            return;
+          }
+
           const { data: sessionData, error } =
             await supabase.auth.getSession();
 
@@ -94,9 +138,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
 
           if (error) {
-            if (isInvalidSupabaseRefreshTokenError(error)) {
+            if (isExpectedSupabaseSignedOutError(error)) {
               await clearSupabaseBrowserAuthSession(supabase);
               commitSignedOutState();
+              subscribeToAuthStateChanges();
             } else {
               setAuthError("Could not load auth session.");
               commitSession(null);
@@ -109,14 +154,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setAuthError(null);
           commitSession(sessionData.session ?? null);
           setLoading(false);
+          subscribeToAuthStateChanges();
         } catch (error) {
           if (cancelled) {
             return;
           }
 
-          if (isInvalidSupabaseRefreshTokenError(error)) {
+          if (isExpectedSupabaseSignedOutError(error)) {
             await clearSupabaseBrowserAuthSession(supabase);
             commitSignedOutState();
+            subscribeToAuthStateChanges();
           } else {
             setAuthError("Could not load auth session.");
             commitSession(null);
@@ -129,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return () => {
         cancelled = true;
-        data.subscription.unsubscribe();
+        subscription?.unsubscribe();
       };
     } catch {
       setAuthError("Auth is not configured.");
@@ -166,7 +213,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data } = await supabase.auth.getSession();
         nextSession = data.session ?? null;
       } catch (error) {
-        if (isInvalidSupabaseRefreshTokenError(error)) {
+        if (isExpectedSupabaseSignedOutError(error)) {
           await clearSupabaseBrowserAuthSession(supabase);
           commitSignedOutState();
           return { ok: true };

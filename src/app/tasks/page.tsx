@@ -21,6 +21,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Page, PageHeader } from "@/components/ui/Page";
 import {
+  recordTaskCompletedActivity,
   recordTaskCreatedActivity,
   recordTaskDeletedActivity,
   recordTaskUpdatedActivity,
@@ -407,11 +408,19 @@ function TasksContent() {
       syncTasks(nextTasks);
 
       if (accessToken) {
-        void recordTaskUpdatedActivity(
-          updatedTask,
-          { previousStatus: task.status },
-          { accessToken },
-        );
+        if (nextStatus === "done") {
+          void recordTaskCompletedActivity(
+            updatedTask,
+            { previousStatus: task.status },
+            { accessToken },
+          );
+        } else {
+          void recordTaskUpdatedActivity(
+            updatedTask,
+            { previousStatus: task.status },
+            { accessToken },
+          );
+        }
       }
     } catch {
       const nextTasks = tasks.map((currentTask) =>

@@ -4,6 +4,7 @@ import {
   workspaceIdFromLabel,
 } from "@/lib/inbox";
 import {
+  recordInboxProcessedActivity,
   recordNoteCreatedActivity,
   recordTaskCreatedActivity,
 } from "@/lib/activity-recording";
@@ -112,6 +113,9 @@ export async function convertInboxItemToTask(
     await recordTaskCreatedActivity(result.task, {
       accessToken: options.accessToken,
     });
+    await recordInboxProcessedActivity("task", {
+      accessToken: options.accessToken,
+    });
   }
 
   return {
@@ -147,6 +151,9 @@ export async function convertInboxItemToNote(
     await recordNoteCreatedActivity(result.note, {
       accessToken: options.accessToken,
     });
+    await recordInboxProcessedActivity("note", {
+      accessToken: options.accessToken,
+    });
   }
 
   return {
@@ -165,12 +172,20 @@ export async function archiveInboxItem(
   capture: QuickCapture,
   options: InboxProcessingOptions = {},
 ): Promise<InboxArchiveProcessingResult> {
+  const remainingCaptures = await removeProcessedCapture(
+    capture,
+    "archived",
+    options,
+  );
+
+  if (options.captureSource === "cloud") {
+    await recordInboxProcessedActivity("archived", {
+      accessToken: options.accessToken,
+    });
+  }
+
   return {
     action: "archive",
-    remainingCaptures: await removeProcessedCapture(
-      capture,
-      "archived",
-      options,
-    ),
+    remainingCaptures,
   };
 }

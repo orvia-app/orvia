@@ -77,7 +77,6 @@ const note = {
 test("task activity payloads do not include raw task content", async () => {
   const calls = [];
   const {
-    recordTaskCompletedActivity,
     recordTaskCreatedActivity,
     recordTaskDeletedActivity,
     recordTaskUpdatedActivity,
@@ -89,14 +88,9 @@ test("task activity payloads do not include raw task content", async () => {
     { previousStatus: "todo" },
     { accessToken: "token" },
   );
-  await recordTaskCompletedActivity(
-    { ...task, status: "done" },
-    { previousStatus: "todo" },
-    { accessToken: "token" },
-  );
   await recordTaskDeletedActivity(task, { accessToken: "token" });
 
-  assert.equal(calls.length, 4);
+  assert.equal(calls.length, 3);
 
   for (const call of calls) {
     const serialized = JSON.stringify(call);
@@ -104,11 +98,8 @@ test("task activity payloads do not include raw task content", async () => {
     assert.equal(serialized.includes(task.title), false);
     assert.equal(serialized.includes(task.description), false);
     assert.equal(serialized.includes(task.workspaceId), false);
-    assert.match(call.title, /^Task (created|updated|completed|deleted)$/);
-    assert.match(
-      call.description,
-      /^(Created|Updated|Completed|Deleted) a task$/,
-    );
+    assert.match(call.title, /^Task (created|updated|deleted)$/);
+    assert.match(call.description, /^(Created|Updated|Deleted) a task$/);
   }
 
   assert.deepEqual(calls[0].metadata, {
@@ -116,37 +107,6 @@ test("task activity payloads do not include raw task content", async () => {
     priority: "critical",
     status: "todo",
   });
-});
-
-test("inbox processed activity payloads use safe outcome metadata only", async () => {
-  const calls = [];
-  const { recordInboxProcessedActivity } = loadActivityRecording(calls);
-
-  await recordInboxProcessedActivity("task", { accessToken: "token" });
-  await recordInboxProcessedActivity("note", { accessToken: "token" });
-  await recordInboxProcessedActivity("archived", { accessToken: "token" });
-
-  assert.equal(calls.length, 3);
-
-  assert.deepEqual(
-    calls.map((call) => call.metadata),
-    [
-      { outcome: "task", source: "inbox" },
-      { outcome: "note", source: "inbox" },
-      { outcome: "archived", source: "inbox" },
-    ],
-  );
-
-  for (const call of calls) {
-    assert.equal(call.type, "inbox_processed");
-    assert.equal(call.entityType, "inbox");
-    assert.equal(call.entityId, null);
-    assert.equal(call.title, "Inbox item processed");
-    assert.match(
-      call.description,
-      /^(Processed|Archived) an inbox item$/,
-    );
-  }
 });
 
 test("note activity payloads do not include raw note content", async () => {

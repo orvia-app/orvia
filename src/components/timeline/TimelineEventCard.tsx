@@ -26,6 +26,8 @@ function getEventLabelKey(event: TimelineEvent): TranslationKey {
       return "timeline.taskCreated";
     case "task_updated":
       return "timeline.taskUpdated";
+    case "task_completed":
+      return "timeline.taskCompleted";
     case "task_deleted":
       return "timeline.taskDeleted";
     case "note_created":
@@ -49,6 +51,7 @@ function getEventIcon(event: TimelineEvent): LucideIcon {
   switch (event.type) {
     case "task_created":
     case "task_updated":
+    case "task_completed":
       return CheckSquare;
     case "note_created":
     case "note_updated":

@@ -16,6 +16,7 @@ export type CreateActivityApiInput = {
   type:
     | "task_created"
     | "task_updated"
+    | "task_completed"
     | "task_deleted"
     | "note_created"
     | "note_updated"

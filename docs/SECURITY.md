@@ -220,6 +220,15 @@ Initial backend auth should use email/password with verified email before public
 
 Sessions should avoid storing sensitive tokens in localStorage. Prefer provider-supported secure session patterns and server-side checks for privileged operations.
 
+If browser Supabase auth storage contains an invalid or missing refresh token,
+or Supabase reports `AuthSessionMissingError`, the app must treat the session as
+signed out. Recovery should clear only Supabase auth/session storage for the
+configured project and must not clear Orvia workspace data, local caches,
+backups, or user-created browser data. Browser auth storage should be checked
+for obviously corrupt session shapes before constructing the Supabase browser
+client so provider initialization cannot refresh a known-bad token outside the
+app's guarded session recovery path.
+
 ## Future Access Control Plan
 
 When backend storage exists:
