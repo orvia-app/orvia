@@ -198,6 +198,12 @@ descriptions, or metadata. Activity rows should use short system-generated
 titles and descriptions such as "Task created", "Created a task", or "Captured
 an inbox item".
 
+`POST /api/activities` must enforce this boundary server-side. The API derives
+safe titles, descriptions, and entity types from the allowed activity type and
+keeps only allowlisted primitive metadata. Client-provided activity titles,
+descriptions, unknown metadata keys, nested objects, arrays, and unsafe values
+must not be persisted.
+
 Allowed activity metadata should stay categorical or boolean where possible,
 such as priority, status, `has_due_date`, source, outcome, note type, or storage
 mode. Activity remains user personal data, but it should not become a second
