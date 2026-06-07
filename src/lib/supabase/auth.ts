@@ -2,36 +2,63 @@
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-import { requireSupabaseBrowserConfig } from "@/lib/supabase/config";
+import {
+  getSupabaseBrowserReadiness,
+  requireSupabaseBrowserConfig,
+} from "@/lib/supabase/config";
+import {
+  getSupabaseAuthStorageKey,
+  getSupabaseAuthStorageKeysToClear,
+  getRecoverableCorruptSupabaseAuthStorageKeysToClear,
+} from "@/lib/supabase/auth-storage";
+export {
+  isExpectedSupabaseSignedOutError,
+  isInvalidSupabaseRefreshTokenError,
+  isSupabaseAuthSessionMissingError,
+} from "@/lib/supabase/auth-errors";
 
 export type SupabaseBrowserAuthClient = SupabaseClient;
 
 let cachedBrowserAuthClient: SupabaseBrowserAuthClient | null = null;
 
-function getErrorMessage(error: unknown): string | null {
-  if (error instanceof Error) {
-    return error.message;
+function removeSupabaseBrowserAuthStorageKeys(keys: readonly string[]): void {
+  if (typeof window === "undefined") {
+    return;
   }
 
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "message" in error &&
-    typeof error.message === "string"
-  ) {
-    return error.message;
+  try {
+    for (const key of keys) {
+      window.localStorage.removeItem(key);
+    }
+  } catch {
+    // Browser storage can be unavailable in private or restricted contexts.
   }
-
-  return null;
 }
 
-export function isInvalidSupabaseRefreshTokenError(error: unknown): boolean {
-  const message = getErrorMessage(error)?.toLowerCase();
+function getBrowserLocalStorageEntries(): [string, string | null][] {
+  if (typeof window === "undefined") {
+    return [];
+  }
 
-  return (
-    message?.includes("invalid refresh token") === true ||
-    message?.includes("refresh token not found") === true
+  try {
+    return Object.keys(window.localStorage).map((key) => [
+      key,
+      window.localStorage.getItem(key),
+    ]);
+  } catch {
+    return [];
+  }
+}
+
+function clearRecoverableCorruptSupabaseBrowserAuthStorage(
+  supabaseUrl: string,
+): void {
+  const keysToClear = getRecoverableCorruptSupabaseAuthStorageKeysToClear(
+    getBrowserLocalStorageEntries(),
+    supabaseUrl,
   );
+
+  removeSupabaseBrowserAuthStorageKeys(keysToClear);
 }
 
 export function getSupabaseBrowserAuthClient(): SupabaseBrowserAuthClient {
@@ -40,16 +67,36 @@ export function getSupabaseBrowserAuthClient(): SupabaseBrowserAuthClient {
   }
 
   const config = requireSupabaseBrowserConfig();
+  const storageKey = getSupabaseAuthStorageKey(config.url);
+
+  clearRecoverableCorruptSupabaseBrowserAuthStorage(config.url);
 
   cachedBrowserAuthClient = createClient(config.url, config.anonKey, {
     auth: {
       autoRefreshToken: true,
       detectSessionInUrl: true,
       persistSession: true,
+      skipAutoInitialize: true,
+      storageKey: storageKey ?? undefined,
     },
   });
 
   return cachedBrowserAuthClient;
+}
+
+function clearSupabaseBrowserAuthStorage(): void {
+  const readiness = getSupabaseBrowserReadiness();
+
+  if (!readiness.ready) {
+    return;
+  }
+
+  removeSupabaseBrowserAuthStorageKeys(
+    getSupabaseAuthStorageKeysToClear(
+      getBrowserLocalStorageEntries().map(([key]) => key),
+      readiness.config.url,
+    ),
+  );
 }
 
 export async function clearSupabaseBrowserAuthSession(
@@ -59,5 +106,7 @@ export async function clearSupabaseBrowserAuthSession(
     await supabase.auth.signOut({ scope: "local" });
   } catch {
     // If browser auth storage is already corrupt, keep rendering signed out.
+  } finally {
+    clearSupabaseBrowserAuthStorage();
   }
 }

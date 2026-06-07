@@ -12,7 +12,7 @@ import { Card } from "@/components/ui/Card";
 import {
   clearSupabaseBrowserAuthSession,
   getSupabaseBrowserAuthClient,
-  isInvalidSupabaseRefreshTokenError,
+  isExpectedSupabaseSignedOutError,
 } from "@/lib/supabase/auth";
 
 export default function LoginPage() {
@@ -42,7 +42,7 @@ export default function LoginPage() {
           router.replace("/app");
         }
       } catch (error) {
-        if (isInvalidSupabaseRefreshTokenError(error)) {
+        if (isExpectedSupabaseSignedOutError(error)) {
           const supabase = getSupabaseBrowserAuthClient();
           await clearSupabaseBrowserAuthSession(supabase);
         }

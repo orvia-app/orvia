@@ -55,6 +55,7 @@ export type SupabaseNoteInsert = {
 export type SupabaseActivityType =
   | "task_created"
   | "task_updated"
+  | "task_completed"
   | "task_deleted"
   | "note_created"
   | "note_updated"

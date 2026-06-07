@@ -13,6 +13,12 @@ type TaskUpdatedActivityDetails = {
   previousStatus?: TaskStatus;
 };
 
+type TaskCompletedActivityDetails = {
+  previousStatus?: TaskStatus;
+};
+
+type InboxProcessedOutcome = "task" | "note" | "archived";
+
 type LocalImportCompletedActivityDetails = {
   importedTasks: number;
   importedNotes: number;
@@ -94,6 +100,29 @@ export function recordTaskUpdatedActivity(
   );
 }
 
+export function recordTaskCompletedActivity(
+  task: Task,
+  details: TaskCompletedActivityDetails,
+  options: ActivityRecordingOptions,
+): Promise<void> {
+  return recordActivity(
+    {
+      type: "task_completed",
+      entityType: "task",
+      entityId: getUuidEntityId(task.id),
+      title: "Task completed",
+      description: "Completed a task",
+      metadata: {
+        has_due_date: Boolean(task.dueDate),
+        previousStatus: details.previousStatus,
+        priority: task.priority,
+        status: "done",
+      },
+    },
+    options,
+  );
+}
+
 export function recordTaskDeletedActivity(
   task: Task,
   options: ActivityRecordingOptions,
@@ -109,6 +138,29 @@ export function recordTaskDeletedActivity(
         has_due_date: Boolean(task.dueDate),
         priority: task.priority,
         status: task.status,
+      },
+    },
+    options,
+  );
+}
+
+export function recordInboxProcessedActivity(
+  outcome: InboxProcessedOutcome,
+  options: ActivityRecordingOptions,
+): Promise<void> {
+  return recordActivity(
+    {
+      type: "inbox_processed",
+      entityType: "inbox",
+      entityId: null,
+      title: "Inbox item processed",
+      description:
+        outcome === "archived"
+          ? "Archived an inbox item"
+          : "Processed an inbox item",
+      metadata: {
+        outcome,
+        source: "inbox",
       },
     },
     options,
