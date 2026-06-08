@@ -24,9 +24,12 @@ import {
   type NoteType,
 } from "@/lib/notes";
 import {
+  clearLocalFallbackNoteForOwner,
   createNoteFromPrimarySource,
   deleteNoteViaApi,
   loadNotesFromPrimarySourceWithBoundary,
+  markHiddenNoteForOwner,
+  markLocalFallbackNoteForOwner,
   saveCachedNotesForOwner,
   type NoteSourceById,
   type PrimaryNoteSource,
@@ -162,8 +165,17 @@ export default function NotesPage() {
 
     return notes.filter((note) => note.type === typeFilter);
   }, [notes, typeFilter]);
+  const hasLocalFallbackNotes = useMemo(
+    () =>
+      Object.values(noteSourcesById).some(
+        (source) => source === "local-fallback",
+      ),
+    [noteSourcesById],
+  );
   const noteBoundaryMessage = accessToken
-    ? noteSource === "local-fallback"
+    ? hasLocalFallbackNotes
+      ? t("notes.deviceOnlyWarning")
+      : noteSource === "local-fallback"
       ? t("source.notesFallback")
       : t("notes.accountMessage")
     : t("source.notesDevice");
@@ -311,7 +323,12 @@ export default function NotesPage() {
         currentNote.id === note.id ? updatedNote : currentNote,
       );
 
-      syncNotes(nextNotes);
+      if (accessToken) {
+        clearLocalFallbackNoteForOwner(ownerId, note.id);
+        syncNotes(nextNotes, { [note.id]: "cloud" });
+      } else {
+        syncNotes(nextNotes);
+      }
       cancelEditingNote();
 
       if (accessToken) {
@@ -329,6 +346,7 @@ export default function NotesPage() {
       );
 
       syncNotes(nextNotes, { [note.id]: "local-fallback" });
+      markLocalFallbackNoteForOwner(ownerId, note.id);
       cancelEditingNote();
       setNoteActionError(t("notes.updateFallback"));
     } finally {
@@ -357,6 +375,7 @@ export default function NotesPage() {
         void recordNoteDeletedActivity(note, { accessToken });
       }
     } catch {
+      markHiddenNoteForOwner(ownerId, note.id);
       syncNotes(notes.filter((currentNote) => currentNote.id !== note.id));
       setNoteActionError(t("notes.deleteFallback"));
     } finally {
@@ -383,7 +402,11 @@ export default function NotesPage() {
         />
 
           <Card
-            variant={noteSource === "local-fallback" ? "secondary" : "ghost"}
+            variant={
+              hasLocalFallbackNotes || noteSource === "local-fallback"
+                ? "secondary"
+                : "ghost"
+            }
             className="mt-5 p-3 text-sm text-zinc-600 dark:text-zinc-400"
           >
             {noteBoundaryMessage}

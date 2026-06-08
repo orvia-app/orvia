@@ -8,6 +8,13 @@ import {
   readUserScopedList,
   writeUserScopedList,
 } from "@/lib/user-scoped-cache";
+import {
+  getUserScopedFallbackIds,
+  getUserScopedHiddenIds,
+  markUserScopedFallbackId,
+  markUserScopedHiddenId,
+  unmarkUserScopedFallbackId,
+} from "@/lib/local-fallback-cache";
 import type { Task, TaskPriority, TaskStatus } from "@/types";
 
 type ApiTaskRow = {
@@ -88,6 +95,21 @@ export function mergeApiTasksWithLocalTasks(
   return [...apiTasks, ...localOnlyTasks];
 }
 
+export function mergeApiTasksWithLocalFallbackTasks(
+  apiTasks: Task[],
+  cachedTasks: Task[],
+  fallbackIds: readonly string[],
+): Task[] {
+  const fallbackIdSet = new Set(fallbackIds);
+  const fallbackTasks = cachedTasks.filter((task) => fallbackIdSet.has(task.id));
+  const fallbackTaskIds = new Set(fallbackTasks.map((task) => task.id));
+
+  return [
+    ...fallbackTasks,
+    ...apiTasks.filter((task) => !fallbackTaskIds.has(task.id)),
+  ];
+}
+
 export function getCachedTasksForOwner(ownerId?: string): Task[] {
   return readUserScopedList({
     domain: "tasks",
@@ -123,6 +145,27 @@ export function upsertCachedTaskForOwner(
   return nextTasks;
 }
 
+export function markLocalFallbackTaskForOwner(
+  ownerId: string | undefined,
+  taskId: string,
+): void {
+  markUserScopedFallbackId("tasks", ownerId, taskId);
+}
+
+export function markHiddenTaskForOwner(
+  ownerId: string | undefined,
+  taskId: string,
+): void {
+  markUserScopedHiddenId("tasks", ownerId, taskId);
+}
+
+export function clearLocalFallbackTaskForOwner(
+  ownerId: string | undefined,
+  taskId: string,
+): void {
+  unmarkUserScopedFallbackId("tasks", ownerId, taskId);
+}
+
 function createTaskSourceMap(
   tasks: readonly Task[],
   source: PrimaryTaskSource,
@@ -131,6 +174,20 @@ function createTaskSourceMap(
 
   for (const task of tasks) {
     sources[task.id] = source;
+  }
+
+  return sources;
+}
+
+function createMergedTaskSourceMap(
+  tasks: readonly Task[],
+  fallbackIds: readonly string[],
+): TaskSourceById {
+  const fallbackIdSet = new Set(fallbackIds);
+  const sources: TaskSourceById = {};
+
+  for (const task of tasks) {
+    sources[task.id] = fallbackIdSet.has(task.id) ? "local-fallback" : "cloud";
   }
 
   return sources;
@@ -314,13 +371,21 @@ export async function loadTasksFromPrimarySourceWithBoundary(
 
   try {
     const apiTasks = await fetchTasksViaApi(options);
+    const fallbackIds = getUserScopedFallbackIds("tasks", options.ownerId);
+    const hiddenIds = new Set(getUserScopedHiddenIds("tasks", options.ownerId));
+    const visibleApiTasks = apiTasks.filter((task) => !hiddenIds.has(task.id));
+    const tasks = mergeApiTasksWithLocalFallbackTasks(
+      visibleApiTasks,
+      getCachedTasksForOwner(options.ownerId),
+      fallbackIds,
+    );
 
-    saveCachedTasksForOwner(options.ownerId, apiTasks);
+    saveCachedTasksForOwner(options.ownerId, tasks);
 
     return {
       source: "cloud",
-      taskSources: createTaskSourceMap(apiTasks, "cloud"),
-      tasks: apiTasks,
+      taskSources: createMergedTaskSourceMap(tasks, fallbackIds),
+      tasks,
     };
   } catch {
     const tasks = getCachedTasksForOwner(options.ownerId);

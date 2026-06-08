@@ -31,6 +31,20 @@ export function getUserScopedStorageKey(
   return `${USER_SCOPED_STORAGE_PREFIX}.${userId}.${domain}`;
 }
 
+export function getUserScopedFallbackStorageKey(
+  userId: string,
+  domain: UserScopedStorageDomain,
+): string {
+  return `${USER_SCOPED_STORAGE_PREFIX}.${userId}.fallback.${domain}`;
+}
+
+export function getUserScopedHiddenStorageKey(
+  userId: string,
+  domain: UserScopedStorageDomain,
+): string {
+  return `${USER_SCOPED_STORAGE_PREFIX}.${userId}.hidden.${domain}`;
+}
+
 export function getUserScopedStoragePrefix(): string {
   return `${USER_SCOPED_STORAGE_PREFIX}.`;
 }

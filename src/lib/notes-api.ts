@@ -10,6 +10,13 @@ import {
   readUserScopedList,
   writeUserScopedList,
 } from "@/lib/user-scoped-cache";
+import {
+  getUserScopedFallbackIds,
+  getUserScopedHiddenIds,
+  markUserScopedFallbackId,
+  markUserScopedHiddenId,
+  unmarkUserScopedFallbackId,
+} from "@/lib/local-fallback-cache";
 
 type ApiNoteRow = {
   id?: unknown;
@@ -75,6 +82,21 @@ export function mergeApiNotesWithLocalNotes(
   return [...apiNotes, ...localOnlyNotes];
 }
 
+export function mergeApiNotesWithLocalFallbackNotes(
+  apiNotes: Note[],
+  cachedNotes: Note[],
+  fallbackIds: readonly string[],
+): Note[] {
+  const fallbackIdSet = new Set(fallbackIds);
+  const fallbackNotes = cachedNotes.filter((note) => fallbackIdSet.has(note.id));
+  const fallbackNoteIds = new Set(fallbackNotes.map((note) => note.id));
+
+  return [
+    ...fallbackNotes,
+    ...apiNotes.filter((note) => !fallbackNoteIds.has(note.id)),
+  ];
+}
+
 export function getCachedNotesForOwner(ownerId?: string): Note[] {
   return readUserScopedList({
     domain: "notes",
@@ -110,6 +132,27 @@ export function upsertCachedNoteForOwner(
   return nextNotes;
 }
 
+export function markLocalFallbackNoteForOwner(
+  ownerId: string | undefined,
+  noteId: string,
+): void {
+  markUserScopedFallbackId("notes", ownerId, noteId);
+}
+
+export function markHiddenNoteForOwner(
+  ownerId: string | undefined,
+  noteId: string,
+): void {
+  markUserScopedHiddenId("notes", ownerId, noteId);
+}
+
+export function clearLocalFallbackNoteForOwner(
+  ownerId: string | undefined,
+  noteId: string,
+): void {
+  unmarkUserScopedFallbackId("notes", ownerId, noteId);
+}
+
 function createNoteSourceMap(
   notes: readonly Note[],
   source: PrimaryNoteSource,
@@ -118,6 +161,20 @@ function createNoteSourceMap(
 
   for (const note of notes) {
     sources[note.id] = source;
+  }
+
+  return sources;
+}
+
+function createMergedNoteSourceMap(
+  notes: readonly Note[],
+  fallbackIds: readonly string[],
+): NoteSourceById {
+  const fallbackIdSet = new Set(fallbackIds);
+  const sources: NoteSourceById = {};
+
+  for (const note of notes) {
+    sources[note.id] = fallbackIdSet.has(note.id) ? "local-fallback" : "cloud";
   }
 
   return sources;
@@ -148,6 +205,7 @@ function createOwnerScopedFallbackNote(
   };
 
   upsertCachedNoteForOwner(ownerId, note);
+  markLocalFallbackNoteForOwner(ownerId, note.id);
 
   return note;
 }
@@ -303,12 +361,20 @@ export async function loadNotesFromPrimarySourceWithBoundary(
 
   try {
     const apiNotes = await fetchNotesViaApi(options);
+    const fallbackIds = getUserScopedFallbackIds("notes", options.ownerId);
+    const hiddenIds = new Set(getUserScopedHiddenIds("notes", options.ownerId));
+    const visibleApiNotes = apiNotes.filter((note) => !hiddenIds.has(note.id));
+    const notes = mergeApiNotesWithLocalFallbackNotes(
+      visibleApiNotes,
+      getCachedNotesForOwner(options.ownerId),
+      fallbackIds,
+    );
 
-    saveCachedNotesForOwner(options.ownerId, apiNotes);
+    saveCachedNotesForOwner(options.ownerId, notes);
 
     return {
-      noteSources: createNoteSourceMap(apiNotes, "cloud"),
-      notes: apiNotes,
+      noteSources: createMergedNoteSourceMap(notes, fallbackIds),
+      notes,
       source: "cloud",
     };
   } catch {
