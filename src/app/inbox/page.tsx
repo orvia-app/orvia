@@ -106,6 +106,13 @@ export default function InboxPage() {
       })),
     [captureSource, captureSourcesById, captures],
   );
+  const hasLocalFallbackCaptures = useMemo(
+    () =>
+      Object.values(captureSourcesById).some(
+        (source) => source === "local-fallback",
+      ),
+    [captureSourcesById],
+  );
   const exampleLines = [
     t("inbox.example1"),
     t("inbox.example2"),
@@ -113,13 +120,17 @@ export default function InboxPage() {
   ];
 
   const inboxBoundaryMessage = signedIn
-    ? captureSource === "local-fallback"
+    ? hasLocalFallbackCaptures
+      ? t("inbox.deviceOnlyWarning")
+      : captureSource === "local-fallback"
       ? t("source.inboxFallback")
       : t("source.savedAccount")
     : t("source.inboxDevice");
 
   const queueDescription =
-    captureSource === "local-fallback"
+    hasLocalFallbackCaptures
+      ? t("inbox.queueDeviceOnly")
+      : captureSource === "local-fallback"
       ? t("inbox.queueFallback")
       : signedIn
         ? t("inbox.queueCloud")

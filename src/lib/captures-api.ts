@@ -12,6 +12,12 @@ import {
   readUserScopedList,
   writeUserScopedList,
 } from "@/lib/user-scoped-cache";
+import {
+  getUserScopedFallbackIds,
+  getUserScopedHiddenIds,
+  markUserScopedFallbackId,
+  markUserScopedHiddenId,
+} from "@/lib/local-fallback-cache";
 
 export type Capture = {
   id: string;
@@ -240,6 +246,25 @@ export function mergeApiCapturesWithLocalCaptures(
   return [...apiCaptures, ...localOnlyCaptures];
 }
 
+export function mergeApiCapturesWithLocalFallbackCaptures(
+  apiCaptures: QuickCapture[],
+  cachedCaptures: QuickCapture[],
+  fallbackIds: readonly string[],
+): QuickCapture[] {
+  const fallbackIdSet = new Set(fallbackIds);
+  const fallbackCaptures = cachedCaptures.filter((capture) =>
+    fallbackIdSet.has(capture.id),
+  );
+  const fallbackCaptureIds = new Set(
+    fallbackCaptures.map((capture) => capture.id),
+  );
+
+  return [
+    ...fallbackCaptures,
+    ...apiCaptures.filter((capture) => !fallbackCaptureIds.has(capture.id)),
+  ];
+}
+
 export function getCachedCapturesForOwner(ownerId?: string): QuickCapture[] {
   return readUserScopedList({
     domain: "quick-captures",
@@ -273,6 +298,20 @@ export function upsertCachedCaptureForOwner(
   saveCachedCapturesForOwner(ownerId, nextCaptures);
 
   return nextCaptures;
+}
+
+export function markLocalFallbackCaptureForOwner(
+  ownerId: string | undefined,
+  captureId: string,
+): void {
+  markUserScopedFallbackId("quick-captures", ownerId, captureId);
+}
+
+export function markHiddenCaptureForOwner(
+  ownerId: string | undefined,
+  captureId: string,
+): void {
+  markUserScopedHiddenId("quick-captures", ownerId, captureId);
 }
 
 export function removeCachedCaptureForOwner(
@@ -313,8 +352,25 @@ function createOwnerScopedFallbackCapture(
   };
 
   upsertCachedCaptureForOwner(ownerId, capture);
+  markLocalFallbackCaptureForOwner(ownerId, capture.id);
 
   return capture;
+}
+
+function createMergedCaptureSourceMap(
+  captures: readonly QuickCapture[],
+  fallbackIds: readonly string[],
+): CaptureSourceById {
+  const fallbackIdSet = new Set(fallbackIds);
+  const sources: CaptureSourceById = {};
+
+  for (const capture of captures) {
+    sources[capture.id] = fallbackIdSet.has(capture.id)
+      ? "local-fallback"
+      : "cloud";
+  }
+
+  return sources;
 }
 
 export async function fetchCapturesViaApi(
@@ -441,16 +497,31 @@ export async function loadCapturesFromPrimarySourceWithBoundary(
     const apiCaptures = (await fetchCapturesViaApi(options))
       .filter((capture) => capture.status === "inbox")
       .map(mapCaptureToQuickCapture);
+    const fallbackIds = getUserScopedFallbackIds(
+      "quick-captures",
+      options.ownerId,
+    );
+    const hiddenIds = new Set(
+      getUserScopedHiddenIds("quick-captures", options.ownerId),
+    );
+    const visibleApiCaptures = apiCaptures.filter(
+      (capture) => !hiddenIds.has(capture.id),
+    );
+    const captures = mergeApiCapturesWithLocalFallbackCaptures(
+      visibleApiCaptures,
+      getCachedCapturesForOwner(options.ownerId),
+      fallbackIds,
+    );
 
     try {
-      saveCachedCapturesForOwner(options.ownerId, apiCaptures);
+      saveCachedCapturesForOwner(options.ownerId, captures);
     } catch {
       // Cache refresh is best-effort; the cloud read is still the source of truth.
     }
 
     return {
-      captureSources: createCaptureSourceMap(apiCaptures, "cloud"),
-      captures: apiCaptures,
+      captureSources: createMergedCaptureSourceMap(captures, fallbackIds),
+      captures,
       source: "cloud",
     };
   } catch {

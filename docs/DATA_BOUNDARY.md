@@ -39,6 +39,7 @@ authenticated user-scoped cache keys such as `personal-os.user.<userId>.*`.
 Some screens intentionally combine cloud-backed and local-only data while Orvia transitions from local-first MVP to authenticated cloud storage:
 
 - Tasks, Notes, and Inbox captures prefer cloud data when signed in. Authenticated cache data is scoped by Supabase user id so users on the same browser do not inherit another signed-in user's cached records.
+- Successful cloud refreshes preserve authenticated records that were explicitly created as device-only fallback records. This keeps failed-write recovery visible without pretending those records were uploaded.
 - Dashboard and Today use cloud-primary tasks and cloud-primary Inbox captures when signed in, with visible local fallback copy if cloud reads fail.
 - Search includes account tasks, account notes, account Inbox captures, and account activity when signed in. Signed-out search uses data saved on the current device.
 - Settings provides a manual local-to-cloud import for supported local tasks and notes only.
@@ -49,7 +50,7 @@ Signed-in UI must never silently present local-only data as cloud/account data.
 
 - Cloud-backed items should be labeled clearly where mixed data can appear.
 - Local-only items should use compact labels such as `Local only`.
-- Local fallback items should use compact labels such as `Local fallback`.
+- Local fallback items should use compact labels such as `Device only`.
 - Page-level helper copy should explain mixed surfaces without long warnings.
 - Inbox/quick capture surfaces must label cloud-primary, local-only, or local fallback mode clearly.
 - Activity/timeline data should only be fetched with an authenticated access token.
@@ -65,6 +66,8 @@ Rules:
 - Fallback should not delete local data.
 - Fallback should not auto-import local data.
 - Signed-in fallback writes must use user-scoped browser cache keyed by authenticated user id.
+- Signed-in fallback writes must be marked as device-only fallback records so later successful cloud refreshes do not hide them.
+- If a signed-in delete fails, the item may be hidden on that device only; it must not be described as deleted from the account.
 - Signed-out fallback writes may update shared browser-local storage and should be labeled as device-only data.
 
 ## Settings Import Rules
@@ -80,6 +83,7 @@ Rules:
 - It should show candidate counts before import.
 - It should show a success/error summary after import.
 - It must not import Inbox captures, settings, Labs data, or unsupported local records. Capture import/migration remains a separate future workflow.
+- It does not upload signed-in device-only fallback changes yet. Those records remain visible as device-only recovery data until a future sync queue/import flow exists.
 
 ## Remaining Beta Risks
 

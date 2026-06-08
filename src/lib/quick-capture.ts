@@ -3,6 +3,7 @@ import { createNoteFromPrimarySource } from "@/lib/notes-api";
 import { getTasks, saveTasks } from "@/lib/tasks";
 import {
   createTaskViaApi,
+  markLocalFallbackTaskForOwner,
   upsertCachedTaskForOwner,
   type TasksApiRequestOptions,
 } from "@/lib/tasks-api";
@@ -98,6 +99,7 @@ export async function createQuickCaptureTask(
 
     if (input.accessToken?.trim()) {
       upsertCachedTaskForOwner(input.ownerId, task);
+      markLocalFallbackTaskForOwner(input.ownerId, task.id);
     } else {
       upsertTaskInLocalCache(task);
     }

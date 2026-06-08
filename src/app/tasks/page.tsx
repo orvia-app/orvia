@@ -32,9 +32,12 @@ import {
   TASK_STATUSES,
 } from "@/lib/tasks";
 import {
+  clearLocalFallbackTaskForOwner,
   createTaskViaApi,
   deleteTaskViaApi,
   loadTasksFromPrimarySourceWithBoundary,
+  markHiddenTaskForOwner,
+  markLocalFallbackTaskForOwner,
   saveCachedTasksForOwner,
   type PrimaryTaskSource,
   type TaskSourceById,
@@ -242,8 +245,17 @@ function TasksContent() {
 
     return tasks.filter((task) => task.status === statusFilter);
   }, [statusFilter, tasks]);
+  const hasLocalFallbackTasks = useMemo(
+    () =>
+      Object.values(taskSourcesById).some(
+        (source) => source === "local-fallback",
+      ),
+    [taskSourcesById],
+  );
   const taskBoundaryMessage = accessToken
-    ? taskSource === "local-fallback"
+    ? hasLocalFallbackTasks
+      ? t("tasks.deviceOnlyWarning")
+      : taskSource === "local-fallback"
       ? t("source.tasksFallback")
       : t("tasks.accountMessage")
     : t("source.tasksDevice");
@@ -368,6 +380,7 @@ function TasksContent() {
       const localTask = createLocalTaskFromForm(title, workspaceId);
       const nextTasks = [localTask, ...tasks];
 
+      markLocalFallbackTaskForOwner(ownerId, localTask.id);
       syncTasks(nextTasks, { [localTask.id]: "local-fallback" });
       closeModal();
       setTaskActionError(t("tasks.createFallback"));
@@ -405,7 +418,12 @@ function TasksContent() {
         currentTask.id === task.id ? updatedTask : currentTask,
       );
 
-      syncTasks(nextTasks);
+      if (accessToken) {
+        clearLocalFallbackTaskForOwner(ownerId, task.id);
+        syncTasks(nextTasks, { [task.id]: "cloud" });
+      } else {
+        syncTasks(nextTasks);
+      }
 
       if (accessToken) {
         if (nextStatus === "done") {
@@ -433,6 +451,7 @@ function TasksContent() {
       );
 
       syncTasks(nextTasks, { [task.id]: "local-fallback" });
+      markLocalFallbackTaskForOwner(ownerId, task.id);
       setTaskActionError(t("tasks.updateFallback"));
     } finally {
       setTaskPending(task.id, false);
@@ -472,6 +491,7 @@ function TasksContent() {
         (currentTask) => currentTask.id !== task.id,
       );
 
+      markHiddenTaskForOwner(ownerId, task.id);
       syncTasks(nextTasks);
       setTaskActionError(t("tasks.deleteFallback"));
     } finally {
@@ -495,7 +515,11 @@ function TasksContent() {
         />
 
           <Card
-            variant={taskSource === "local-fallback" ? "secondary" : "ghost"}
+            variant={
+              hasLocalFallbackTasks || taskSource === "local-fallback"
+                ? "secondary"
+                : "ghost"
+            }
             className="mt-5 p-3 text-sm text-zinc-600 dark:text-zinc-400"
           >
             {taskBoundaryMessage}
