@@ -286,7 +286,7 @@ export default function TodayPage() {
     try {
       const activities = await fetchActivitiesViaApi({ accessToken });
       setActivityEvents(
-        createTimelineEventsFromActivities(activities).slice(0, 3),
+        createTimelineEventsFromActivities(activities, t).slice(0, 3),
       );
     } catch {
       setActivityEvents([]);

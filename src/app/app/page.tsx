@@ -333,7 +333,7 @@ export default function Home() {
     try {
       const activities = await fetchActivitiesViaApi({ accessToken });
       setActivityEvents(
-        createTimelineEventsFromActivities(activities).slice(0, 5),
+        createTimelineEventsFromActivities(activities, t).slice(0, 5),
       );
     } catch {
       setActivityEvents([]);

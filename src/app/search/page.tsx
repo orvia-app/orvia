@@ -164,6 +164,7 @@ export default function SearchPage() {
         const dataset = await loadUnifiedSearchDataset({
           accessToken,
           ownerId,
+          translateTimeline: t,
         });
 
         if (!active) {
@@ -184,7 +185,7 @@ export default function SearchPage() {
     return () => {
       active = false;
     };
-  }, [accessToken, ownerId]);
+  }, [accessToken, ownerId, t]);
 
   const results = useMemo(
     () => searchUnifiedResults(allResults, query),

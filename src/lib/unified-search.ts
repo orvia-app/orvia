@@ -21,6 +21,7 @@ import {
   createTimelineEventsFromActivities,
   type TimelineEvent,
 } from "@/lib/timeline";
+import type { TranslationKey } from "@/lib/i18n";
 import type { Task } from "@/types";
 
 export type UnifiedSearchResultType = "task" | "note" | "inbox" | "timeline";
@@ -52,6 +53,10 @@ export type UnifiedSearchDataset = {
 };
 
 export type UnifiedSearchCounts = Record<UnifiedSearchResultType, number>;
+
+type UnifiedSearchOptions = TasksApiRequestOptions & {
+  translateTimeline?: (key: TranslationKey) => string;
+};
 
 export const UNIFIED_SEARCH_GROUPS: readonly UnifiedSearchGroup[] = [
   { key: "task", label: "Tasks" },
@@ -221,7 +226,7 @@ function sortResultsNewestFirst(
 }
 
 export async function loadUnifiedSearchDataset(
-  options: TasksApiRequestOptions = {},
+  options: UnifiedSearchOptions = {},
 ): Promise<UnifiedSearchDataset> {
   const taskResult = await loadTasksFromPrimarySourceWithBoundary(options);
   const noteResult = await loadNotesFromPrimarySourceWithBoundary(options);
@@ -229,6 +234,7 @@ export async function loadUnifiedSearchDataset(
   const timelineEvents = options.accessToken
     ? createTimelineEventsFromActivities(
         await fetchActivitiesViaApi(options).catch(() => []),
+        options.translateTimeline,
       )
     : [];
 
