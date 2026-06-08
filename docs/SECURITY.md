@@ -209,6 +209,11 @@ such as priority, status, `has_due_date`, source, outcome, note type, or storage
 mode. Activity remains user personal data, but it should not become a second
 content store that complicates retention, export, deletion, or privacy review.
 
+Timeline UI should render known system activity text from the activity `type`
+and safe metadata through i18n. Stored titles and descriptions are fallback text
+for unknown future activity types only, not the source of truth for known system
+events.
+
 ## Future Auth And Session Architecture
 
 Future auth should support:

@@ -44,7 +44,7 @@ export default function TimelinePage() {
           return;
         }
 
-        setEvents(createTimelineEventsFromActivities(activities));
+        setEvents(createTimelineEventsFromActivities(activities, t));
         setLoadError(null);
       } catch {
         if (cancelled) {
