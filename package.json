@@ -11,6 +11,7 @@
     "test:run": "node --test tests/*.test.mjs",
     "security:guard": "node scripts/security-guard.mjs",
     "verify:rls": "node scripts/verify-rls-ownership.mjs",
+    "verify:ownership:runtime": "node scripts/verify-runtime-ownership.mjs",
     "start": "next start",
     "lint": "eslint"
   },

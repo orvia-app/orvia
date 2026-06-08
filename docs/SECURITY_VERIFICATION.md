@@ -101,6 +101,83 @@ The fix introduced authenticated user-scoped cache keys:
 Tasks, Notes, Captures, Search, Today, related context, and Command Palette
 were retested after the fix. Runtime retesting passed.
 
+## Automated Runtime Ownership Script
+
+The repository includes a no-new-dependency runtime verification command:
+
+```bash
+npm run verify:ownership:runtime
+```
+
+This script signs in two disposable Supabase Auth users through the public
+Supabase anon client. It does not use the service-role key and does not require
+application server access. The script loads `.env.local` through Next's local
+environment loader, so `npm run verify:ownership:runtime` works from a fresh
+terminal without manually exporting variables.
+
+Required environment variables:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+ORVIA_RUNTIME_USER_A_EMAIL=
+ORVIA_RUNTIME_USER_A_PASSWORD=
+ORVIA_RUNTIME_USER_B_EMAIL=
+ORVIA_RUNTIME_USER_B_PASSWORD=
+```
+
+Use disposable test accounts only. Do not use real customer accounts and do not
+commit real credentials.
+
+The script verifies:
+
+- User A cannot read User B Tasks through direct authenticated Supabase access.
+- User A cannot update User B Tasks through direct authenticated Supabase access.
+- User A cannot delete User B Tasks through direct authenticated Supabase access.
+- User A cannot read User B Notes through direct authenticated Supabase access.
+- User A cannot update User B Notes through direct authenticated Supabase access.
+- User A cannot delete User B Notes through direct authenticated Supabase access.
+- User A cannot read User B Captures through direct authenticated Supabase access.
+- User A cannot update User B Captures through direct authenticated Supabase access.
+- User A cannot delete User B Captures through direct authenticated Supabase access.
+- User A cannot read User B Activities through direct authenticated Supabase access.
+- User B cannot read User A rows created during the same verification run.
+
+The script creates temporary records for both users and attempts to clean them up
+with each owning user's authenticated Supabase session. If cleanup fails, remove
+rows whose titles/content include the printed runtime verification prefix from
+the target Supabase project manually.
+
+This script proves runtime RLS behavior for direct authenticated Supabase access.
+It complements, but does not replace, the static API ownership checks in
+`npm run verify:rls` and the application API smoke checks below.
+
+## Runtime Grants Requirement
+
+Runtime verification found that `public.tasks` had owner-only RLS policies but
+was missing authenticated table privileges in the target Supabase database.
+PostgreSQL checks table privileges before evaluating Row Level Security, so an
+authenticated direct-client request needs table-level privileges and then RLS
+decides which rows are visible or mutable.
+
+The migration
+`supabase/migrations/202606010007_grant_authenticated_runtime_table_permissions.sql`
+grants `select`, `insert`, `update`, and `delete` on `public.tasks`,
+`public.notes`, `public.captures`, and `public.activities` to the
+`authenticated` role only. It does not grant access to `anon`, does not disable
+RLS, and does not change owner-only policies.
+
+Manual SQL, if the migration must be applied through the Supabase SQL Editor:
+
+```sql
+grant select, insert, update, delete
+  on table public.tasks,
+           public.notes,
+           public.captures,
+           public.activities
+  to authenticated;
+```
+
 ## Test Accounts
 
 ### User A
