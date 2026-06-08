@@ -13,6 +13,7 @@ import {
   House,
   Inbox,
   Menu,
+  MessageSquare,
   Monitor,
   Moon,
   Plus,
@@ -31,6 +32,7 @@ import { CommandCenter } from "@/components/command-palette/CommandCenter";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { QuickCapture } from "@/components/quick-capture/QuickCapture";
 import { useTheme, type Theme } from "@/components/ThemeProvider";
+import { FEEDBACK_URL, isFeedbackUrlConfigured } from "@/lib/feedback";
 import type { TranslationKey } from "@/lib/i18n";
 
 type NavItem = {
@@ -162,6 +164,39 @@ function NavLinkItem({
       <Icon className={iconClassName} aria-hidden />
       <span>{t(labelKey)}</span>
     </Link>
+  );
+}
+
+function FeedbackLink({
+  mobile = false,
+  onClick,
+}: {
+  mobile?: boolean;
+  onClick?: () => void;
+}) {
+  const { t } = useI18n();
+
+  if (!isFeedbackUrlConfigured()) {
+    return null;
+  }
+
+  return (
+    <a
+      href={FEEDBACK_URL}
+      target="_blank"
+      rel="noreferrer"
+      onClick={onClick}
+      className={[
+        "group flex cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 text-sm font-medium text-zinc-500 transition hover:border-violet-200/70 hover:bg-white hover:text-zinc-950 dark:text-zinc-500 dark:hover:border-violet-500/20 dark:hover:bg-zinc-900/70 dark:hover:text-white",
+        mobile ? "min-h-11" : "py-2",
+      ].join(" ")}
+    >
+      <MessageSquare
+        className="h-4 w-4 shrink-0 text-zinc-500 transition group-hover:text-violet-700 dark:text-zinc-500 dark:group-hover:text-violet-300"
+        aria-hidden
+      />
+      <span>{t("common.feedback")}</span>
+    </a>
   );
 }
 
@@ -527,6 +562,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               }}
             />
           ))}
+          <FeedbackLink />
 
           <LabsNavSection
             open={desktopLabsVisible}
@@ -653,6 +689,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     minHeight
                   />
                 ))}
+                <FeedbackLink
+                  mobile
+                  onClick={() => setMobileMenuOpen(false)}
+                />
 
                 <LabsNavSection
                   mobile
