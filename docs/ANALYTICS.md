@@ -2,11 +2,14 @@
 
 ## Status
 
-Analytics is not connected yet.
+Product analytics is not connected yet.
 
 The current repository includes only a typed event taxonomy, a safe metadata
-schema, and a no-op tracking helper. No PostHog, Sentry, Vercel Analytics, or
-custom analytics backend is installed. No analytics events are sent anywhere.
+schema, and a no-op tracking helper. No PostHog, Vercel Analytics, or custom
+analytics backend is installed. No product analytics events are sent anywhere.
+
+Sentry is available only as DSN-gated error monitoring. It is not product
+analytics, and it must not be used to track activation, funnels, or retention.
 
 ## Goals
 
@@ -157,9 +160,11 @@ Recommended private beta approach:
 
 PostHog should be used for funnels, cohorts, activation, and retention.
 
-## Future Sentry Plan
+## Sentry Error Monitoring
 
-Sentry should be added later for error monitoring, not product analytics.
+Sentry is configured as a minimal private-beta monitoring foundation when
+`NEXT_PUBLIC_SENTRY_DSN` is present. If the DSN is missing, Sentry remains
+disabled.
 
 Track:
 
@@ -170,8 +175,20 @@ Track:
 - Supabase failures
 - task, note, capture, and activity failures
 
+Private beta defaults:
+
+- Session Replay disabled.
+- tracing and performance monitoring disabled.
+- profiling disabled.
+- source-map upload disabled.
+- default PII disabled.
+- Sentry user identity is Supabase `user.id` only, never email.
+- events and breadcrumbs pass through strict redaction before send.
+
 Sentry configuration must redact sensitive data and avoid collecting request
-bodies, auth headers, tokens, sessions, or user content.
+bodies, response bodies, auth headers, cookies, tokens, sessions, emails, raw
+Supabase session/user objects, raw errors, task titles/descriptions, note
+titles/content, capture content, searchable text, or search queries.
 
 ## Review Checklist
 

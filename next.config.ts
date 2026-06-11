@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const legacyAppRoutes = [
   "ai-chat",
@@ -24,4 +25,19 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  silent: true,
+  sourcemaps: {
+    disable: true,
+  },
+  suppressOnRouterTransitionStartWarning: true,
+  telemetry: false,
+  webpack: {
+    treeshake: {
+      excludeReplayIframe: true,
+      excludeReplayShadowDOM: true,
+      removeDebugLogging: true,
+      removeTracing: true,
+    },
+  },
+});

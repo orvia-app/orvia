@@ -66,6 +66,26 @@ Allowed uses:
 
 Never put API keys, service-role keys, Stripe secrets, OpenAI keys, integration tokens, or private webhook secrets in `NEXT_PUBLIC_*`.
 
+## Sentry Error Monitoring
+
+Minimal Sentry error monitoring is controlled by:
+
+- `NEXT_PUBLIC_SENTRY_DSN`
+- `NEXT_PUBLIC_SENTRY_ENVIRONMENT`
+- `SENTRY_ENVIRONMENT` for an optional server-side environment override
+
+Sentry is disabled when `NEXT_PUBLIC_SENTRY_DSN` is blank. The DSN is browser
+visible and must be treated as public configuration, not a secret.
+
+For the private beta foundation:
+- Session Replay is disabled.
+- tracing and performance monitoring are disabled.
+- profiling is disabled.
+- source-map upload is disabled.
+- Sentry user context is Supabase `user.id` only.
+- emails, tokens, cookies, sessions, request bodies, response bodies, task text,
+  note text, capture text, and search queries must not be sent.
+
 ## Future OpenAI Handling
 
 OpenAI or other AI provider keys must be server-side only.

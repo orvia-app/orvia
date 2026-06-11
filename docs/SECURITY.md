@@ -187,6 +187,22 @@ Rules:
 - restrict access to production logs
 - treat logs as in-scope for incident response and data deletion policy where applicable
 
+## Sentry Monitoring Data Minimization
+
+Sentry is allowed only as privacy-safe error monitoring for private beta. It is
+disabled unless `NEXT_PUBLIC_SENTRY_DSN` is configured.
+
+The current Sentry foundation disables Session Replay, tracing/performance
+monitoring, profiling, and source-map upload. Sentry must not receive task
+titles, task descriptions, note titles, note content, capture content, search
+queries, searchable text, request bodies, response bodies, cookies,
+Authorization headers, access tokens, refresh tokens, Supabase sessions, raw API
+responses, raw errors, or user emails.
+
+The only allowed user identity in Sentry is Supabase `user.id`. This keeps error
+grouping useful during private beta without exposing email or user-authored
+content.
+
 ## Activity And Timeline Data Minimization
 
 Timeline activity records should describe product actions without duplicating

@@ -16,6 +16,7 @@ import {
   getSupabaseBrowserAuthClient,
   isExpectedSupabaseSignedOutError,
 } from "@/lib/supabase/auth";
+import { setMonitoringUserId } from "@/lib/monitoring/sentry-user";
 
 type AuthActionResult =
   | { ok: true }
@@ -54,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isSignedOutSession(nextSession, ignoredSignedOutAccessTokenRef.current)) {
       sessionRef.current = null;
       setSession(null);
+      setMonitoringUserId(null);
       return;
     }
 
@@ -63,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     sessionRef.current = nextSession;
     setSession(nextSession);
+    setMonitoringUserId(nextSession?.user.id ?? null);
   }
 
   function commitSignedOutState(): void {

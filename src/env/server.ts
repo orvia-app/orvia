@@ -1,6 +1,11 @@
 export const SERVER_ENV_KEYS = [
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  "NEXT_PUBLIC_SENTRY_DSN",
+  "NEXT_PUBLIC_SENTRY_ENVIRONMENT",
+  "NEXT_PUBLIC_VERCEL_ENV",
+  "SENTRY_ENVIRONMENT",
+  "VERCEL_ENV",
   "SUPABASE_SERVICE_ROLE_KEY",
   "OPENAI_API_KEY",
   "TELEGRAM_BOT_TOKEN",
@@ -11,6 +16,11 @@ export type ServerEnvKey = (typeof SERVER_ENV_KEYS)[number];
 export type ServerEnv = {
   NEXT_PUBLIC_SUPABASE_URL?: string;
   NEXT_PUBLIC_SUPABASE_ANON_KEY?: string;
+  NEXT_PUBLIC_SENTRY_DSN?: string;
+  NEXT_PUBLIC_SENTRY_ENVIRONMENT?: string;
+  NEXT_PUBLIC_VERCEL_ENV?: string;
+  SENTRY_ENVIRONMENT?: string;
+  VERCEL_ENV?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
   OPENAI_API_KEY?: string;
   TELEGRAM_BOT_TOKEN?: string;
@@ -71,6 +81,13 @@ export function readServerEnv(): ServerEnv {
     NEXT_PUBLIC_SUPABASE_ANON_KEY: cleanEnvValue(
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     ),
+    NEXT_PUBLIC_SENTRY_DSN: cleanEnvValue(process.env.NEXT_PUBLIC_SENTRY_DSN),
+    NEXT_PUBLIC_SENTRY_ENVIRONMENT: cleanEnvValue(
+      process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT,
+    ),
+    NEXT_PUBLIC_VERCEL_ENV: cleanEnvValue(process.env.NEXT_PUBLIC_VERCEL_ENV),
+    SENTRY_ENVIRONMENT: cleanEnvValue(process.env.SENTRY_ENVIRONMENT),
+    VERCEL_ENV: cleanEnvValue(process.env.VERCEL_ENV),
     SUPABASE_SERVICE_ROLE_KEY: cleanEnvValue(
       process.env.SUPABASE_SERVICE_ROLE_KEY,
     ),
@@ -98,6 +115,13 @@ export function validateServerEnv(
   validateSecretLength(env, "SUPABASE_SERVICE_ROLE_KEY", 20, issues);
   validateSecretLength(env, "OPENAI_API_KEY", 20, issues);
   validateSecretLength(env, "TELEGRAM_BOT_TOKEN", 20, issues);
+
+  if (env.NEXT_PUBLIC_SENTRY_DSN && !isValidHttpUrl(env.NEXT_PUBLIC_SENTRY_DSN)) {
+    issues.push({
+      key: "NEXT_PUBLIC_SENTRY_DSN",
+      message: "Must be a valid http(s) URL when configured.",
+    });
+  }
 
   return issues.length > 0 ? { ok: false, issues } : { ok: true, env };
 }
