@@ -1,6 +1,9 @@
 export const CLIENT_ENV_KEYS = [
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  "NEXT_PUBLIC_SENTRY_DSN",
+  "NEXT_PUBLIC_SENTRY_ENVIRONMENT",
+  "NEXT_PUBLIC_VERCEL_ENV",
 ] as const;
 
 export type ClientEnvKey = (typeof CLIENT_ENV_KEYS)[number];
@@ -8,6 +11,9 @@ export type ClientEnvKey = (typeof CLIENT_ENV_KEYS)[number];
 export type ClientEnv = {
   NEXT_PUBLIC_SUPABASE_URL?: string;
   NEXT_PUBLIC_SUPABASE_ANON_KEY?: string;
+  NEXT_PUBLIC_SENTRY_DSN?: string;
+  NEXT_PUBLIC_SENTRY_ENVIRONMENT?: string;
+  NEXT_PUBLIC_VERCEL_ENV?: string;
 };
 
 export type EnvValidationIssue = {
@@ -41,6 +47,11 @@ export function readClientEnv(): ClientEnv {
     NEXT_PUBLIC_SUPABASE_ANON_KEY: cleanEnvValue(
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     ),
+    NEXT_PUBLIC_SENTRY_DSN: cleanEnvValue(process.env.NEXT_PUBLIC_SENTRY_DSN),
+    NEXT_PUBLIC_SENTRY_ENVIRONMENT: cleanEnvValue(
+      process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT,
+    ),
+    NEXT_PUBLIC_VERCEL_ENV: cleanEnvValue(process.env.NEXT_PUBLIC_VERCEL_ENV),
   };
 }
 
@@ -64,6 +75,13 @@ export function validateClientEnv(env = readClientEnv()): EnvValidationResult {
     issues.push({
       key: "NEXT_PUBLIC_SUPABASE_ANON_KEY",
       message: "Must be a non-placeholder public anon key when configured.",
+    });
+  }
+
+  if (env.NEXT_PUBLIC_SENTRY_DSN && !isValidHttpUrl(env.NEXT_PUBLIC_SENTRY_DSN)) {
+    issues.push({
+      key: "NEXT_PUBLIC_SENTRY_DSN",
+      message: "Must be a valid http(s) URL when configured.",
     });
   }
 
