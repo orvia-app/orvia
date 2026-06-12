@@ -135,7 +135,7 @@ export default function LandingPage() {
           aria-label={t("landing.navigation")}
           className="flex items-center gap-2 text-sm"
         >
-          <div className="hidden items-center gap-1 rounded-full bg-white/65 p-1 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 dark:bg-zinc-950/55 dark:ring-zinc-800 sm:flex">
+          <div className="flex items-center gap-1 rounded-full bg-white/65 p-1 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 dark:bg-zinc-950/55 dark:ring-zinc-800">
             {(["en", "ua"] as const).map((option) => (
               <button
                 key={option}
@@ -143,8 +143,8 @@ export default function LandingPage() {
                 onClick={() => setLocale(option)}
                 className={
                   locale === option
-                    ? "rounded-full bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-800 dark:bg-violet-500/15 dark:text-violet-200"
-                    : "rounded-full px-2.5 py-1 text-xs font-medium text-zinc-500 transition hover:text-violet-700 dark:text-zinc-400 dark:hover:text-violet-200"
+                    ? "rounded-full bg-violet-50 px-2 py-1 text-xs font-semibold text-violet-800 dark:bg-violet-500/15 dark:text-violet-200 sm:px-2.5"
+                    : "rounded-full px-2 py-1 text-xs font-medium text-zinc-500 transition hover:text-violet-700 dark:text-zinc-400 dark:hover:text-violet-200 sm:px-2.5"
                 }
               >
                 {option === "en" ? "EN" : "UA"}

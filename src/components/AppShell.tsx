@@ -121,6 +121,38 @@ function ThemeSwitcher() {
   );
 }
 
+function LanguageSwitcher() {
+  const { locale, setLocale, t } = useI18n();
+
+  return (
+    <div>
+      <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+        {t("settings.language")}
+      </p>
+      <div className="grid grid-cols-2 gap-1.5">
+        {(["en", "ua"] as const).map((option) => {
+          const active = locale === option;
+
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setLocale(option)}
+              className={
+                active
+                  ? "flex cursor-pointer items-center justify-center rounded-lg border border-violet-200/80 bg-violet-50 px-2 py-2 text-center text-[11px] font-semibold text-violet-800 shadow-sm shadow-violet-950/[0.025] dark:border-violet-500/25 dark:bg-violet-500/10 dark:text-violet-200 dark:shadow-none"
+                  : "flex cursor-pointer items-center justify-center rounded-lg border border-transparent px-2 py-2 text-center text-[11px] font-medium text-zinc-600 transition hover:border-violet-200/70 hover:bg-white hover:text-violet-800 dark:text-zinc-400 dark:hover:border-violet-500/20 dark:hover:bg-zinc-900/70 dark:hover:text-violet-200"
+              }
+            >
+              {option === "en" ? "EN" : "UA"}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function NavSectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <p className="px-3 pb-1 pt-3 text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-600">
@@ -586,6 +618,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="mb-3">
             <AuthStatus />
           </div>
+          <div className="mb-3">
+            <LanguageSwitcher />
+          </div>
           <ThemeSwitcher />
         </div>
       </aside>
@@ -713,6 +748,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </button>
                 <div className="mb-4">
                   <AuthStatus />
+                </div>
+                <div className="mb-4">
+                  <LanguageSwitcher />
                 </div>
                 <ThemeSwitcher />
               </div>
