@@ -7,6 +7,7 @@ export const SERVER_ENV_KEYS = [
   "SENTRY_ENVIRONMENT",
   "VERCEL_ENV",
   "SUPABASE_SERVICE_ROLE_KEY",
+  "ADMIN_EMAILS",
   "OPENAI_API_KEY",
   "TELEGRAM_BOT_TOKEN",
 ] as const;
@@ -22,6 +23,7 @@ export type ServerEnv = {
   SENTRY_ENVIRONMENT?: string;
   VERCEL_ENV?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
+  ADMIN_EMAILS?: string;
   OPENAI_API_KEY?: string;
   TELEGRAM_BOT_TOKEN?: string;
 };
@@ -91,6 +93,7 @@ export function readServerEnv(): ServerEnv {
     SUPABASE_SERVICE_ROLE_KEY: cleanEnvValue(
       process.env.SUPABASE_SERVICE_ROLE_KEY,
     ),
+    ADMIN_EMAILS: cleanEnvValue(process.env.ADMIN_EMAILS),
     OPENAI_API_KEY: cleanEnvValue(process.env.OPENAI_API_KEY),
     TELEGRAM_BOT_TOKEN: cleanEnvValue(process.env.TELEGRAM_BOT_TOKEN),
   };

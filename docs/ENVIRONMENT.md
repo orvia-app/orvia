@@ -46,6 +46,7 @@ Examples of server-only secrets:
 
 - `OPENAI_API_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `ADMIN_EMAILS`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - integration refresh tokens
@@ -101,6 +102,19 @@ Expected future variables:
 - `SUPABASE_SERVICE_ROLE_KEY`
 
 The anon key may be browser-visible only after Row Level Security is configured and reviewed. The service-role key must remain server-only and must not be used in normal user request paths unless strictly scoped.
+
+## Admin Allowlist
+
+Internal beta admin access is controlled by:
+
+- `ADMIN_EMAILS`
+
+`ADMIN_EMAILS` is server-only and contains a comma-separated list of exact email
+addresses allowed to access internal admin routes such as
+`/app/admin/feedback` and `/api/admin/feedback`.
+
+Do not create `NEXT_PUBLIC_ADMIN_EMAILS`. Admin checks must happen server-side
+after Supabase Auth validates the bearer token.
 
 Current Supabase preparation files:
 - `src/server/supabase/*`: server-side config readiness and typed factory seams.

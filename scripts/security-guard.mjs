@@ -170,6 +170,40 @@ const coreApiRoutes = [
       },
     ],
   },
+  {
+    path: "src/app/api/admin/feedback/route.ts",
+    checks: [
+      {
+        label: "validates admin API auth",
+        pattern: /authenticateAdminApiRequest\(request\)/,
+      },
+      {
+        label: "uses server-only Supabase client after admin check",
+        pattern: /getSupabaseServerClient\(\)/,
+      },
+      {
+        label: "selects feedback for admin review",
+        pattern: /\.select\("id,created_at,type,status,user_id,message"\)/,
+      },
+    ],
+  },
+  {
+    path: "src/app/api/admin/feedback/[id]/route.ts",
+    checks: [
+      {
+        label: "validates admin API auth",
+        pattern: /authenticateAdminApiRequest\(request\)/,
+      },
+      {
+        label: "validates feedback id",
+        pattern: /UUID_PATTERN\.test\(id\)/,
+      },
+      {
+        label: "updates only status",
+        pattern: /\.update\(\{\s*status:/,
+      },
+    ],
+  },
 ];
 
 function readProjectFile(path) {
