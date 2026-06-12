@@ -101,6 +101,17 @@ export default function LandingPage() {
   const { locale, setLocale, t } = useI18n();
   const { isAuthenticated, loading: authLoading } = useAuthSession();
   const { hydrated, theme, setTheme } = useTheme();
+  const mobileThemeValue = hydrated ? theme : "system";
+  const mobileThemeOption =
+    landingThemeOptions.find((option) => option.value === mobileThemeValue) ??
+    landingThemeOptions[2];
+  const MobileThemeIcon = mobileThemeOption.icon;
+  const nextMobileTheme: Theme =
+    mobileThemeValue === "light"
+      ? "dark"
+      : mobileThemeValue === "dark"
+        ? "system"
+        : "light";
 
   useEffect(() => {
     if (authLoading) {
@@ -115,16 +126,16 @@ export default function LandingPage() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.11),transparent_34rem),linear-gradient(180deg,#fafafa_0%,#f4f4f5_48%,#fafafa_100%)] text-zinc-950 dark:bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.18),transparent_32rem),linear-gradient(180deg,#18181b_0%,#09090b_52%,#18181b_100%)] dark:text-white">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-5 sm:px-6 lg:px-8">
-        <div className="flex min-w-0 items-center gap-2.5">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-2.5 py-3 sm:px-6 sm:py-5 lg:px-8">
+        <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-2.5">
           <Link
             href="/"
-            className="flex items-center gap-2 text-sm font-semibold tracking-tight text-zinc-950 dark:text-white"
+            className="flex items-center gap-1.5 text-sm font-semibold tracking-tight text-zinc-950 dark:text-white sm:gap-2"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-violet-800 shadow-sm shadow-zinc-950/[0.04] ring-1 ring-zinc-200/80 dark:bg-zinc-900 dark:text-violet-200 dark:ring-zinc-800">
-              <BrandMark className="h-5 w-5" />
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-violet-800 shadow-sm shadow-zinc-950/[0.04] ring-1 ring-zinc-200/80 dark:bg-zinc-900 dark:text-violet-200 dark:ring-zinc-800 sm:h-9 sm:w-9 sm:rounded-xl">
+              <BrandMark className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
             </span>
-            {t("common.orvia")}
+            <span className="hidden sm:inline">{t("common.orvia")}</span>
           </Link>
           <span className="hidden rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-800 ring-1 ring-violet-200/80 dark:bg-violet-500/10 dark:text-violet-200 dark:ring-violet-500/25 sm:inline-flex">
             {t("landing.privateBeta")}
@@ -133,9 +144,9 @@ export default function LandingPage() {
 
         <nav
           aria-label={t("landing.navigation")}
-          className="flex items-center gap-2 text-sm"
+          className="flex min-w-0 flex-1 items-center justify-end gap-1 text-xs sm:gap-2 sm:text-sm"
         >
-          <div className="flex items-center gap-1 rounded-full bg-white/65 p-1 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 dark:bg-zinc-950/55 dark:ring-zinc-800">
+          <div className="flex h-8 shrink-0 items-center gap-0.5 rounded-full bg-white/65 p-0.5 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 dark:bg-zinc-950/55 dark:ring-zinc-800 sm:h-auto sm:gap-1 sm:p-1">
             {(["en", "ua"] as const).map((option) => (
               <button
                 key={option}
@@ -143,15 +154,23 @@ export default function LandingPage() {
                 onClick={() => setLocale(option)}
                 className={
                   locale === option
-                    ? "rounded-full bg-violet-50 px-2 py-1 text-xs font-semibold text-violet-800 dark:bg-violet-500/15 dark:text-violet-200 sm:px-2.5"
-                    : "rounded-full px-2 py-1 text-xs font-medium text-zinc-500 transition hover:text-violet-700 dark:text-zinc-400 dark:hover:text-violet-200 sm:px-2.5"
+                    ? "rounded-full bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold leading-5 text-violet-800 dark:bg-violet-500/15 dark:text-violet-200 sm:px-2.5 sm:py-1 sm:text-xs sm:leading-normal"
+                    : "rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-5 text-zinc-500 transition hover:text-violet-700 dark:text-zinc-400 dark:hover:text-violet-200 sm:px-2.5 sm:py-1 sm:text-xs sm:leading-normal"
                 }
               >
                 {option === "en" ? "EN" : "UA"}
               </button>
             ))}
           </div>
-          <div className="hidden items-center gap-1 rounded-full bg-white/65 p-1 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 dark:bg-zinc-950/55 dark:ring-zinc-800 md:flex">
+          <button
+            type="button"
+            onClick={() => setTheme(nextMobileTheme)}
+            aria-label={t(mobileThemeOption.labelKey)}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/65 text-zinc-600 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 transition hover:text-violet-700 dark:bg-zinc-950/55 dark:text-zinc-400 dark:ring-zinc-800 dark:hover:text-violet-200 sm:hidden"
+          >
+            <MobileThemeIcon className="h-3.5 w-3.5" aria-hidden />
+          </button>
+          <div className="hidden items-center gap-1 rounded-full bg-white/65 p-1 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 dark:bg-zinc-950/55 dark:ring-zinc-800 sm:flex">
             {landingThemeOptions.map(({ icon: Icon, labelKey, value }) => {
               const active = hydrated && theme === value;
 
@@ -174,20 +193,20 @@ export default function LandingPage() {
           </div>
           <Link
             href="/login"
-            className="rounded-full px-3 py-2 font-medium text-zinc-600 transition hover:bg-white/70 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white"
+            className="shrink-0 rounded-full px-1 py-1.5 text-[11px] font-medium leading-none text-zinc-600 transition hover:bg-white/70 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white sm:px-3 sm:py-2 sm:text-sm sm:leading-normal"
           >
             {t("common.signIn")}
           </Link>
           <Link
             href="/register"
-            className="rounded-full bg-zinc-950 px-4 py-2 font-medium text-white shadow-sm shadow-zinc-950/10 transition hover:bg-violet-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-violet-100"
+            className="inline-flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-zinc-950 px-2 text-[11px] font-medium leading-none text-white shadow-sm shadow-zinc-950/10 transition hover:bg-violet-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-violet-100 sm:h-auto sm:rounded-full sm:px-4 sm:py-2 sm:text-sm sm:leading-normal"
           >
             {t("common.createAccount")}
           </Link>
         </nav>
       </header>
 
-      <section className="mx-auto grid w-full max-w-6xl gap-10 px-4 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-16 lg:grid-cols-[1.02fr_0.98fr] lg:px-8 lg:pb-24 lg:pt-20">
+      <section className="mx-auto grid w-full max-w-6xl gap-8 px-4 pb-14 pt-7 sm:gap-10 sm:px-6 sm:pb-20 sm:pt-16 lg:grid-cols-[1.02fr_0.98fr] lg:px-8 lg:pb-24 lg:pt-20">
         <div className="flex flex-col justify-center">
           <div className="inline-flex w-fit items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 text-xs font-medium text-violet-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-violet-200/80 dark:bg-violet-500/10 dark:text-violet-200 dark:ring-violet-500/25">
             <Sparkles className="h-3.5 w-3.5" aria-hidden />
@@ -199,17 +218,17 @@ export default function LandingPage() {
           <p className="mt-5 max-w-2xl text-base leading-8 text-zinc-600 dark:text-zinc-300 sm:text-lg">
             {t("landing.subheadline")}
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="mt-7 flex flex-col gap-2.5 sm:mt-8 sm:flex-row sm:items-center sm:gap-3">
             <a
               href="/register"
-              className="inline-flex h-11 items-center justify-center rounded-xl bg-violet-800 px-5 text-sm font-semibold text-white shadow-sm shadow-violet-950/10 transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-violet-600 dark:hover:bg-violet-500 dark:focus-visible:ring-offset-zinc-950"
+              className="inline-flex h-10 items-center justify-center rounded-xl bg-violet-800 px-4 text-sm font-semibold text-white shadow-sm shadow-violet-950/10 transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 sm:h-11 sm:px-5 dark:bg-violet-600 dark:hover:bg-violet-500 dark:focus-visible:ring-offset-zinc-950"
             >
               {t("landing.notify")}
               <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
             </a>
             <a
               href="#demo-flow"
-              className="inline-flex h-11 items-center justify-center rounded-xl bg-white px-5 text-sm font-semibold text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50/70 hover:text-violet-800 hover:ring-violet-200/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-zinc-950/70 dark:text-zinc-100 dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/20 dark:focus-visible:ring-offset-zinc-950"
+              className="inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50/70 hover:text-violet-800 hover:ring-violet-200/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 sm:h-11 sm:px-5 dark:bg-zinc-950/70 dark:text-zinc-100 dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/20 dark:focus-visible:ring-offset-zinc-950"
             >
               {t("landing.viewDemo")}
             </a>
