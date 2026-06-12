@@ -26,6 +26,7 @@ import {
   recordTaskDeletedActivity,
   recordTaskUpdatedActivity,
 } from "@/lib/activity-recording";
+import { trackFirstTaskCreated } from "@/lib/analytics";
 import {
   saveTasks,
   TASK_PRIORITIES,
@@ -168,7 +169,7 @@ function getTaskPageContextFromSearchParams(
 function TasksContent() {
   const searchParams = useSearchParams();
   const { session } = useAuthSession();
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const accessToken = session?.access_token;
   const ownerId = session?.user.id;
   const initialPageContext = useMemo(
@@ -371,6 +372,13 @@ function TasksContent() {
       if (accessToken) {
         void recordTaskCreatedActivity(newTask, { accessToken });
       }
+
+      if (tasks.length === 0) {
+        trackFirstTaskCreated({
+          authenticated: Boolean(accessToken),
+          locale,
+        });
+      }
     } catch {
       if (!accessToken) {
         setCreateError(t("tasks.createError"));
@@ -382,6 +390,12 @@ function TasksContent() {
 
       markLocalFallbackTaskForOwner(ownerId, localTask.id);
       syncTasks(nextTasks, { [localTask.id]: "local-fallback" });
+      if (tasks.length === 0) {
+        trackFirstTaskCreated({
+          authenticated: true,
+          locale,
+        });
+      }
       closeModal();
       setTaskActionError(t("tasks.createFallback"));
     } finally {

@@ -9,12 +9,13 @@ import { useAuthSession } from "@/components/auth/useAuthSession";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { trackBetaEvent } from "@/lib/analytics";
 import { getSupabaseBrowserAuthClient } from "@/lib/supabase/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
   const { isAuthenticated, loading } = useAuthSession();
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +41,11 @@ export default function RegisterPage() {
 
     try {
       const supabase = getSupabaseBrowserAuthClient();
+      trackBetaEvent("signup_started", {
+        authenticated: false,
+        locale,
+      });
+
       const { error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -50,6 +56,10 @@ export default function RegisterPage() {
         return;
       }
 
+      trackBetaEvent("signup_completed", {
+        authenticated: false,
+        locale,
+      });
       setSuccess(t("register.success"));
       setPassword("");
     } catch {

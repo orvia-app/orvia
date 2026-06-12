@@ -16,6 +16,7 @@ import {
   getSupabaseBrowserAuthClient,
   isExpectedSupabaseSignedOutError,
 } from "@/lib/supabase/auth";
+import { trackEmailConfirmedFromUrl } from "@/lib/analytics";
 import { setMonitoringUserId } from "@/lib/monitoring/sentry-user";
 
 type AuthActionResult =
@@ -87,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         const { data } = supabase.auth.onAuthStateChange(
-          (_event, nextSession) => {
+          (event, nextSession) => {
             if (cancelled) {
               return;
             }
@@ -103,6 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
 
             commitSession(nextSession);
+            if (event === "SIGNED_IN") {
+              trackEmailConfirmedFromUrl({
+                authenticated: nextSession !== null,
+              });
+            }
             setAuthError(null);
             setLoading(false);
           },
@@ -156,6 +162,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           setAuthError(null);
           commitSession(sessionData.session ?? null);
+          trackEmailConfirmedFromUrl({
+            authenticated: sessionData.session !== null,
+          });
           setLoading(false);
           subscribeToAuthStateChanges();
         } catch (error) {
