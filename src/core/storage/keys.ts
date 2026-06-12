@@ -9,6 +9,8 @@ export const STORAGE_KEYS = {
   localResetCompleted: "personal-os.local-reset-completed",
   onboardingCompleted: "personal-os.onboarding.completed",
   commandHistory: "personal-os.command-history",
+  betaAnalyticsAnonymousId: "personal-os.beta-analytics.anonymous-id",
+  betaAnalyticsEvents: "personal-os.beta-analytics.events",
 } as const;
 
 export type StorageKeyName = keyof typeof STORAGE_KEYS;

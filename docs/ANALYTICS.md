@@ -2,11 +2,12 @@
 
 ## Status
 
-Product analytics is not connected yet.
+Product analytics is internal-only.
 
-The current repository includes only a typed event taxonomy, a safe metadata
-schema, and a no-op tracking helper. No PostHog, Vercel Analytics, or custom
-analytics backend is installed. No product analytics events are sent anywhere.
+The current repository includes a typed event taxonomy, a safe metadata schema,
+and a local beta analytics buffer. No PostHog, Vercel Analytics, or custom
+analytics backend is installed. No product analytics events are sent to a third
+party.
 
 Sentry is available only as DSN-gated error monitoring. It is not product
 analytics, and it must not be used to track activation, funnels, or retention.
@@ -25,7 +26,16 @@ Analytics must not become a shadow store of user content.
 
 ## Event Taxonomy
 
-Current beta-critical event names:
+Current beta activation event names stored locally:
+
+- `landing_view`
+- `signup_started`
+- `signup_completed`
+- `email_confirmed`
+- `login_completed`
+- `first_task_created`
+
+Broader future taxonomy:
 
 - `landing_viewed`
 - `signup_started`
@@ -43,6 +53,21 @@ Current beta-critical event names:
 - `timeline_opened`
 - `feedback_clicked`
 - `error_seen`
+
+## Local Beta Event Schema
+
+Local beta analytics records store only:
+
+- anonymous browser identifier
+- session identifier
+- event name
+- timestamp
+- locale
+- authenticated yes/no
+
+They must not store user ID, email, task titles, task descriptions, note titles,
+note content, capture content, search queries, Supabase sessions, tokens,
+Authorization headers, request bodies, response bodies, or raw errors.
 
 ## Safe Metadata
 
@@ -142,9 +167,11 @@ after signup or activation. For private beta, a day 6-8 window is acceptable.
 - `sanitizeAnalyticsMetadata`
 - `trackEvent`
 
-`trackEvent` is intentionally no-op today. It must never throw and must not make
-network requests. Future providers should be connected behind this helper rather
-than directly inside product components.
+`trackEvent` remains no-op for broad future product analytics. The private-beta
+foundation uses `trackBetaEvent` for the small activation event set above.
+Analytics helpers must never throw and must not make network requests. Future
+providers should be connected behind these helpers rather than directly inside
+product components.
 
 ## Future PostHog Plan
 

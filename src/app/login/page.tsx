@@ -9,6 +9,7 @@ import { useAuthSession } from "@/components/auth/useAuthSession";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { trackBetaEvent } from "@/lib/analytics";
 import {
   clearSupabaseBrowserAuthSession,
   getSupabaseBrowserAuthClient,
@@ -18,7 +19,7 @@ import {
 export default function LoginPage() {
   const router = useRouter();
   const { isAuthenticated, loading } = useAuthSession();
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +78,10 @@ export default function LoginPage() {
         return;
       }
 
+      trackBetaEvent("login_completed", {
+        authenticated: true,
+        locale,
+      });
       router.replace("/app");
     } catch {
       setError(t("login.errorConfig"));

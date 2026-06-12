@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -16,8 +17,10 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import { BrandMark } from "@/components/BrandMark";
+import { useAuthSession } from "@/components/auth/useAuthSession";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { useTheme, type Theme } from "@/components/ThemeProvider";
+import { trackBetaEvent } from "@/lib/analytics";
 import type { TranslationKey } from "@/lib/i18n";
 
 const workflow: {
@@ -96,7 +99,19 @@ const landingThemeOptions: {
 
 export default function LandingPage() {
   const { locale, setLocale, t } = useI18n();
+  const { isAuthenticated, loading: authLoading } = useAuthSession();
   const { hydrated, theme, setTheme } = useTheme();
+
+  useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
+    trackBetaEvent("landing_view", {
+      authenticated: isAuthenticated,
+      locale,
+    });
+  }, [authLoading, isAuthenticated, locale]);
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.11),transparent_34rem),linear-gradient(180deg,#fafafa_0%,#f4f4f5_48%,#fafafa_100%)] text-zinc-950 dark:bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.18),transparent_32rem),linear-gradient(180deg,#18181b_0%,#09090b_52%,#18181b_100%)] dark:text-white">
