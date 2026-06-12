@@ -153,6 +153,23 @@ const coreApiRoutes = [
       },
     ],
   },
+  {
+    path: "src/app/api/feedback/route.ts",
+    checks: [
+      {
+        label: "validates API auth",
+        pattern: /authenticateApiRequest\(request\)/,
+      },
+      {
+        label: "inserts authenticated user_id",
+        pattern: /\.insert\(\{\s*\.{3}parsedPayload\.payload,\s*user_id:\s*auth\.userId\s*\}\)/,
+      },
+      {
+        label: "does not echo feedback message in response",
+        pattern: /\.select\("id,type,status,created_at"\)/,
+      },
+    ],
+  },
 ];
 
 function readProjectFile(path) {

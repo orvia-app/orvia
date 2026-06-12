@@ -131,6 +131,38 @@ export type SupabaseCaptureInsert = {
   deleted_at?: string | null;
 };
 
+export type SupabaseFeedbackType =
+  | "bug"
+  | "idea"
+  | "confusing"
+  | "missing_feature"
+  | "general";
+
+export type SupabaseFeedbackStatus =
+  | "new"
+  | "reviewed"
+  | "planned"
+  | "closed";
+
+export type SupabaseFeedbackRow = {
+  id: string;
+  user_id: string;
+  type: SupabaseFeedbackType;
+  message: string;
+  status: SupabaseFeedbackStatus;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  [key: string]: unknown;
+};
+
+export type SupabaseFeedbackInsert = {
+  user_id?: string;
+  type?: SupabaseFeedbackType;
+  message: string;
+  status?: SupabaseFeedbackStatus;
+  metadata?: Record<string, unknown>;
+};
+
 export type SupabaseDatabase = {
   public: {
     Tables: {
@@ -156,6 +188,12 @@ export type SupabaseDatabase = {
         Row: SupabaseCaptureRow;
         Insert: SupabaseCaptureInsert;
         Update: Partial<SupabaseCaptureInsert>;
+        Relationships: [];
+      };
+      feedback: {
+        Row: SupabaseFeedbackRow;
+        Insert: SupabaseFeedbackInsert;
+        Update: Partial<SupabaseFeedbackInsert>;
         Relationships: [];
       };
     };

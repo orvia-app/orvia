@@ -230,6 +230,16 @@ and safe metadata through i18n. Stored titles and descriptions are fallback text
 for unknown future activity types only, not the source of truth for known system
 events.
 
+## Feedback Data Minimization
+
+In-product beta feedback is authenticated and user-owned. Feedback messages are
+user-entered content and must not be copied into analytics, Sentry events,
+activity/timeline records, console logs, or operational metadata.
+
+`POST /api/feedback` derives `user_id` from the validated Supabase bearer token,
+validates message length and type, strips metadata down to a small allowlist,
+and returns only a safe acknowledgement without echoing the message.
+
 ## Future Auth And Session Architecture
 
 Future auth should support:

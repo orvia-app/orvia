@@ -29,10 +29,10 @@ import type { LucideIcon } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { useAuthSession } from "@/components/auth/useAuthSession";
 import { CommandCenter } from "@/components/command-palette/CommandCenter";
+import { FeedbackDialog } from "@/components/feedback/FeedbackDialog";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { QuickCapture } from "@/components/quick-capture/QuickCapture";
 import { useTheme, type Theme } from "@/components/ThemeProvider";
-import { FEEDBACK_URL, isFeedbackUrlConfigured } from "@/lib/feedback";
 import type { TranslationKey } from "@/lib/i18n";
 
 type NavItem = {
@@ -208,17 +208,12 @@ function FeedbackLink({
 }) {
   const { t } = useI18n();
 
-  if (!isFeedbackUrlConfigured()) {
-    return null;
-  }
-
   return (
-    <a
-      href={FEEDBACK_URL}
-      target="_blank"
-      rel="noreferrer"
+    <button
+      type="button"
       onClick={onClick}
       className={[
+        "w-full text-left",
         "group flex cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 text-sm font-medium text-zinc-500 transition hover:border-violet-200/70 hover:bg-white hover:text-zinc-950 dark:text-zinc-500 dark:hover:border-violet-500/20 dark:hover:bg-zinc-900/70 dark:hover:text-white",
         mobile ? "min-h-11" : "py-2",
       ].join(" ")}
@@ -228,7 +223,7 @@ function FeedbackLink({
         aria-hidden
       />
       <span>{t("common.feedback")}</span>
-    </a>
+    </button>
   );
 }
 
@@ -400,6 +395,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [quickCaptureOpen, setQuickCaptureOpen] = useState(false);
   const [desktopLabsOpen, setDesktopLabsOpen] = useState(false);
   const [mobileLabsOpen, setMobileLabsOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const labsActive = labsNavItems.some((item) => isNavActive(pathname, item.href));
   const desktopLabsVisible = desktopLabsOpen || labsActive;
   const mobileLabsVisible = mobileLabsOpen || labsActive;
@@ -534,6 +530,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         onOpenChange={setQuickCaptureOpen}
         open={quickCaptureOpen}
       />
+      <FeedbackDialog
+        accessToken={session?.access_token}
+        onOpenChange={setFeedbackOpen}
+        open={feedbackOpen}
+        source="app_shell"
+      />
 
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-zinc-200/80 bg-zinc-50/95 dark:border-zinc-800/80 dark:bg-zinc-950 lg:flex">
         <div className="flex shrink-0 items-center gap-3 px-5 pt-5">
@@ -594,7 +596,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               }}
             />
           ))}
-          <FeedbackLink />
+          <FeedbackLink onClick={() => setFeedbackOpen(true)} />
 
           <LabsNavSection
             open={desktopLabsVisible}
@@ -726,7 +728,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 ))}
                 <FeedbackLink
                   mobile
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setFeedbackOpen(true);
+                  }}
                 />
 
                 <LabsNavSection

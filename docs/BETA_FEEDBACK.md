@@ -5,52 +5,62 @@
 Private beta users need a clear way to report bugs, suggest ideas, and explain
 where the product feels confusing.
 
-This is intentionally lightweight. Orvia does not run a feedback backend yet,
-and this foundation does not create database tables, file uploads, analytics, or
+Feedback is now collected in-product for signed-in users. The implementation is
+intentionally small: it stores feedback rows, but it does not include an admin
+dashboard, email notifications, file uploads, anonymous/public feedback, or
 support automation.
 
 ## Current Behavior
 
-The Settings page includes a beta feedback card with three actions:
+The AppShell sidebar/mobile drawer includes a Feedback entry. Settings also has
+a feedback card with three actions:
 
 - Send Feedback
 - Report a Bug
 - Suggest an Idea
 
-All actions can point to the same external form during private beta.
+All actions open the same in-product feedback dialog. Users choose a feedback
+type, write a message, and submit it to `POST /api/feedback` with their current
+Supabase access token.
 
-## Configuration
+## Data Model
 
-The feedback URL is configured in:
+Feedback is stored in `public.feedback`.
 
-```ts
-src/lib/feedback.ts
-```
+The table is user-owned:
 
-Replace the placeholder value:
+- `user_id` references `auth.users(id)`
+- authenticated users can insert their own feedback
+- authenticated users can select their own feedback
+- normal authenticated users cannot update or delete feedback
+- anon has no table access
+- service role can manage feedback for future internal review tooling
 
-```ts
-export const FEEDBACK_URL = "https://forms.google.com/PLACEHOLDER";
-```
+## Privacy Rules
 
-with the real feedback form URL.
+Feedback messages are user-entered content.
 
-If the URL is empty or still uses the placeholder value, feedback actions are
-disabled and the Settings page shows helper text instead of crashing or opening
-a broken link.
+Do not copy feedback messages into:
 
-## Why No Backend Yet
+- Sentry events or breadcrumbs
+- analytics events
+- activity/timeline records
+- console logs
+- support metadata
 
-For private beta, an external form is lower risk and faster to operate than a
-custom feedback system.
+The API returns only a safe acknowledgement shape: id, type, status, and
+created time. It does not echo the submitted message back to the client.
 
-Deferring a backend keeps this PR out of:
+Allowed feedback metadata is limited to small operational context such as route,
+locale, theme, and source. Unknown or non-string metadata is ignored.
 
-- database schema design
-- moderation and spam handling
-- attachment security
-- support queue workflows
-- analytics/event routing
+## Deferred
 
-When beta volume requires it, feedback can move behind an owned support system
-or product analytics workflow.
+The following are intentionally not implemented yet:
+
+- admin feedback review dashboard
+- email or Slack notifications
+- anonymous/public feedback
+- attachments/screenshots
+- moderation/spam controls
+- feedback analytics

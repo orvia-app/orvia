@@ -95,6 +95,41 @@ verifyRlsPolicySet({
   deletePolicy: "create policy captures_delete_own on public.captures",
 });
 
+const feedbackMigration = read(
+  "supabase/migrations/202606010008_create_feedback.sql",
+);
+
+assertIncludes(
+  feedbackMigration,
+  "alter table public.feedback enable row level security;",
+  "feedback RLS migration",
+);
+assertIncludes(
+  feedbackMigration,
+  "create policy feedback_select_own on public.feedback",
+  "feedback RLS migration",
+);
+assertIncludes(
+  feedbackMigration,
+  "create policy feedback_insert_own on public.feedback",
+  "feedback RLS migration",
+);
+assertMatches(
+  feedbackMigration,
+  /using \(user_id = auth\.uid\(\)\)/,
+  "feedback RLS migration",
+);
+assertMatches(
+  feedbackMigration,
+  /with check \(user_id = auth\.uid\(\)\)/,
+  "feedback RLS migration",
+);
+assertIncludes(
+  feedbackMigration,
+  "grant select, insert\n  on public.feedback\n  to authenticated;",
+  "feedback RLS migration",
+);
+
 verifyApiRoute("src/server/api/auth.ts", [
   "parseBearerToken",
   "createSupabaseServerAuthClient({ accessToken })",
@@ -150,6 +185,12 @@ verifyApiRoute("src/app/api/captures/[id]/route.ts", [
   '.eq("id", captureId)',
   '.eq("user_id", auth.userId)',
   '.is("deleted_at", null)',
+]);
+
+verifyApiRoute("src/app/api/feedback/route.ts", [
+  "authenticateApiRequest(request)",
+  ".insert({ ...parsedPayload.payload, user_id: auth.userId })",
+  '.select("id,type,status,created_at")',
 ]);
 
 if (existsSync(join(root, "src/app/api/test/route.ts"))) {
