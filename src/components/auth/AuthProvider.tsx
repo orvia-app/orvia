@@ -15,6 +15,7 @@ import {
   clearSupabaseBrowserAuthSession,
   getSupabaseBrowserAuthClient,
   isExpectedSupabaseSignedOutError,
+  loadSupabaseBrowserAuthSession,
 } from "@/lib/supabase/auth";
 import { trackEmailConfirmedFromUrl } from "@/lib/analytics";
 import { setMonitoringUserId } from "@/lib/monitoring/sentry-user";
@@ -119,51 +120,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       async function loadInitialSession(): Promise<void> {
         try {
-          const { error: initializeError } = await supabase.auth.initialize();
+          const sessionResult = await loadSupabaseBrowserAuthSession(supabase);
 
           if (cancelled) {
             return;
           }
 
-          if (initializeError) {
-            if (isExpectedSupabaseSignedOutError(initializeError)) {
-              await clearSupabaseBrowserAuthSession(supabase);
-              commitSignedOutState();
-              subscribeToAuthStateChanges();
-            } else {
-              setAuthError("Could not load auth session.");
-              commitSession(null);
-              setLoading(false);
-            }
-
-            return;
-          }
-
-          const { data: sessionData, error } =
-            await supabase.auth.getSession();
-
-          if (cancelled) {
-            return;
-          }
-
-          if (error) {
-            if (isExpectedSupabaseSignedOutError(error)) {
-              await clearSupabaseBrowserAuthSession(supabase);
-              commitSignedOutState();
-              subscribeToAuthStateChanges();
-            } else {
-              setAuthError("Could not load auth session.");
-              commitSession(null);
-              setLoading(false);
-            }
-
+          if (!sessionResult.ok) {
+            setAuthError(sessionResult.error);
+            commitSession(null);
+            setLoading(false);
             return;
           }
 
           setAuthError(null);
-          commitSession(sessionData.session ?? null);
+          commitSession(sessionResult.session);
           trackEmailConfirmedFromUrl({
-            authenticated: sessionData.session !== null,
+            authenticated: sessionResult.session !== null,
           });
           setLoading(false);
           subscribeToAuthStateChanges();
@@ -216,6 +189,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) {
         await clearSupabaseBrowserAuthSession(supabase);
         commitSession(null);
+        if (isExpectedSupabaseSignedOutError(error)) {
+          return { ok: true };
+        }
         return { ok: false, error: "Could not sign out." };
       }
 

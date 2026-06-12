@@ -74,8 +74,22 @@ test("expected Supabase signed-out errors include invalid refresh tokens only", 
     true,
   );
   assert.equal(
+    isExpectedSupabaseSignedOutError({
+      name: "AuthApiError",
+      message: "Invalid Refresh Token: Refresh Token Not Found",
+      status: 400,
+    }),
+    true,
+  );
+  assert.equal(
     isExpectedSupabaseSignedOutError(
       new Error("Refresh token is not valid"),
+    ),
+    true,
+  );
+  assert.equal(
+    isExpectedSupabaseSignedOutError(
+      new Error("invalid refresh token: refresh token not found"),
     ),
     true,
   );

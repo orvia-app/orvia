@@ -11,9 +11,8 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { trackBetaEvent } from "@/lib/analytics";
 import {
-  clearSupabaseBrowserAuthSession,
   getSupabaseBrowserAuthClient,
-  isExpectedSupabaseSignedOutError,
+  loadSupabaseBrowserAuthSession,
 } from "@/lib/supabase/auth";
 
 export default function LoginPage() {
@@ -38,17 +37,9 @@ export default function LoginPage() {
 
     async function clearStaleSession(): Promise<void> {
       try {
-        const supabase = getSupabaseBrowserAuthClient();
-        const { error } = await supabase.auth.getSession();
-
-        if (error && isExpectedSupabaseSignedOutError(error)) {
-          await clearSupabaseBrowserAuthSession(supabase);
-        }
-      } catch (error) {
-        if (isExpectedSupabaseSignedOutError(error)) {
-          const supabase = getSupabaseBrowserAuthClient();
-          await clearSupabaseBrowserAuthSession(supabase);
-        }
+        await loadSupabaseBrowserAuthSession();
+      } catch {
+        // AuthProvider owns the visible auth configuration state.
       }
     }
 
