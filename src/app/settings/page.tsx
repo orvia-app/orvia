@@ -6,6 +6,7 @@ import { Monitor, Moon, Sun } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { useAuthSession } from "@/components/auth/useAuthSession";
+import { FeedbackDialog } from "@/components/feedback/FeedbackDialog";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { useTheme, type Theme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/Button";
@@ -25,8 +26,8 @@ import {
   type LocalCloudImportPlan,
   type LocalCloudImportSummary,
 } from "@/lib/local-cloud-sync";
-import { FEEDBACK_URL, isFeedbackUrlConfigured } from "@/lib/feedback";
 import { resetOnboarding } from "@/lib/onboarding";
+import type { FeedbackType } from "@/lib/feedback-api";
 import type { TranslationKey } from "@/lib/i18n";
 
 type SettingsSectionId =
@@ -98,10 +99,13 @@ const appearanceOptions: {
   },
 ];
 
-const feedbackActions: TranslationKey[] = [
-  "settings.sendFeedback",
-  "settings.reportBug",
-  "settings.suggestIdea",
+const feedbackActions: {
+  labelKey: TranslationKey;
+  type: FeedbackType;
+}[] = [
+  { labelKey: "settings.sendFeedback", type: "general" },
+  { labelKey: "settings.reportBug", type: "bug" },
+  { labelKey: "settings.suggestIdea", type: "idea" },
 ];
 
 export default function SettingsPage() {
@@ -120,12 +124,14 @@ export default function SettingsPage() {
   const [resettingLocalData, setResettingLocalData] = useState(false);
   const [onboardingDialogOpen, setOnboardingDialogOpen] = useState(false);
   const [resettingOnboarding, setResettingOnboarding] = useState(false);
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
+  const [feedbackDialogType, setFeedbackDialogType] =
+    useState<FeedbackType>("general");
   const [activeSettingsSection, setActiveSettingsSection] =
     useState<SettingsSectionId>("profile");
   const selectedSettingsSection = settingsSections.find(
     (section) => section.id === activeSettingsSection,
   ) ?? settingsSections[0];
-  const feedbackConfigured = isFeedbackUrlConfigured();
 
   const importDisabled = useMemo(() => {
     if (authLoading || planLoading || importing || !isAuthenticated) {
@@ -625,34 +631,20 @@ export default function SettingsPage() {
                 subtitle={t("settings.feedbackDescription")}
               />
               <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                {feedbackActions.map((labelKey) =>
-                  feedbackConfigured ? (
-                    <a
-                      key={labelKey}
-                      href={FEEDBACK_URL}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50/70 hover:text-violet-800 hover:ring-violet-200/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-zinc-950/60 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/20 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
-                    >
-                      {t(labelKey)}
-                    </a>
-                  ) : (
-                    <button
-                      key={labelKey}
-                      type="button"
-                      disabled
-                      className="inline-flex h-10 cursor-not-allowed items-center justify-center rounded-xl bg-zinc-50 px-4 text-sm font-medium text-zinc-400 ring-1 ring-zinc-200/80 dark:bg-zinc-900/50 dark:text-zinc-600 dark:ring-zinc-800/80"
-                    >
-                      {t(labelKey)}
-                    </button>
-                  ),
-                )}
+                {feedbackActions.map((action) => (
+                  <Button
+                    key={action.labelKey}
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      setFeedbackDialogType(action.type);
+                      setFeedbackDialogOpen(true);
+                    }}
+                  >
+                    {t(action.labelKey)}
+                  </Button>
+                ))}
               </div>
-              {!feedbackConfigured ? (
-                <p className="mt-3 text-sm leading-6 text-zinc-500 dark:text-zinc-500">
-                  {t("settings.feedbackUnavailable")}
-                </p>
-              ) : null}
             </Card>
           </Section>
 
@@ -717,6 +709,13 @@ export default function SettingsPage() {
         open={onboardingDialogOpen}
         title={t("settings.resetOnboardingDialogTitle")}
         tone="default"
+      />
+      <FeedbackDialog
+        accessToken={accessToken}
+        initialType={feedbackDialogType}
+        onOpenChange={setFeedbackDialogOpen}
+        open={feedbackDialogOpen}
+        source="settings"
       />
     </AppShell>
   );
