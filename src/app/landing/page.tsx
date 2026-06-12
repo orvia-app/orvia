@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -98,12 +97,6 @@ const landingThemeOptions: {
 export default function LandingPage() {
   const { locale, setLocale, t } = useI18n();
   const { hydrated, theme, setTheme } = useTheme();
-  const [submitted, setSubmitted] = useState(false);
-
-  function handleWaitlistSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSubmitted(true);
-  }
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.11),transparent_34rem),linear-gradient(180deg,#fafafa_0%,#f4f4f5_48%,#fafafa_100%)] text-zinc-950 dark:bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.18),transparent_32rem),linear-gradient(180deg,#18181b_0%,#09090b_52%,#18181b_100%)] dark:text-white">
@@ -193,7 +186,7 @@ export default function LandingPage() {
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <a
-              href="#waitlist"
+              href="/register"
               className="inline-flex h-11 items-center justify-center rounded-xl bg-violet-800 px-5 text-sm font-semibold text-white shadow-sm shadow-violet-950/10 transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-violet-600 dark:hover:bg-violet-500 dark:focus-visible:ring-offset-zinc-950"
             >
               {t("landing.notify")}
@@ -345,7 +338,7 @@ export default function LandingPage() {
       </section>
 
       <section
-        id="waitlist"
+        id="private-beta"
         className="border-t border-zinc-200/75 bg-white/70 dark:border-zinc-800/75 dark:bg-zinc-950/35"
       >
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
@@ -361,58 +354,25 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <form
-            onSubmit={handleWaitlistSubmit}
-            className="rounded-2xl bg-white/90 p-5 shadow-sm shadow-zinc-950/[0.035] ring-1 ring-zinc-200/75 dark:bg-zinc-900/70 dark:ring-zinc-800/75"
-          >
-            <div className="grid gap-4">
-              <label className="grid gap-1.5">
-                <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                  {t("common.email")}
-                </span>
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  placeholder="you@example.com"
-                  className="h-11 rounded-xl bg-zinc-50 px-3 text-sm text-zinc-950 outline-none ring-1 ring-zinc-200/80 transition placeholder:text-zinc-500 focus:ring-2 focus:ring-violet-300 dark:bg-zinc-950/70 dark:text-white dark:ring-zinc-800 dark:focus:ring-violet-500/50"
-                />
-              </label>
-              <label className="grid gap-1.5">
-                <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                  {t("landing.roleLabel")}
-                  <span className="font-normal text-zinc-500">
-                    {" "}
-                    {t("landing.optional")}
-                  </span>
-                </span>
-                <input
-                  type="text"
-                  name="role"
-                  placeholder={t("landing.rolePlaceholder")}
-                  className="h-11 rounded-xl bg-zinc-50 px-3 text-sm text-zinc-950 outline-none ring-1 ring-zinc-200/80 transition placeholder:text-zinc-500 focus:ring-2 focus:ring-violet-300 dark:bg-zinc-950/70 dark:text-white dark:ring-zinc-800 dark:focus:ring-violet-500/50"
-                />
-              </label>
-            </div>
-
-            <button
-              type="submit"
-              className="mt-5 inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-xl bg-violet-800 px-4 text-sm font-semibold text-white shadow-sm shadow-violet-950/10 transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-violet-600 dark:hover:bg-violet-500 dark:focus-visible:ring-offset-zinc-900"
-            >
-              {t("landing.notify")}
-            </button>
-            <p className="mt-3 text-sm leading-6 text-zinc-500 dark:text-zinc-500">
-              {t("landing.formNote")}
+          <div className="rounded-2xl bg-white/90 p-5 shadow-sm shadow-zinc-950/[0.035] ring-1 ring-zinc-200/75 dark:bg-zinc-900/70 dark:ring-zinc-800/75">
+            <p className="text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+              {t("landing.betaCtaDescription")}
             </p>
-            {submitted ? (
-              <p
-                role="status"
-                className="mt-3 rounded-xl bg-violet-50 px-3 py-2 text-sm font-medium text-violet-800 ring-1 ring-violet-200/80 dark:bg-violet-500/10 dark:text-violet-200 dark:ring-violet-500/25"
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/register"
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-violet-800 px-5 text-sm font-semibold text-white shadow-sm shadow-violet-950/10 transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-violet-600 dark:hover:bg-violet-500 dark:focus-visible:ring-offset-zinc-900"
               >
-                {t("landing.thanks")}
-              </p>
-            ) : null}
-          </form>
+                {t("landing.joinPrivateBeta")}
+              </Link>
+              <Link
+                href="/login"
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-zinc-50 px-5 text-sm font-semibold text-zinc-800 ring-1 ring-zinc-200/80 transition hover:bg-violet-50/70 hover:text-violet-800 hover:ring-violet-200/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-zinc-950/70 dark:text-zinc-100 dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/20 dark:focus-visible:ring-offset-zinc-900"
+              >
+                {t("common.signIn")}
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 

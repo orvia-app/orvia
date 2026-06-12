@@ -25,37 +25,33 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
+    if (!loading && isAuthenticated) {
+      router.replace("/app");
+    }
+  }, [isAuthenticated, loading, router]);
 
-    if (loading || !isAuthenticated) {
-      return () => {
-        cancelled = true;
-      };
+  useEffect(() => {
+    if (loading || isAuthenticated) {
+      return;
     }
 
-    async function redirectIfSessionExists(): Promise<void> {
+    async function clearStaleSession(): Promise<void> {
       try {
         const supabase = getSupabaseBrowserAuthClient();
-        const { data } = await supabase.auth.getSession();
+        const { error } = await supabase.auth.getSession();
 
-        if (!cancelled && data.session) {
-          router.replace("/app");
+        if (error && isExpectedSupabaseSignedOutError(error)) {
+          await clearSupabaseBrowserAuthSession(supabase);
         }
       } catch (error) {
         if (isExpectedSupabaseSignedOutError(error)) {
           const supabase = getSupabaseBrowserAuthClient();
           await clearSupabaseBrowserAuthSession(supabase);
         }
-
-        // Stay on the login page if browser auth is unavailable or stale.
       }
     }
 
-    void redirectIfSessionExists();
-
-    return () => {
-      cancelled = true;
-    };
+    void clearStaleSession();
   }, [isAuthenticated, loading, router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -92,6 +88,13 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 py-10 text-zinc-950 dark:bg-black dark:text-white">
       <Card className="w-full max-w-md p-6 sm:p-7">
+        <Link
+          href="/"
+          className="mb-5 inline-flex text-sm font-medium text-zinc-500 transition hover:text-violet-800 dark:text-zinc-500 dark:hover:text-violet-200"
+        >
+          {t("auth.backToLanding")}
+        </Link>
+
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-100 text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
             <BrandMark className="h-5 w-5" />
