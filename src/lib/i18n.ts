@@ -620,7 +620,8 @@ const en = {
   "landing.headline": "Capture tasks, notes, and ideas. Know what to do next.",
   "landing.subheadline":
     "Orvia helps you turn scattered tasks, notes, captures, and activity into a clear daily focus so your next action is always obvious.",
-  "landing.notify": "Notify me when beta opens",
+  "landing.notify": "Create free account",
+  "landing.joinPrivateBeta": "Join private beta",
   "landing.viewDemo": "View demo flow",
   "landing.problemEyebrow": "The problem",
   "landing.problemTitle": "Work gets scattered faster than tools can organize it.",
@@ -634,11 +635,13 @@ const en = {
     "Built for people who carry too much context and need a clearer next action.",
   "landing.betaTitle": "Help shape Orvia before public launch.",
   "landing.betaDescription":
-    "Orvia is currently preparing for private beta. Tell us you are interested, or create an account to try the current preview today.",
+    "Orvia is currently preparing for private beta. Create an account to try the current preview today.",
+  "landing.betaCtaDescription":
+    "Start with the current beta preview. Capture something, process it in Inbox, then open Today to see what to do next.",
   "landing.roleLabel": "Role or what you do",
   "landing.rolePlaceholder": "Founder, PM, freelancer, operator...",
   "landing.optional": "optional",
-  "landing.formNote": "This preview form does not submit yet. Create an account to try Orvia today.",
+  "landing.formNote": "Create an account to try Orvia today.",
   "landing.thanks":
     "Thanks. Waitlist collection will be connected soon. For now, create an account to try the current preview.",
   "landing.footer": "Orvia - private beta in progress.",
@@ -1297,7 +1300,8 @@ const ua: Record<TranslationKey, string> = {
   "landing.headline": "Зберігайте завдання, нотатки й ідеї. Знайте, що робити далі.",
   "landing.subheadline":
     "Orvia перетворює розрізнені завдання, нотатки, записи й активність на чіткий фокус дня, щоб наступна дія була очевидною.",
-  "landing.notify": "Повідомити про відкриття бети",
+  "landing.notify": "Створити безкоштовний акаунт",
+  "landing.joinPrivateBeta": "Приєднатися до приватної бети",
   "landing.viewDemo": "Подивитися демо-потік",
   "landing.problemEyebrow": "Проблема",
   "landing.problemTitle": "Робота розлітається швидше, ніж інструменти її впорядковують.",
@@ -1311,11 +1315,13 @@ const ua: Record<TranslationKey, string> = {
     "Створено для тих, хто несе багато контексту й потребує чіткішої наступної дії.",
   "landing.betaTitle": "Допоможіть сформувати Orvia до публічного запуску.",
   "landing.betaDescription":
-    "Orvia готується до приватної бети. Повідомте про інтерес або створіть акаунт, щоб спробувати поточне превʼю.",
+    "Orvia готується до приватної бети. Створіть акаунт, щоб спробувати поточне превʼю.",
+  "landing.betaCtaDescription":
+    "Почніть із поточного бета-превʼю. Збережіть щось, обробіть це у Вхідних, а потім відкрийте Сьогодні, щоб побачити наступну дію.",
   "landing.roleLabel": "Роль або чим ви займаєтесь",
   "landing.rolePlaceholder": "Засновник, продакт-менеджер, фрилансер, оператор...",
   "landing.optional": "необовʼязково",
-  "landing.formNote": "Ця форма попереднього інтересу ще не надсилається. Створіть акаунт, щоб спробувати Orvia сьогодні.",
+  "landing.formNote": "Створіть акаунт, щоб спробувати Orvia сьогодні.",
   "landing.thanks":
     "Дякуємо. Збір списку очікування буде підключено пізніше. Поки що створіть акаунт, щоб спробувати поточний перегляд.",
   "landing.footer": "Orvia - приватна бета триває.",
