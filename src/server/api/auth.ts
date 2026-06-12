@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerAuthClient } from "@/server/supabase/auth";
 
 export type AuthenticatedUser =
-  | { ok: true; userId: string }
+  | { ok: true; email: string | null; userId: string }
   | { ok: false; response: NextResponse };
 
 function parseBearerToken(authorizationHeader: string | null): string | null {
@@ -49,5 +49,5 @@ export async function authenticateApiRequest(
     };
   }
 
-  return { ok: true, userId };
+  return { ok: true, email: data.user.email ?? null, userId };
 }

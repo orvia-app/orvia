@@ -19,6 +19,7 @@ import {
   Plus,
   Settings,
   Search,
+  ShieldCheck,
   Sun,
   Wallet,
   X,
@@ -58,6 +59,10 @@ const settingsNavItems: NavItem[] = [
   { labelKey: "common.settings", href: "/app/settings", icon: Settings },
 ];
 
+const adminNavItems: NavItem[] = [
+  { labelKey: "admin.feedback.nav", href: "/app/admin/feedback", icon: ShieldCheck },
+];
+
 const labsNavItems: NavItem[] = [
   { labelKey: "nav.cars", href: "/app/cars", icon: Car },
   { labelKey: "nav.finance", href: "/app/finance", icon: Wallet },
@@ -68,6 +73,7 @@ const navItems: NavItem[] = [
   ...focusNavItems,
   ...workflowNavItems,
   ...settingsNavItems,
+  ...adminNavItems,
   ...labsNavItems,
 ];
 
@@ -405,6 +411,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [desktopLabsOpen, setDesktopLabsOpen] = useState(false);
   const [mobileLabsOpen, setMobileLabsOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [adminNavigationVisible, setAdminNavigationVisible] = useState(false);
   const labsActive = labsNavItems.some((item) => isNavActive(pathname, item.href));
   const desktopLabsVisible = desktopLabsOpen || labsActive;
   const mobileLabsVisible = mobileLabsOpen || labsActive;
@@ -448,6 +455,43 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       router.replace("/login");
     }
   }, [isAppRoute, isAuthenticated, loading, router]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!session?.access_token) {
+      setAdminNavigationVisible(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const accessToken = session.access_token;
+
+    async function checkAdminAccess(): Promise<void> {
+      try {
+        const response = await fetch("/api/admin/feedback?probe=1", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        if (!cancelled) {
+          setAdminNavigationVisible(response.ok);
+        }
+      } catch {
+        if (!cancelled) {
+          setAdminNavigationVisible(false);
+        }
+      }
+    }
+
+    void checkAdminAccess();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.access_token]);
 
   useEffect(() => {
     if (!mobileMenuOpen) {
@@ -607,6 +651,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           ))}
           <FeedbackLink onClick={() => setFeedbackOpen(true)} />
 
+          {adminNavigationVisible ? (
+            <>
+              <NavSectionLabel>{t("common.admin")}</NavSectionLabel>
+              {adminNavItems.map(({ labelKey, href, icon }) => (
+                <NavLinkItem
+                  key={href}
+                  active={isNavActive(pathname, href)}
+                  href={href}
+                  icon={icon}
+                  labelKey={labelKey}
+                  refCallback={(element) => {
+                    navItemRefs.current[href] = element;
+                  }}
+                />
+              ))}
+            </>
+          ) : null}
+
           <LabsNavSection
             open={desktopLabsVisible}
             pathname={pathname}
@@ -739,6 +801,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     setFeedbackOpen(true);
                   }}
                 />
+
+                {adminNavigationVisible ? (
+                  <>
+                    <NavSectionLabel>{t("common.admin")}</NavSectionLabel>
+                    {adminNavItems.map(({ labelKey, href, icon }) => (
+                      <NavLinkItem
+                        key={href}
+                        active={isNavActive(pathname, href)}
+                        href={href}
+                        icon={icon}
+                        labelKey={labelKey}
+                        minHeight
+                      />
+                    ))}
+                  </>
+                ) : null}
 
                 <LabsNavSection
                   mobile
