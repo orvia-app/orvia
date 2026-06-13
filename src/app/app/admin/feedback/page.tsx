@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { MessageSquare } from "lucide-react";
 
@@ -179,6 +180,51 @@ export default function AdminFeedbackPage() {
     }
   }
 
+  if (loading) {
+    return (
+      <AppShell>
+        <Page width="narrow">
+          <Card className="space-y-3 p-6 text-center">
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-200/70 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
+              <MessageSquare className="h-4.5 w-4.5" aria-hidden />
+            </div>
+            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              {t("admin.feedback.checking")}
+            </p>
+          </Card>
+        </Page>
+      </AppShell>
+    );
+  }
+
+  if (forbidden) {
+    return (
+      <AppShell>
+        <Page width="narrow">
+          <Card className="space-y-4 p-6 text-center">
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200/75 dark:bg-zinc-900 dark:text-zinc-300 dark:ring-zinc-800">
+              <MessageSquare className="h-4.5 w-4.5" aria-hidden />
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold tracking-tight text-zinc-950 dark:text-white">
+                {t("admin.feedback.accessDeniedTitle")}
+              </h1>
+              <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                {t("admin.feedback.accessDeniedDescription")}
+              </p>
+            </div>
+            <Link
+              href="/app"
+              className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50/70 hover:text-violet-800 hover:ring-violet-200/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-zinc-950/60 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/20 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
+            >
+              {t("admin.feedback.backToApp")}
+            </Link>
+          </Card>
+        </Page>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <Page>
@@ -222,15 +268,7 @@ export default function AdminFeedbackPage() {
               </p>
             ) : null}
 
-            {loading ? (
-              <div className="rounded-xl bg-zinc-100/70 px-4 py-8 text-center text-sm text-zinc-500 dark:bg-zinc-900/55 dark:text-zinc-500">
-                {t("common.loading")}...
-              </div>
-            ) : forbidden ? (
-              <div className="rounded-xl bg-zinc-100/70 px-4 py-8 text-center text-sm text-zinc-600 dark:bg-zinc-900/55 dark:text-zinc-400">
-                {t("admin.feedback.forbidden")}
-              </div>
-            ) : filteredFeedback.length === 0 ? (
+            {filteredFeedback.length === 0 ? (
               <div className="rounded-xl bg-zinc-100/70 px-4 py-8 text-center text-sm text-zinc-600 dark:bg-zinc-900/55 dark:text-zinc-400">
                 {t("admin.feedback.empty")}
               </div>

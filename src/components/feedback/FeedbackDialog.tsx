@@ -50,17 +50,17 @@ export function FeedbackDialog({
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    if (!open) {
-      return;
+    if (open) {
+      setType(initialType);
+      setMessage("");
+      setSubmitError(null);
+      setSubmitted(false);
     }
+  }, [initialType, open]);
 
-    setType(initialType);
-    setMessage("");
-    setSubmitError(null);
-    setSubmitted(false);
-
+  useEffect(() => {
     function handleKeyDown(event: KeyboardEvent): void {
-      if (event.key === "Escape" && !submitting) {
+      if (open && event.key === "Escape" && !submitting) {
         onOpenChange(false);
       }
     }
@@ -70,7 +70,7 @@ export function FeedbackDialog({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [initialType, onOpenChange, open, submitting]);
+  }, [onOpenChange, open, submitting]);
 
   if (!open) {
     return null;
