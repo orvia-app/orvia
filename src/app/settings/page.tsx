@@ -9,6 +9,7 @@ import { useAuthSession } from "@/components/auth/useAuthSession";
 import { FeedbackDialog } from "@/components/feedback/FeedbackDialog";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { useTheme, type Theme } from "@/components/ThemeProvider";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -29,49 +30,6 @@ import {
 import { resetOnboarding } from "@/lib/onboarding";
 import type { FeedbackType } from "@/lib/feedback-api";
 import type { TranslationKey } from "@/lib/i18n";
-
-type SettingsSectionId =
-  | "profile"
-  | "integrations"
-  | "billing"
-  | "data-privacy";
-
-const settingsSections: {
-  descriptionKey: TranslationKey;
-  detailKey: TranslationKey;
-  id: SettingsSectionId;
-  statusKey: TranslationKey;
-  titleKey: TranslationKey;
-}[] = [
-  {
-    id: "profile",
-    titleKey: "settings.profile",
-    statusKey: "settings.profileStatus",
-    descriptionKey: "settings.profileDescription",
-    detailKey: "settings.profileDetail",
-  },
-  {
-    id: "integrations",
-    titleKey: "settings.integrations",
-    statusKey: "settings.integrationsStatus",
-    descriptionKey: "settings.integrationsDescription",
-    detailKey: "settings.integrationsDetail",
-  },
-  {
-    id: "billing",
-    titleKey: "settings.billing",
-    statusKey: "settings.billingStatus",
-    descriptionKey: "settings.billingDescription",
-    detailKey: "settings.billingDetail",
-  },
-  {
-    id: "data-privacy",
-    titleKey: "settings.dataPrivacy",
-    statusKey: "settings.dataPrivacyStatus",
-    descriptionKey: "settings.dataPrivacyDescription",
-    detailKey: "settings.dataPrivacyDetail",
-  },
-];
 
 const appearanceOptions: {
   value: Theme;
@@ -127,11 +85,21 @@ export default function SettingsPage() {
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const [feedbackDialogType, setFeedbackDialogType] =
     useState<FeedbackType>("general");
-  const [activeSettingsSection, setActiveSettingsSection] =
-    useState<SettingsSectionId>("profile");
-  const selectedSettingsSection = settingsSections.find(
-    (section) => section.id === activeSettingsSection,
-  ) ?? settingsSections[0];
+  const currentLanguageLabel =
+    locale === "ua" ? t("settings.ukrainian") : t("settings.english");
+  const currentThemeLabel = !hydrated
+    ? t("common.loading")
+    : theme === "system"
+    ? `${t("nav.systemTheme")} (${t(
+        resolvedTheme === "dark" ? "nav.dark" : "nav.light",
+      )})`
+    : t(theme === "dark" ? "nav.dark" : "nav.light");
+  const accountEmail = session?.user?.email ?? t("settings.emailUnavailable");
+  const accountStatus = authLoading
+    ? t("common.checking")
+    : isAuthenticated
+    ? t("settings.accountStatusSignedIn")
+    : t("settings.accountStatusSignedOut");
 
   const importDisabled = useMemo(() => {
     if (authLoading || planLoading || importing || !isAuthenticated) {
@@ -259,18 +227,67 @@ export default function SettingsPage() {
           <Section className="mt-10">
             <Card>
               <SectionHeader
+                title={t("settings.profile")}
+                subtitle={t("settings.profileSectionSubtitle")}
+              />
+              <div className="mt-5 grid gap-3">
+                <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                      {t("settings.accountStatus")}
+                    </span>
+                    <Badge variant={isAuthenticated ? "success" : "warning"}>
+                      {accountStatus}
+                    </Badge>
+                  </div>
+                  <p className="mt-3 truncate text-sm font-medium text-zinc-950 dark:text-white">
+                    {accountEmail}
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-500">
+                    {t("settings.accountStatusDescription")}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+                  <div className="flex flex-wrap gap-2">
+                    <Badge>{t("settings.availableNow")}</Badge>
+                    <Badge variant="info">{t("settings.privateBeta")}</Badge>
+                  </div>
+                  <div className="mt-3 grid gap-2 text-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-zinc-500 dark:text-zinc-500">
+                        {t("settings.currentLanguage")}
+                      </span>
+                      <span className="font-medium text-zinc-950 dark:text-white">
+                        {currentLanguageLabel}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-zinc-500 dark:text-zinc-500">
+                        {t("settings.currentTheme")}
+                      </span>
+                      <span className="font-medium text-zinc-950 dark:text-white">
+                        {currentThemeLabel}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-xs leading-5 text-zinc-500 dark:text-zinc-500">
+                    {t("settings.profileComingLater")}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </Section>
+
+          <Section className="mt-8">
+            <Card>
+              <SectionHeader
                 title={t("settings.appearance")}
                 subtitle={
                   <>
                     {t("settings.currentSelection")}{" "}
                     <span className="font-medium text-zinc-950 dark:text-white">
-                      {!hydrated
-                        ? t("common.loading")
-                        : theme === "system"
-                        ? `${t("nav.systemTheme")} (${t(
-                            resolvedTheme === "dark" ? "nav.dark" : "nav.light",
-                          )})`
-                        : t(theme === "dark" ? "nav.dark" : "nav.light")}
+                      {currentThemeLabel}
                     </span>
                   </>
                 }
@@ -360,9 +377,21 @@ export default function SettingsPage() {
           <Section className="mt-8">
             <Card>
               <SectionHeader
-                title={t("settings.backupRestore")}
-                subtitle={t("settings.backupRestoreDescription")}
+                title={t("settings.dataPrivacy")}
+                subtitle={t("settings.dataPrivacyDescription")}
               />
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Badge>{t("settings.availableNow")}</Badge>
+                <Badge variant="warning">{t("settings.comingLater")}</Badge>
+              </div>
+              <div className="mt-4">
+                <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
+                  {t("settings.backupRestore")}
+                </h3>
+                <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                  {t("settings.backupRestoreDescription")}
+                </p>
+              </div>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 <div className="flex min-h-[190px] flex-col rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
                   <div>
@@ -409,6 +438,23 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <Link
+                  href="/legal/privacy"
+                  className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 text-sm font-medium text-zinc-800 transition hover:bg-white hover:text-violet-800 hover:ring-1 hover:ring-violet-200/70 dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:text-zinc-200 dark:hover:bg-zinc-900 dark:hover:text-violet-200 dark:hover:ring-violet-500/20"
+                >
+                  {t("settings.privacyPolicy")}
+                </Link>
+                <Link
+                  href="/legal/terms"
+                  className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 text-sm font-medium text-zinc-800 transition hover:bg-white hover:text-violet-800 hover:ring-1 hover:ring-violet-200/70 dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:text-zinc-200 dark:hover:bg-zinc-900 dark:hover:text-violet-200 dark:hover:ring-violet-500/20"
+                >
+                  {t("settings.termsService")}
+                </Link>
+              </div>
+              <p className="mt-4 text-sm leading-6 text-zinc-500 dark:text-zinc-500">
+                {t("settings.dataPrivacyDetail")}
+              </p>
             </Card>
           </Section>
 
@@ -576,50 +622,50 @@ export default function SettingsPage() {
           <Section className="mt-8">
             <Card>
               <SectionHeader
-                title={t("settings.accountSettings")}
-                subtitle={t("settings.accountSettingsDescription")}
+                title={t("settings.integrations")}
+                subtitle={t("settings.integrationsDescription")}
               />
-              <div className="mt-5 grid gap-3 sm:grid-cols-[220px_minmax(0,1fr)]">
-                <div className="grid gap-2">
-                  {settingsSections.map((section) => {
-                    const active = section.id === activeSettingsSection;
-
-                    return (
-                      <button
-                        key={section.id}
-                        type="button"
-                        onClick={() => setActiveSettingsSection(section.id)}
-                        className={
-                          active
-                            ? "rounded-xl bg-violet-50 px-3 py-3 text-left ring-1 ring-violet-200/80 dark:bg-violet-500/10 dark:ring-violet-500/25"
-                            : "rounded-xl bg-zinc-50/80 px-3 py-3 text-left ring-1 ring-zinc-200/80 transition hover:bg-white hover:ring-violet-200/70 dark:bg-zinc-900/40 dark:ring-zinc-800/80 dark:hover:bg-zinc-900 dark:hover:ring-violet-500/20"
-                        }
-                      >
-                        <span className="block text-sm font-semibold text-zinc-950 dark:text-white">
-                          {t(section.titleKey)}
-                        </span>
-                        <span className="mt-1 block text-xs text-zinc-500 dark:text-zinc-500">
-                          {t(section.statusKey)}
-                        </span>
-                      </button>
-                    );
-                  })}
+              <div className="mt-5 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="warning">{t("settings.comingSoon")}</Badge>
+                  <Badge variant="info">{t("settings.privateBeta")}</Badge>
                 </div>
-
-                <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-5 dark:border-zinc-800/80 dark:bg-zinc-900/40">
-                  <p className="text-xs font-medium uppercase tracking-wide text-violet-700 dark:text-violet-300">
-                    {t(selectedSettingsSection.statusKey)}
-                  </p>
-                  <h3 className="mt-2 text-base font-semibold text-zinc-950 dark:text-white">
-                    {t(selectedSettingsSection.titleKey)}
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                    {t(selectedSettingsSection.descriptionKey)}
-                  </p>
-                  <p className="mt-3 text-sm leading-6 text-zinc-500 dark:text-zinc-500">
-                    {t(selectedSettingsSection.detailKey)}
-                  </p>
+                <p className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                  {t("settings.integrationsDetail")}
+                </p>
+                <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                  {[
+                    t("settings.integrationCalendar"),
+                    t("settings.integrationTelegram"),
+                    t("settings.integrationAiAssistant"),
+                    t("settings.integrationNotifications"),
+                  ].map((item) => (
+                    <div
+                      key={item}
+                      className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-zinc-700 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:text-zinc-300 dark:ring-zinc-800"
+                    >
+                      {item}
+                    </div>
+                  ))}
                 </div>
+              </div>
+            </Card>
+          </Section>
+
+          <Section className="mt-8">
+            <Card>
+              <SectionHeader
+                title={t("settings.billing")}
+                subtitle={t("settings.billingDescription")}
+              />
+              <div className="mt-5 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="info">{t("settings.privateBeta")}</Badge>
+                  <Badge variant="warning">{t("settings.comingLater")}</Badge>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                  {t("settings.billingDetail")}
+                </p>
               </div>
             </Card>
           </Section>
@@ -630,6 +676,9 @@ export default function SettingsPage() {
                 title={t("settings.feedbackTitle")}
                 subtitle={t("settings.feedbackDescription")}
               />
+              <div className="mt-4 rounded-xl border border-violet-200/70 bg-violet-50/70 p-4 text-sm leading-6 text-violet-950 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-100">
+                {t("settings.feedbackBetaTeam")}
+              </div>
               <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                 {feedbackActions.map((action) => (
                   <Button
@@ -654,24 +703,12 @@ export default function SettingsPage() {
                 title={t("settings.helpLegal")}
                 subtitle={t("settings.helpLegalDescription")}
               />
-              <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 <Link
                   href="/help-center"
                   className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 text-sm font-medium text-zinc-800 transition hover:bg-white hover:text-violet-800 hover:ring-1 hover:ring-violet-200/70 dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:text-zinc-200 dark:hover:bg-zinc-900 dark:hover:text-violet-200 dark:hover:ring-violet-500/20"
                 >
                   {t("settings.helpCenter")}
-                </Link>
-                <Link
-                  href="/legal/privacy"
-                  className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 text-sm font-medium text-zinc-800 transition hover:bg-white hover:text-violet-800 hover:ring-1 hover:ring-violet-200/70 dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:text-zinc-200 dark:hover:bg-zinc-900 dark:hover:text-violet-200 dark:hover:ring-violet-500/20"
-                >
-                  {t("settings.privacyPolicy")}
-                </Link>
-                <Link
-                  href="/legal/terms"
-                  className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 text-sm font-medium text-zinc-800 transition hover:bg-white hover:text-violet-800 hover:ring-1 hover:ring-violet-200/70 dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:text-zinc-200 dark:hover:bg-zinc-900 dark:hover:text-violet-200 dark:hover:ring-violet-500/20"
-                >
-                  {t("settings.termsService")}
                 </Link>
               </div>
             </Card>
