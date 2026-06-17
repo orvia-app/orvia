@@ -368,7 +368,7 @@ const en = {
   "help.reset.question": "How do I reset local data?",
   "help.reset.answer": "Go to Settings, then Local data reset. This clears Orvia data stored in this browser only and does not delete cloud records.",
   "help.support.question": "How do I contact support?",
-  "help.support.answer": "During early beta, contact support through the channel where you received your Orvia invite.",
+  "help.support.answer": "During early beta, signed-in users can send feedback from Orvia. You can also use the channel where you received your invite.",
 
   "dashboard.eyebrow": "Daily focus",
   "dashboard.title": "Priorities, context, and what changed.",
@@ -739,7 +739,7 @@ const en = {
   "landing.workflowRecall": "Recall",
   "landing.workflowRecallDescription": "Search and Timeline help you recover what changed and why.",
   "landing.audienceFounders": "Founders",
-  "landing.audienceProductManagers": "Продакт-менеджери",
+  "landing.audienceProductManagers": "Product managers",
   "landing.audienceFreelancers": "Freelancers / consultants",
   "landing.audienceOperators": "Operators",
   "landing.audienceKnowledgeWorkers": "Knowledge workers managing many projects",
@@ -1111,7 +1111,7 @@ const ua: Record<TranslationKey, string> = {
   "help.reset.question": "Як скинути локальні дані?",
   "help.reset.answer": "Перейдіть у Налаштування, потім у скидання локальних даних. Це очищає лише дані Orvia в цьому браузері й не видаляє хмарні записи.",
   "help.support.question": "Як звернутися до підтримки?",
-  "help.support.answer": "Під час ранньої бети звертайтеся до підтримки через канал, у якому ви отримали запрошення в Orvia.",
+  "help.support.answer": "Під час ранньої бети користувачі після входу можуть надіслати відгук з Orvia. Також можна використати канал, у якому ви отримали запрошення.",
 
   "dashboard.eyebrow": "Фокус дня",
   "dashboard.title": "Пріоритети, контекст і останні зміни.",
@@ -1423,7 +1423,7 @@ const ua: Record<TranslationKey, string> = {
 
   "landing.privateBeta": "Приватна бета",
   "landing.heroBadge": "Приватна бета триває",
-  "landing.headline": "Зберігайте завдання, нотатки й ідеї. Знайте, що робити далі.",
+  "landing.headline": "Фіксуйте задачі, нотатки та ідеї. Завжди знайте, що робити далі.",
   "landing.subheadline":
     "Orvia перетворює розрізнені завдання, нотатки, записи й активність на чіткий фокус дня, щоб наступна дія була очевидною.",
   "landing.notify": "Створити безкоштовний акаунт",
@@ -1473,7 +1473,7 @@ const ua: Record<TranslationKey, string> = {
   "landing.problem2": "Нотатки тримають контекст, але рідко переходять у дію.",
   "landing.problem3": "Записи Вхідних зберігаються один раз і потім забуваються.",
   "landing.problem4": "Більшість інструментів продуктивності зберігають інформацію, але не допомагають вибрати головне.",
-  "landing.workflowCapture": "Зберегти",
+  "landing.workflowCapture": "Фіксувати",
   "landing.workflowCaptureDescription": "Кидайте завдання, нотатки, ідеї й нагадування в одні Вхідні.",
   "landing.workflowOrganize": "Упорядкувати",
   "landing.workflowOrganizeDescription": "Перетворюйте записи на завдання й нотатки без втрати контексту.",
@@ -1483,9 +1483,9 @@ const ua: Record<TranslationKey, string> = {
   "landing.workflowRecallDescription": "Пошук і Таймлайн допомагають повернути, що змінилось і чому.",
   "landing.audienceFounders": "Засновники",
   "landing.audienceProductManagers": "Продакт-менеджери",
-  "landing.audienceFreelancers": "Фрилансери / консультанти",
+  "landing.audienceFreelancers": "Фрилансери й консультанти",
   "landing.audienceOperators": "Оператори",
-  "landing.audienceKnowledgeWorkers": "Фахівці, що ведуть багато проєктів",
+  "landing.audienceKnowledgeWorkers": "Фахівці, які ведуть багато проєктів",
 };
 
 export const translations = {
