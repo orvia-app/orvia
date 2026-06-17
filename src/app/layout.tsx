@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Orvia",
-  description: "Local-first capture and memory operating system",
+  description: "Capture tasks, notes, and ideas. Know what to do next.",
 };
 
 const themeInitScript = `
