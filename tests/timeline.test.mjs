@@ -96,7 +96,7 @@ test("known activity type returns English system copy by default", () => {
   ]);
 
   assert.equal(event.title, "Task created");
-  assert.equal(event.description, "Created a task");
+  assert.equal(event.description, "A new action was added to your workspace.");
 });
 
 test("known activity type returns Ukrainian system copy", () => {
@@ -106,7 +106,7 @@ test("known activity type returns Ukrainian system copy", () => {
   );
 
   assert.equal(event.title, "Завдання виконано");
-  assert.equal(event.description, "Завдання позначено як виконане");
+  assert.equal(event.description, "Завдання позначено як виконане.");
 });
 
 test("inbox processed outcomes return safe localized text", () => {
@@ -177,5 +177,5 @@ test("known activity type ignores raw stored user content", () => {
   assert.equal(serialized.includes("Private note title"), false);
   assert.equal(serialized.includes("Private note body"), false);
   assert.equal(event.title, "Note created");
-  assert.equal(event.description, "Created a note");
+  assert.equal(event.description, "New context was saved as a note.");
 });
