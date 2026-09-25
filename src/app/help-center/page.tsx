@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { PublicInfoNav } from "@/components/public/PublicInfoNav";
 import { Card } from "@/components/ui/Card";
@@ -65,6 +67,9 @@ export default function HelpCenterPage() {
 
         <PageSection className="space-y-4">
           <PublicInfoNav />
+          <Link href="/app/settings" className="inline-flex rounded-xl px-3 py-2 text-sm font-medium text-violet-700 underline underline-offset-4 focus-visible:outline-2 dark:text-violet-300">
+            {t("help.openSupport")}
+          </Link>
 
           <div className="grid gap-3 md:grid-cols-2">
             {faqs.map((faq) => (
