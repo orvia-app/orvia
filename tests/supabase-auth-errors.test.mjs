@@ -105,3 +105,13 @@ test("expected Supabase signed-out errors include invalid refresh tokens only", 
     false,
   );
 });
+
+test("classification excludes network, credentials, rate limits and embedded diagnostic text", () => {
+  const { isExpectedSupabaseSignedOutError } = loadAuthErrorHelpers();
+  for (const message of ["Failed to fetch", "Invalid login credentials", "Too many requests",
+    "Parser failed while handling invalid refresh token", "Unexpected database error"]) {
+    assert.equal(isExpectedSupabaseSignedOutError(new Error(message)), false);
+  }
+  assert.equal(isExpectedSupabaseSignedOutError({ code: "session_expired" }), true);
+  assert.equal(isExpectedSupabaseSignedOutError({ code: "refresh_token_already_used" }), true);
+});

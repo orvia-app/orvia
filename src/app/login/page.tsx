@@ -10,10 +10,7 @@ import { useI18n } from "@/components/i18n/I18nProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { trackBetaEvent } from "@/lib/analytics";
-import {
-  getSupabaseBrowserAuthClient,
-  loadSupabaseBrowserAuthSession,
-} from "@/lib/supabase/auth";
+import { getSupabaseBrowserAuthClient } from "@/lib/supabase/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,22 +25,6 @@ export default function LoginPage() {
     if (!loading && isAuthenticated) {
       router.replace("/app");
     }
-  }, [isAuthenticated, loading, router]);
-
-  useEffect(() => {
-    if (loading || isAuthenticated) {
-      return;
-    }
-
-    async function clearStaleSession(): Promise<void> {
-      try {
-        await loadSupabaseBrowserAuthSession();
-      } catch {
-        // AuthProvider owns the visible auth configuration state.
-      }
-    }
-
-    void clearStaleSession();
   }, [isAuthenticated, loading, router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -73,7 +54,6 @@ export default function LoginPage() {
         authenticated: true,
         locale,
       });
-      router.replace("/app");
     } catch {
       setError(t("login.errorConfig"));
     } finally {

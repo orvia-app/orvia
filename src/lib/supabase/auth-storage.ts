@@ -1,5 +1,3 @@
-const LEGACY_SUPABASE_AUTH_STORAGE_KEYS = new Set(["supabase.auth.token"]);
-
 type StorageEntry = readonly [key: string, value: string | null];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -21,17 +19,17 @@ export function shouldClearSupabaseAuthStorageKey(
   key: string,
   supabaseUrl: string,
 ): boolean {
-  if (LEGACY_SUPABASE_AUTH_STORAGE_KEYS.has(key)) {
-    return true;
-  }
-
   const storageKey = getSupabaseAuthStorageKey(supabaseUrl);
 
   if (!storageKey) {
     return false;
   }
 
-  return key === storageKey || key.startsWith(`${storageKey}-`);
+  return (
+    key === storageKey ||
+    key === `${storageKey}-code-verifier` ||
+    key === `${storageKey}-user`
+  );
 }
 
 export function getSupabaseAuthStorageKeysToClear(
@@ -82,7 +80,11 @@ export function isRecoverablyCorruptSupabaseAuthStorageValue(
     return true;
   }
 
-  return !isRecord(session.user);
+  return (
+    !isRecord(session.user) ||
+    typeof session.user.id !== "string" ||
+    session.user.id.trim().length === 0
+  );
 }
 
 export function getRecoverableCorruptSupabaseAuthStorageKeysToClear(

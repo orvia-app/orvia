@@ -16,6 +16,7 @@ import {
   getSupabaseBrowserAuthClient,
   isExpectedSupabaseSignedOutError,
   loadSupabaseBrowserAuthSession,
+  reportUnexpectedSupabaseAuthError,
 } from "@/lib/supabase/auth";
 import { trackEmailConfirmedFromUrl } from "@/lib/analytics";
 import { setMonitoringUserId } from "@/lib/monitoring/sentry-user";
@@ -79,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     let subscription: Subscription | null = null;
+    let initialLoadFailed = false;
 
     try {
       const supabase = getSupabaseBrowserAuthClient();
@@ -90,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const { data } = supabase.auth.onAuthStateChange(
           (event, nextSession) => {
-            if (cancelled) {
+            if (cancelled || (event === "INITIAL_SESSION" && initialLoadFailed && !nextSession)) {
               return;
             }
 
@@ -127,6 +129,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
 
           if (!sessionResult.ok) {
+            initialLoadFailed = true;
+            subscribeToAuthStateChanges();
             setAuthError(sessionResult.error);
             commitSession(null);
             setLoading(false);
@@ -147,9 +151,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           if (isExpectedSupabaseSignedOutError(error)) {
             await clearSupabaseBrowserAuthSession(supabase);
+            if (cancelled) {
+              return;
+            }
             commitSignedOutState();
             subscribeToAuthStateChanges();
           } else {
+            initialLoadFailed = true;
+            subscribeToAuthStateChanges();
+            reportUnexpectedSupabaseAuthError("initialize-provider", error);
             setAuthError("Could not load auth session.");
             commitSession(null);
             setLoading(false);
@@ -175,8 +185,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async (): Promise<AuthActionResult> => {
+    let supabase: ReturnType<typeof getSupabaseBrowserAuthClient> | undefined;
     try {
-      const supabase = getSupabaseBrowserAuthClient();
+      supabase = getSupabaseBrowserAuthClient();
       const signedOutAccessToken = sessionRef.current?.access_token ?? null;
 
       ignoredSignedOutAccessTokenRef.current = signedOutAccessToken;
@@ -192,36 +203,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (isExpectedSupabaseSignedOutError(error)) {
           return { ok: true };
         }
+        reportUnexpectedSupabaseAuthError("sign-out", error);
         return { ok: false, error: "Could not sign out." };
-      }
-
-      let nextSession: Session | null = null;
-
-      try {
-        const { data } = await supabase.auth.getSession();
-        nextSession = data.session ?? null;
-      } catch (error) {
-        if (isExpectedSupabaseSignedOutError(error)) {
-          await clearSupabaseBrowserAuthSession(supabase);
-          commitSignedOutState();
-          return { ok: true };
-        }
-
-        throw error;
-      }
-
-      if (isSignedOutSession(nextSession, signedOutAccessToken)) {
-        await clearSupabaseBrowserAuthSession(supabase);
-        commitSession(null);
-      } else {
-        commitSession(nextSession);
       }
 
       setAuthError(null);
       return { ok: true };
-    } catch {
+    } catch (error) {
+      if (supabase) {
+        await clearSupabaseBrowserAuthSession(supabase);
+      }
       commitSession(null);
-      return { ok: false, error: "Auth is not configured." };
+      if (isExpectedSupabaseSignedOutError(error)) {
+        return { ok: true };
+      }
+      reportUnexpectedSupabaseAuthError("sign-out", error);
+      return { ok: false, error: "Could not sign out." };
     }
   }, []);
 
