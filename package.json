@@ -13,7 +13,8 @@
     "verify:rls": "node scripts/verify-rls-ownership.mjs",
     "verify:ownership:runtime": "node scripts/verify-runtime-ownership.mjs",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "node scripts/patch-supabase-auth.mjs"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.57.0",

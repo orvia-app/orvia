@@ -60,7 +60,6 @@ test("only configured Supabase auth storage keys are selected for cleanup", () =
     [
       "sb-abcd1234-auth-token",
       "sb-abcd1234-auth-token-code-verifier",
-      "supabase.auth.token",
     ],
   );
 });

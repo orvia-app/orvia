@@ -47,10 +47,9 @@ export function isInvalidSupabaseRefreshTokenError(error: unknown): boolean {
 
   return (
     code === "refresh_token_not_found" ||
-    message?.includes("invalid refresh token") === true ||
-    message?.includes("refresh token not found") === true ||
-    message?.includes("refresh token is not valid") === true ||
-    message?.includes("refresh_token_not_found") === true
+    code === "refresh_token_already_used" ||
+    (typeof message === "string" &&
+      /^(invalid refresh token(?::.*)?|refresh token not found|refresh token is not valid|refresh_token_not_found)[.!]?$/.test(message))
   );
 }
 
@@ -61,10 +60,10 @@ export function isSupabaseAuthSessionMissingError(error: unknown): boolean {
 
   return (
     code === "session_not_found" ||
+    code === "session_expired" ||
     name === "AuthSessionMissingError" ||
-    message?.includes("auth session missing") === true ||
-    message?.includes("missing auth session") === true ||
-    message?.includes("session_not_found") === true
+    (typeof message === "string" &&
+      /^(auth session missing|missing auth session|session_not_found)[.!]?$/.test(message))
   );
 }
 

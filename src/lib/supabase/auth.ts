@@ -28,6 +28,11 @@ export type SupabaseBrowserSessionResult =
   | { ok: true; recovered: boolean; session: Session | null }
   | { ok: false; error: string };
 
+const pendingSessionLoads = new WeakMap<
+  SupabaseBrowserAuthClient,
+  Promise<SupabaseBrowserSessionResult>
+>();
+
 let cachedBrowserAuthClient: SupabaseBrowserAuthClient | null = null;
 
 function removeSupabaseBrowserAuthStorageKeys(keys: readonly string[]): void {
@@ -112,9 +117,14 @@ export async function clearSupabaseBrowserAuthSession(
   supabase: SupabaseBrowserAuthClient,
 ): Promise<void> {
   try {
-    await supabase.auth.signOut({ scope: "local" });
-  } catch {
-    // If browser auth storage is already corrupt, keep rendering signed out.
+    const { error } = await supabase.auth.signOut({ scope: "local" });
+    if (error && !isExpectedSupabaseSignedOutError(error)) {
+      reportUnexpectedSupabaseAuthError("local-sign-out", error);
+    }
+  } catch (error) {
+    if (!isExpectedSupabaseSignedOutError(error)) {
+      reportUnexpectedSupabaseAuthError("local-sign-out", error);
+    }
   } finally {
     clearSupabaseBrowserAuthStorage();
   }
@@ -132,9 +142,41 @@ async function recoverExpectedSignedOutState(
   return true;
 }
 
-export async function loadSupabaseBrowserAuthSession(
+// Never log raw SDK errors: messages can contain credentials or response content.
+export function reportUnexpectedSupabaseAuthError(
+  operation: string,
+  error: unknown,
+): void {
+  const status =
+    typeof error === "object" && error !== null && "status" in error &&
+    typeof error.status === "number" ? error.status : undefined;
+  console.error("Unexpected Supabase auth failure", { operation, status });
+}
+
+export function loadSupabaseBrowserAuthSession(
   supabase: SupabaseBrowserAuthClient = getSupabaseBrowserAuthClient(),
 ): Promise<SupabaseBrowserSessionResult> {
+  const pending = pendingSessionLoads.get(supabase);
+  if (pending) {
+    return pending;
+  }
+  const request = loadSession(supabase).finally(() => {
+    pendingSessionLoads.delete(supabase);
+  });
+  pendingSessionLoads.set(supabase, request);
+  return request;
+}
+
+async function loadSession(
+  supabase: SupabaseBrowserAuthClient,
+): Promise<SupabaseBrowserSessionResult> {
+  const readiness = getSupabaseBrowserReadiness();
+  const storageKey = readiness.ready
+    ? getSupabaseAuthStorageKey(readiness.config.url)
+    : null;
+  const hadStoredSession = getBrowserLocalStorageEntries().some(
+    ([key, value]) => key === storageKey && value !== null,
+  );
   try {
     const { error: initializeError } = await supabase.auth.initialize();
 
@@ -143,6 +185,7 @@ export async function loadSupabaseBrowserAuthSession(
         return { ok: true, recovered: true, session: null };
       }
 
+      reportUnexpectedSupabaseAuthError("load-session", initializeError);
       return { ok: false, error: "Could not load auth session." };
     }
 
@@ -153,12 +196,19 @@ export async function loadSupabaseBrowserAuthSession(
         return { ok: true, recovered: true, session: null };
       }
 
+      reportUnexpectedSupabaseAuthError("load-session", error);
       return { ok: false, error: "Could not load auth session." };
     }
 
+    // SDK initialization can recover internally and return no error. Finish
+    // scoped companion-key cleanup when that stored session has disappeared.
+    const recovered = hadStoredSession && !data.session;
+    if (recovered) {
+      clearSupabaseBrowserAuthStorage();
+    }
     return {
       ok: true,
-      recovered: false,
+      recovered,
       session: data.session ?? null,
     };
   } catch (error) {
@@ -166,6 +216,7 @@ export async function loadSupabaseBrowserAuthSession(
       return { ok: true, recovered: true, session: null };
     }
 
+    reportUnexpectedSupabaseAuthError("load-session", error);
     return { ok: false, error: "Could not load auth session." };
   }
 }
