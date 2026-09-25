@@ -6,9 +6,9 @@ Private beta users need a clear way to report bugs, suggest ideas, and explain
 where the product feels confusing.
 
 Feedback is now collected in-product for signed-in users. The implementation is
-intentionally small: it stores feedback rows, but it does not include an admin
-dashboard, email notifications, file uploads, anonymous/public feedback, or
-support automation.
+intentionally small: it stores feedback rows and provides an allowlisted admin
+review page (see `docs/FEEDBACK_ADMIN.md`). It does not include email notifications,
+file uploads, anonymous/public feedback, or support automation.
 
 ## Current Behavior
 
@@ -58,7 +58,6 @@ locale, theme, and source. Unknown or non-string metadata is ignored.
 
 The following are intentionally not implemented yet:
 
-- admin feedback review dashboard
 - email or Slack notifications
 - anonymous/public feedback
 - attachments/screenshots

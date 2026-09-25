@@ -2,9 +2,9 @@
 
 ## Current State
 
-Orvia currently has no backend, production AI provider, authentication provider, payment provider, or server-side secret usage.
+Orvia uses Supabase authentication and account-backed API/database access, including server-only credentials for explicitly scoped server operations. Sentry error monitoring is enabled only when a DSN is configured. Production AI and payments are not active.
 
-Environment documentation exists now so future backend, AI, auth, sync, and payments work can start with safe defaults.
+Environment documentation covers the current private beta and safe defaults for future integrations.
 
 Environment access is centralized in:
 - `src/env/server.ts` for server-only and public variables.
@@ -93,9 +93,9 @@ OpenAI or other AI provider keys must be server-side only.
 
 Future AI calls should go through a backend route or server action that enforces authentication, authorization, rate limits, input validation, data minimization, logging policy, and source reference handling.
 
-## Future Supabase Handling
+## Supabase Configuration
 
-Expected future variables:
+Current variables:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -120,7 +120,7 @@ Current Supabase preparation files:
 - `src/server/supabase/*`: server-side config readiness and typed factory seams.
 - `src/lib/supabase/*`: browser-safe public config readiness and typed factory seams.
 
-These files do not install Supabase, open network connections, query data, or replace local-first repositories. They exist so a future `@supabase/supabase-js` installation can be introduced intentionally behind typed boundaries.
+These modules now back Supabase authentication and server API queries. User data routes validate account ownership; browser-local repositories and fallback caches remain alongside account storage.
 
 ## Future Stripe Handling
 

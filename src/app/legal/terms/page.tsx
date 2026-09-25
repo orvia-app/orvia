@@ -53,6 +53,7 @@ export default function TermsPage() {
 
         <PageSection className="space-y-4">
           <PublicInfoNav />
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">{t("legal.lastUpdated")}</p>
 
           <Card className="space-y-6 p-6">
             {sections.map((section) => (
