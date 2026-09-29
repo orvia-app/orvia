@@ -56,25 +56,25 @@ export function TimelineEventCard({
     timestampLabel ?? getFallbackTimestampLabel(event.timestamp);
 
   return (
-    <Card className="p-4 shadow-sm shadow-zinc-950/[0.02] sm:p-5">
+    <Card variant="row" className="orvia-item py-3">
       <div className="flex items-start gap-3">
-        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-700 ring-1 ring-violet-100 dark:bg-violet-500/10 dark:text-violet-200 dark:ring-violet-400/15">
+        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-subtle text-muted">
           <Icon className="h-4 w-4" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <h3 className="min-w-0 text-sm font-semibold text-zinc-950 dark:text-white">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+            <h3 className="min-w-0 break-words text-sm font-semibold text-foreground">
               {event.title}
             </h3>
             <time
               dateTime={event.timestamp}
-              className="shrink-0 whitespace-nowrap text-xs font-medium text-zinc-500 dark:text-zinc-500"
+              className="shrink-0 whitespace-nowrap text-xs font-medium text-muted"
             >
               {displayTimestamp}
             </time>
           </div>
           {event.description ? (
-            <p className="mt-1.5 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+            <p className="mt-1 text-sm leading-5 text-muted">
               {event.description}
             </p>
           ) : null}

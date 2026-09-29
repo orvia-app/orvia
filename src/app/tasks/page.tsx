@@ -1,4 +1,11 @@
 "use client";
+import { ActionPopover } from "@/components/ui/ActionPopover";
+import { usePresence } from "@/components/ui/usePresence";
+import { Select, Input, Textarea } from "@/components/ui/Field";
+
+
+import { relatedTypeKey } from "@/lib/memory/presentation";
+import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 import {
   Suspense,
@@ -8,13 +15,11 @@ import {
   type FormEvent,
 } from "react";
 import { useSearchParams } from "next/navigation";
-import { ChevronDown, X } from "lucide-react";
+import { Check, ChevronDown, X } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { useAuthSession } from "@/components/auth/useAuthSession";
 import { useI18n } from "@/components/i18n/I18nProvider";
-import { Badge } from "@/components/ui/Badge";
-import type { BadgeVariant } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -26,7 +31,6 @@ import {
   recordTaskDeletedActivity,
   recordTaskUpdatedActivity,
 } from "@/lib/activity-recording";
-import { trackFirstTaskCreated } from "@/lib/analytics";
 import {
   saveTasks,
   TASK_PRIORITIES,
@@ -47,7 +51,6 @@ import {
 import {
   getContextEntitiesFromRecords,
   getEntityContext,
-  getRelatedContextSubtitle,
   type EntityContext,
 } from "@/lib/memory/context";
 import { getLegacyWorkspaceId } from "@/lib/workspaces/workspaces";
@@ -128,12 +131,6 @@ function priorityLabelKey(priority: TaskPriority): TranslationKey {
   }
 }
 
-function priorityVariant(priority: TaskPriority): BadgeVariant {
-  if (priority === "critical") return "danger";
-  if (priority === "high") return "warning";
-  return "default";
-}
-
 function taskSourceLabelKey(source: PrimaryTaskSource): TranslationKey {
   if (source === "cloud") {
     return "source.cloud";
@@ -187,6 +184,16 @@ function TasksContent() {
     initialPageContext.selectedTaskId,
   );
   const [modalOpen, setModalOpen] = useState(false);
+  const { present: overlayPresent, closing: overlayClosing } = usePresence(modalOpen);
+  const dialogRef = useDialogFocus(modalOpen);
+  useEffect(() => {
+    if (!modalOpen) return;
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setModalOpen(false);
+    };
+    window.addEventListener("keydown", escape);
+    return () => window.removeEventListener("keydown", escape);
+  }, [modalOpen]);
   const [form, setForm] = useState<TaskFormState>(emptyForm);
   const [createError, setCreateError] = useState<string | null>(null);
   const [taskActionError, setTaskActionError] = useState<string | null>(null);
@@ -372,13 +379,6 @@ function TasksContent() {
       if (accessToken) {
         void recordTaskCreatedActivity(newTask, { accessToken });
       }
-
-      if (tasks.length === 0) {
-        trackFirstTaskCreated({
-          authenticated: Boolean(accessToken),
-          locale,
-        });
-      }
     } catch {
       if (!accessToken) {
         setCreateError(t("tasks.createError"));
@@ -390,12 +390,6 @@ function TasksContent() {
 
       markLocalFallbackTaskForOwner(ownerId, localTask.id);
       syncTasks(nextTasks, { [localTask.id]: "local-fallback" });
-      if (tasks.length === 0) {
-        trackFirstTaskCreated({
-          authenticated: true,
-          locale,
-        });
-      }
       closeModal();
       setTaskActionError(t("tasks.createFallback"));
     } finally {
@@ -403,11 +397,11 @@ function TasksContent() {
     }
   }
 
-  async function updateTaskStatus(
+  async function updateTaskDetails(
     task: Task,
-    nextStatus: TaskStatus,
+    changes: { status: TaskStatus; priority?: never } | { priority: TaskPriority; status?: never },
   ): Promise<void> {
-    if (task.status === nextStatus || pendingTaskIds.has(task.id)) {
+    if ((changes.status === task.status || changes.priority === task.priority) || pendingTaskIds.has(task.id)) {
       return;
     }
 
@@ -418,14 +412,12 @@ function TasksContent() {
       const updatedTask = accessToken
         ? await updateTaskViaApi(
             task.id,
-            {
-              status: nextStatus,
-            },
+            changes,
             { accessToken, ownerId },
           )
         : {
             ...task,
-            status: nextStatus,
+            ...changes,
           };
 
       const nextTasks = tasks.map((currentTask) =>
@@ -440,7 +432,7 @@ function TasksContent() {
       }
 
       if (accessToken) {
-        if (nextStatus === "done") {
+        if (changes.status === "done") {
           void recordTaskCompletedActivity(
             updatedTask,
             { previousStatus: task.status },
@@ -459,7 +451,7 @@ function TasksContent() {
         currentTask.id === task.id
           ? {
               ...currentTask,
-              status: nextStatus,
+              ...changes,
             }
           : currentTask,
       );
@@ -534,7 +526,7 @@ function TasksContent() {
                 ? "secondary"
                 : "ghost"
             }
-            className="mt-5 p-3 text-sm text-zinc-600 dark:text-zinc-400"
+            className="mt-5 p-3 text-sm text-muted"
           >
             {taskBoundaryMessage}
           </Card>
@@ -551,7 +543,7 @@ function TasksContent() {
                     setStatusFilter(value);
                     setSelectedTaskId(null);
                   }}
-                  className="px-4 py-2"
+                  className="shrink-0 whitespace-nowrap px-4 py-2"
                 >
                   {t(labelKey)}
                 </Button>
@@ -559,7 +551,7 @@ function TasksContent() {
             })}
           </div>
 
-          <div className="mt-7 space-y-4">
+          <div className="mt-5 space-y-0">
             {taskActionError ? (
               <p
                 className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200"
@@ -576,49 +568,53 @@ function TasksContent() {
 
               return (
                 <Card
+                  variant="row"
                   key={task.id}
                   id={`task-${task.id}`}
+                  data-pending={taskPending}
+                  data-complete={task.status === "done"}
                   className={
                     selected
-                      ? "scroll-mt-24 ring-2 ring-violet-300/80 dark:ring-violet-500/35"
-                      : ""
+                      ? "orvia-item scroll-mt-24 border-l-2 border-l-accent px-3 bg-accent-soft"
+                      : "orvia-item px-3"
                   }
                 >
                   <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
                     <div className="min-w-0">
-                      <h2 className="text-lg font-semibold text-zinc-950 dark:text-white sm:text-xl">
+                      <div className="flex items-start gap-3">
+                        <button type="button" className="orvia-icon-button mt-0.5 h-6 w-6 shrink-0 rounded-full border border-line" aria-label={`${t(task.status === "done" ? "status.todo" : "status.done")}: ${task.title}`} aria-pressed={task.status === "done"} disabled={taskPending} onClick={() => void updateTaskDetails(task, { status: task.status === "done" ? "todo" : "done" })}>{task.status === "done" && <Check className="h-4 w-4 text-accent" aria-hidden />}</button>
+                      <h2 className="min-w-0 [overflow-wrap:anywhere] text-base font-semibold text-foreground">
                         {task.title}
                       </h2>
+                      </div>
 
                       {task.description ? (
-                        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400 sm:text-base">
+                        <p className="mt-2 [overflow-wrap:anywhere] text-sm leading-6 text-muted">
                           {task.description}
                         </p>
                       ) : null}
 
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        <Badge variant={priorityVariant(task.priority)}>
-                          {t(priorityLabelKey(task.priority))}
-                        </Badge>
-                        <Badge className="bg-zinc-100/80 text-zinc-500 ring-zinc-200/70 dark:bg-zinc-900/75 dark:text-zinc-400 dark:ring-zinc-800/80">
-                          {t(taskSourceLabelKey(taskSourcesById[task.id] ?? taskSource))}
-                        </Badge>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <Select aria-label={`${t("common.priority")}: ${task.title}`} disabled={taskPending} className="min-h-8 w-auto border-0 bg-transparent px-1 py-0 text-xs" value={task.priority} onChange={(event) => void updateTaskDetails(task, { priority: event.target.value as TaskPriority })}>
+                          {TASK_PRIORITIES.map(priority => <option key={priority} value={priority}>{t(priorityLabelKey(priority))}</option>)}
+                        </Select>
+                        <span className="text-xs text-muted">{t(taskSourceLabelKey(taskSourcesById[task.id] ?? taskSource))}</span>
                       </div>
                       {context && context.relatedItems.length > 0 ? (
-                        <div className="mt-4 rounded-xl bg-zinc-100/60 px-3 py-2.5 ring-1 ring-inset ring-zinc-200/60 dark:bg-zinc-900/35 dark:ring-zinc-800/70">
-                          <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
+                        <div className="mt-4 rounded-xl bg-subtle px-3 py-2.5 ring-1 ring-inset ring-line">
+                          <p className="text-xs font-medium text-muted">
                             {t("tasks.connectedTo")}
                           </p>
                           <div className="mt-2 space-y-1.5">
                             {context.relatedItems.slice(0, 2).map((item) => (
                               <p
                                 key={item.entity.id}
-                                className="truncate text-sm text-zinc-700 dark:text-zinc-300"
+                                className="[overflow-wrap:anywhere] text-sm text-muted"
                               >
                                 {item.entity.title}
                                 <span className="text-zinc-400 dark:text-zinc-600">
                                   {" "}
-                                  · {getRelatedContextSubtitle(item)}
+                                  · {t(relatedTypeKey(item.entity.type))}
                                 </span>
                               </p>
                             ))}
@@ -635,15 +631,12 @@ function TasksContent() {
                         {t("tasks.updateStatus")}
                       </span>
                       <div className="relative inline-flex">
-                        <select
+                        <Select
                           aria-labelledby={`task-status-${task.id}`}
-                          className="h-7 cursor-pointer appearance-none rounded-full bg-violet-50/80 py-0 pl-2.5 pr-7 text-[11px] font-semibold text-violet-800 outline-none ring-1 ring-violet-200/70 transition hover:bg-violet-50 hover:ring-violet-300 focus-visible:ring-2 focus-visible:ring-violet-300/80 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-violet-500/10 dark:text-violet-200 dark:ring-violet-500/20 dark:hover:bg-violet-500/15 dark:focus-visible:ring-violet-500/35"
+                          className="h-7 appearance-none pr-8"
                           disabled={taskPending}
                           onChange={(event) => {
-                            void updateTaskStatus(
-                              task,
-                              event.target.value as TaskStatus,
-                            );
+                            void updateTaskDetails(task, { status: event.target.value as TaskStatus });
                           }}
                           value={task.status}
                         >
@@ -657,23 +650,16 @@ function TasksContent() {
                                 : t(statusLabelKey(status))}
                             </option>
                           ))}
-                        </select>
+                        </Select>
                         <ChevronDown
                           className="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-violet-700/70 dark:text-violet-200/70"
                           aria-hidden
                         />
                       </div>
 
-                      <button
-                        className="inline-flex h-7 w-fit cursor-pointer items-center justify-center rounded-full px-2 text-[11px] font-medium text-red-600 transition hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300/70 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-300 dark:hover:bg-red-500/10 dark:hover:text-red-200 dark:focus-visible:ring-red-500/30"
-                        disabled={taskPending}
-                        onClick={() => {
-                          setTaskToDelete(task);
-                        }}
-                        type="button"
-                      >
-                        {t("common.delete")}
-                      </button>
+                      <ActionPopover label={`${t("common.actions")}: ${task.title}`}>
+                        {(close) => <button type="button" className="orvia-menu-action orvia-menu-danger" disabled={taskPending} onClick={() => { close(); setTaskToDelete(task); }}>{t("common.delete")}</button>}
+                      </ActionPopover>
                     </div>
                   </div>
                 </Card>
@@ -689,8 +675,10 @@ function TasksContent() {
           </div>
       </Page>
 
-      {modalOpen ? (
+      {overlayPresent ? (
         <div
+          data-presence={overlayClosing ? "exiting" : "entered"}
+          inert={overlayClosing}
           className="fixed inset-0 z-50 flex items-end justify-center bg-zinc-950/70 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] dark:bg-black/70 sm:items-center sm:p-4"
           role="presentation"
           onClick={(event) => {
@@ -701,6 +689,8 @@ function TasksContent() {
         >
           <Card
             role="dialog"
+            ref={dialogRef}
+            tabIndex={-1}
             aria-modal="true"
             aria-labelledby="new-task-title"
             className="max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto shadow-xl sm:max-h-[90vh]"
@@ -709,14 +699,14 @@ function TasksContent() {
             <div className="flex items-start justify-between gap-4">
               <h2
                 id="new-task-title"
-                className="text-lg font-semibold text-zinc-950 dark:text-white"
+                className="min-w-0 [overflow-wrap:anywhere] text-lg font-semibold text-foreground"
               >
                 {t("tasks.newTask")}
               </h2>
 
               <Button
                 aria-label={t("common.close")}
-                className="h-8 w-8 p-0 text-zinc-700 hover:text-zinc-950 dark:text-zinc-200 dark:hover:text-white"
+                className="h-8 w-8 p-0 text-zinc-700 hover:text-foreground dark:hover:text-white"
                 onClick={closeModal}
                 type="button"
                 variant="ghost"
@@ -729,12 +719,12 @@ function TasksContent() {
               <div>
                 <label
                   htmlFor="task-title"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-muted"
                 >
                   {t("common.title")} <span className="text-red-400">*</span>
                 </label>
 
-                <input
+                <Input
                   id="task-title"
                   required
                   value={form.title}
@@ -744,7 +734,7 @@ function TasksContent() {
                       title: event.target.value,
                     }))
                   }
-                  className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                  className="mt-1.5 w-full"
                   placeholder={t("tasks.titlePlaceholder")}
                 />
               </div>
@@ -752,12 +742,12 @@ function TasksContent() {
               <div>
                 <label
                   htmlFor="task-description"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-muted"
                 >
                   {t("common.description")}
                 </label>
 
-                <textarea
+                <Textarea
                   id="task-description"
                   rows={3}
                   value={form.description}
@@ -767,7 +757,7 @@ function TasksContent() {
                       description: event.target.value,
                     }))
                   }
-                  className="mt-1.5 w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                  className="mt-1.5 w-full"
                   placeholder={t("tasks.descriptionPlaceholder")}
                 />
               </div>
@@ -775,12 +765,12 @@ function TasksContent() {
               <div>
                 <label
                   htmlFor="task-priority"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-muted"
                 >
                   {t("common.priority")}
                 </label>
 
-                <select
+                <Select
                   id="task-priority"
                   value={form.priority}
                   onChange={(event) =>
@@ -789,25 +779,25 @@ function TasksContent() {
                       priority: event.target.value as TaskPriority,
                     }))
                   }
-                  className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                  className="mt-1.5 w-full"
                 >
                   {TASK_PRIORITIES.map((priority) => (
                     <option key={priority} value={priority}>
                       {t(priorityLabelKey(priority))}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               <div>
                 <label
                   htmlFor="task-status"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-muted"
                 >
                   {t("common.status")}
                 </label>
 
-                <select
+                <Select
                   id="task-status"
                   value={form.status}
                   onChange={(event) =>
@@ -816,25 +806,25 @@ function TasksContent() {
                       status: event.target.value as TaskStatus,
                     }))
                   }
-                  className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                  className="mt-1.5 w-full"
                 >
                   {TASK_STATUSES.map((status) => (
                     <option key={status} value={status}>
                       {t(statusLabelKey(status))}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               <div>
                 <label
                   htmlFor="task-workspace"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-muted"
                 >
                   {t("common.workspace")}
                 </label>
 
-                <select
+                <Select
                   id="task-workspace"
                   value={form.workspace}
                   onChange={(event) =>
@@ -843,14 +833,14 @@ function TasksContent() {
                       workspace: event.target.value as WorkspaceChoice,
                     }))
                   }
-                  className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                  className="mt-1.5 w-full"
                 >
                   {taskWorkspaceKeys.map((workspaceKey) => (
                     <option key={workspaceKey} value={workspaceKey}>
                       {t(workspaceLabelKey(workspaceKey))}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">

@@ -1,4 +1,11 @@
 "use client";
+import { ActionPopover } from "@/components/ui/ActionPopover";
+import { usePresence } from "@/components/ui/usePresence";
+import { Input, Textarea, Select } from "@/components/ui/Field";
+
+
+import { relatedTypeKey, contextLabelKey } from "@/lib/memory/presentation";
+import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { X } from "lucide-react";
@@ -38,7 +45,6 @@ import {
 import {
   getContextEntitiesFromRecords,
   getEntityContext,
-  getRelatedContextSubtitle,
   type EntityContext,
 } from "@/lib/memory/context";
 import type { TranslationKey } from "@/lib/i18n";
@@ -123,6 +129,16 @@ export default function NotesPage() {
   const [noteContextById, setNoteContextById] = useState<NoteContextById>({});
   const [typeFilter, setTypeFilter] = useState<FilterValue>("all");
   const [modalOpen, setModalOpen] = useState(false);
+  const { present: overlayPresent, closing: overlayClosing } = usePresence(modalOpen);
+  const dialogRef = useDialogFocus(modalOpen);
+  useEffect(() => {
+    if (!modalOpen) return;
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setModalOpen(false);
+    };
+    window.addEventListener("keydown", escape);
+    return () => window.removeEventListener("keydown", escape);
+  }, [modalOpen]);
   const [form, setForm] = useState<NoteFormState>(EMPTY_FORM);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<NoteFormState>(EMPTY_FORM);
@@ -243,7 +259,11 @@ export default function NotesPage() {
   }
 
   function cancelEditingNote(): void {
+    const noteId = editingNoteId;
     setEditingNoteId(null);
+    requestAnimationFrame(() => {
+      if (noteId) document.getElementById(`note-${noteId}`)?.querySelector<HTMLButtonElement>("button[aria-expanded]")?.focus();
+    });
     setEditForm(EMPTY_FORM);
   }
 
@@ -407,7 +427,7 @@ export default function NotesPage() {
                 ? "secondary"
                 : "ghost"
             }
-            className="mt-5 p-3 text-sm text-zinc-600 dark:text-zinc-400"
+            className="mt-5 p-3 text-sm text-muted"
           >
             {noteBoundaryMessage}
           </Card>
@@ -417,23 +437,21 @@ export default function NotesPage() {
               const active = typeFilter === value;
 
               return (
-                <button
+                <Button
                   key={value}
                   type="button"
+                  aria-pressed={active}
+                  variant={active ? "primary" : "secondary"}
                   onClick={() => setTypeFilter(value)}
-                  className={
-                    active
-                      ? "rounded-xl bg-violet-800 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-violet-950/10 dark:bg-violet-600/85"
-                      : "rounded-xl bg-white px-4 py-2 text-sm font-medium text-zinc-600 shadow-sm shadow-zinc-950/[0.02] ring-1 ring-zinc-200/80 transition hover:bg-violet-50/70 hover:text-violet-800 hover:ring-violet-200/70 dark:bg-zinc-900/60 dark:text-zinc-400 dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/20"
-                  }
+                  className="shrink-0 whitespace-nowrap"
                 >
                   {t(labelKey)}
-                </button>
+                </Button>
               );
             })}
           </div>
 
-          <div className="mt-7 grid gap-4 md:grid-cols-2">
+          <div className="mt-7 grid items-start gap-3 md:grid-cols-2">
             {noteActionError ? (
               <p
                 className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200 md:col-span-2"
@@ -451,7 +469,8 @@ export default function NotesPage() {
               return (
                 <article
                   key={note.id}
-                  className="rounded-2xl bg-white/90 p-5 shadow-sm shadow-zinc-950/[0.035] ring-1 ring-zinc-200/75 transition hover:bg-white hover:ring-violet-200/65 dark:bg-zinc-900/70 dark:shadow-none dark:ring-zinc-800/75 dark:hover:bg-zinc-900 dark:hover:ring-violet-500/20 sm:p-5"
+                  id={`note-${note.id}`}
+                  className="orvia-item rounded-xl border border-line bg-surface p-4"
                 >
                   {editing ? (
                     <form
@@ -463,14 +482,15 @@ export default function NotesPage() {
                     >
                       <div>
                         <label
-                          className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                          className="block text-sm font-medium text-muted"
                           htmlFor={`edit-note-title-${note.id}`}
                         >
                           {t("common.title")} <span className="text-red-400">*</span>
                         </label>
-                        <input
-                          className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                        <Input
+                          className="mt-1.5 w-full"
                           disabled={notePending}
+                          autoFocus
                           id={`edit-note-title-${note.id}`}
                           onChange={(event) =>
                             setEditForm((currentForm) => ({
@@ -485,13 +505,13 @@ export default function NotesPage() {
 
                       <div>
                         <label
-                          className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                          className="block text-sm font-medium text-muted"
                           htmlFor={`edit-note-content-${note.id}`}
                         >
                           {t("common.content")} <span className="text-red-400">*</span>
                         </label>
-                        <textarea
-                          className="mt-1.5 w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                        <Textarea
+                          className="mt-1.5 w-full"
                           disabled={notePending}
                           id={`edit-note-content-${note.id}`}
                           onChange={(event) =>
@@ -508,13 +528,13 @@ export default function NotesPage() {
 
                       <div>
                         <label
-                          className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                          className="block text-sm font-medium text-muted"
                           htmlFor={`edit-note-type-${note.id}`}
                         >
                           {t("common.type")}
                         </label>
-                        <select
-                          className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                        <Select
+                          className="mt-1.5 w-full"
                           disabled={notePending}
                           id={`edit-note-type-${note.id}`}
                           onChange={(event) =>
@@ -530,7 +550,7 @@ export default function NotesPage() {
                               {t(noteTypeLabelKey(type))}
                             </option>
                           ))}
-                        </select>
+                        </Select>
                       </div>
 
                       <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
@@ -553,54 +573,54 @@ export default function NotesPage() {
                     </form>
                   ) : (
                     <>
-                      <div className="flex items-start justify-between gap-4">
-                        <h2 className="text-lg font-semibold text-zinc-950 dark:text-white sm:text-xl">
+                      <div className="flex items-start justify-between gap-3">
+                        <h2 className="min-w-0 [overflow-wrap:anywhere] text-base font-semibold text-foreground">
                           {note.title}
                         </h2>
 
-                        <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
-                          <Badge>{t(noteTypeLabelKey(note.type))}</Badge>
-                          <Badge className="bg-zinc-100/80 text-zinc-500 ring-zinc-200/70 dark:bg-zinc-900/75 dark:text-zinc-400 dark:ring-zinc-800/80">
-                            {t(noteSourceLabelKey(noteSourcesById[note.id] ?? noteSource))}
-                          </Badge>
-                        </div>
+                        <ActionPopover label={`${t("common.actions")}: ${note.title}`}>
+                          {(close) => <>
+                            <button type="button" className="orvia-menu-action" disabled={notePending} onClick={() => { close(); startEditingNote(note); }}>{t("common.edit")}</button>
+                            <button type="button" className="orvia-menu-action orvia-menu-danger" disabled={notePending} onClick={() => { close(); setNoteToDelete(note); }}>{t("common.delete")}</button>
+                          </>}
+                        </ActionPopover>
                       </div>
-                      {context ? (
+                      {context && (context.labels.length > 0 || context.relatedCount > 0) ? (
                         <div className="mt-3 flex flex-wrap gap-2">
                           {context.labels.slice(0, 2).map((label) => (
                             <span
-                              key={label}
-                              className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600 ring-1 ring-zinc-200/80 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800"
+                              key={t(contextLabelKey(label))}
+                              className="rounded-full bg-subtle px-2.5 py-1 text-xs font-medium text-muted ring-1 ring-line"
                             >
-                              {label}
+                              {t(contextLabelKey(label))}
                             </span>
                           ))}
                           {context.relatedCount > 0 ? (
-                            <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-500 dark:bg-zinc-900/70 dark:text-zinc-400">
+                            <span className="rounded-full bg-subtle px-2.5 py-1 text-xs font-medium text-muted">
                               {t("notes.connectedContext")}
                             </span>
                           ) : null}
                         </div>
                       ) : null}
 
-                      <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-zinc-600 dark:text-zinc-400 sm:text-base">
+                      <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-foreground">
                         {note.content}
                       </p>
                       {context && context.relatedItems.length > 0 ? (
-                        <div className="mt-4 rounded-xl bg-zinc-100/60 px-3 py-2.5 ring-1 ring-inset ring-zinc-200/60 dark:bg-zinc-900/35 dark:ring-zinc-800/70">
-                          <p className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
+                        <div className="mt-4 rounded-xl bg-subtle px-3 py-2.5 ring-1 ring-inset ring-line">
+                          <p className="text-xs font-medium text-muted">
                             {t("notes.connectedTo")}
                           </p>
                           <div className="mt-2 space-y-1.5">
                             {context.relatedItems.slice(0, 2).map((item) => (
                               <p
                                 key={item.entity.id}
-                                className="truncate text-sm text-zinc-700 dark:text-zinc-300"
+                                className="[overflow-wrap:anywhere] text-sm text-muted"
                               >
                                 {item.entity.title}
                                 <span className="text-zinc-400 dark:text-zinc-600">
                                   {" "}
-                                  · {getRelatedContextSubtitle(item)}
+                                  · {t(relatedTypeKey(item.entity.type))}
                                 </span>
                               </p>
                             ))}
@@ -608,24 +628,7 @@ export default function NotesPage() {
                         </div>
                       ) : null}
 
-                      <div className="mt-5 flex flex-col gap-2 border-t border-zinc-200/70 pt-3.5 dark:border-zinc-800/70 sm:flex-row sm:justify-end">
-                        <Button
-                          className="w-full px-3 py-1.5 text-xs sm:w-auto"
-                          disabled={notePending}
-                          onClick={() => startEditingNote(note)}
-                          variant="secondary"
-                        >
-                          {t("common.edit")}
-                        </Button>
-                        <Button
-                          className="w-full border border-red-200/70 px-3 py-1.5 text-xs text-red-700 shadow-none hover:bg-red-50 hover:text-red-800 hover:ring-red-200/70 dark:border-red-500/20 dark:text-red-300 dark:hover:bg-red-500/10 dark:hover:text-red-200 dark:hover:ring-red-500/25 sm:w-auto"
-                          disabled={notePending}
-                          onClick={() => setNoteToDelete(note)}
-                          variant="ghost"
-                        >
-                          {t("common.delete")}
-                        </Button>
-                      </div>
+                      <div className="mt-3 flex gap-2 text-xs text-muted"><span>{t(noteTypeLabelKey(note.type))}</span><span aria-hidden>·</span><span>{t(noteSourceLabelKey(noteSourcesById[note.id] ?? noteSource))}</span></div>
                     </>
                   )}
                 </article>
@@ -643,8 +646,10 @@ export default function NotesPage() {
           ) : null}
       </Page>
 
-      {modalOpen ? (
+      {overlayPresent ? (
         <div
+          data-presence={overlayClosing ? "exiting" : "entered"}
+          inert={overlayClosing}
           className="fixed inset-0 z-50 flex items-end justify-center bg-zinc-950/70 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] dark:bg-black/70 sm:items-center sm:p-4"
           role="presentation"
           onClick={(event) => {
@@ -655,15 +660,17 @@ export default function NotesPage() {
         >
           <div
             role="dialog"
+            ref={dialogRef}
+            tabIndex={-1}
             aria-modal="true"
             aria-labelledby="new-note-title"
-            className="max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-zinc-800 dark:bg-zinc-950 sm:max-h-[90vh] sm:p-6"
+            className="orvia-dialog max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-xl border border-line bg-surface p-5 shadow-xl sm:max-h-[90vh] sm:p-6"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start justify-between gap-3">
               <h2
                 id="new-note-title"
-                className="text-lg font-semibold text-zinc-950 dark:text-white"
+                className="min-w-0 [overflow-wrap:anywhere] text-lg font-semibold text-foreground"
               >
                 {t("notes.newNote")}
               </h2>
@@ -672,7 +679,7 @@ export default function NotesPage() {
                 type="button"
                 aria-label={t("common.close")}
                 onClick={closeModal}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white dark:focus-visible:ring-zinc-600"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:hover:bg-zinc-800 dark:hover:text-white dark:focus-visible:ring-zinc-600"
               >
                 <X className="h-4 w-4 shrink-0" aria-hidden strokeWidth={2.25} />
               </button>
@@ -682,12 +689,12 @@ export default function NotesPage() {
               <div>
                 <label
                   htmlFor="note-title"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-muted"
                 >
                   {t("common.title")} <span className="text-red-400">*</span>
                 </label>
 
-                <input
+                <Input
                   id="note-title"
                   required
                   value={form.title}
@@ -697,7 +704,7 @@ export default function NotesPage() {
                       title: event.target.value,
                     }))
                   }
-                  className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                  className="mt-1.5 w-full"
                   placeholder={t("notes.titlePlaceholder")}
                 />
               </div>
@@ -705,12 +712,12 @@ export default function NotesPage() {
               <div>
                 <label
                   htmlFor="note-content"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-muted"
                 >
                   {t("common.content")} <span className="text-red-400">*</span>
                 </label>
 
-                <textarea
+                <Textarea
                   id="note-content"
                   required
                   rows={6}
@@ -721,7 +728,7 @@ export default function NotesPage() {
                       content: event.target.value,
                     }))
                   }
-                  className="mt-1.5 w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                  className="mt-1.5 w-full"
                   placeholder={t("notes.contentPlaceholder")}
                 />
               </div>
@@ -729,12 +736,12 @@ export default function NotesPage() {
               <div>
                 <label
                   htmlFor="note-type"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-muted"
                 >
                   {t("common.type")}
                 </label>
 
-                <select
+                <Select
                   id="note-type"
                   value={form.type}
                   onChange={(event) =>
@@ -743,28 +750,28 @@ export default function NotesPage() {
                       type: event.target.value as NoteType,
                     }))
                   }
-                  className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                  className="mt-1.5 w-full"
                 >
                   {NOTE_TYPES.map((type) => (
                     <option key={type} value={type}>
                       {t(noteTypeLabelKey(type))}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="rounded-xl border border-zinc-300 bg-transparent px-4 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                  className="orvia-button orvia-button-secondary"
                 >
                   {t("common.cancel")}
                 </button>
 
                 <button
                   type="submit"
-                  className="rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
+                  className="orvia-button orvia-button-primary"
                 >
                   {t("common.create")}
                 </button>

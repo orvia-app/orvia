@@ -1,4 +1,9 @@
 "use client";
+import { usePresence } from "@/components/ui/usePresence";
+import { Select, Textarea } from "@/components/ui/Field";
+
+
+import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 import { useEffect, useId, useState } from "react";
 import { X } from "lucide-react";
@@ -41,6 +46,7 @@ export function FeedbackDialog({
   source,
 }: FeedbackDialogProps) {
   const { locale, t } = useI18n();
+  const dialogRef = useDialogFocus(open);
   const titleId = useId();
   const descriptionId = useId();
   const [type, setType] = useState<FeedbackType>(initialType);
@@ -72,7 +78,8 @@ export function FeedbackDialog({
     };
   }, [onOpenChange, open, submitting]);
 
-  if (!open) {
+  const { present: overlayPresent, closing: overlayClosing } = usePresence(open);
+  if (!overlayPresent) {
     return null;
   }
 
@@ -117,7 +124,9 @@ export function FeedbackDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-end justify-center bg-zinc-950/55 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-sm dark:bg-black/65 sm:items-center sm:p-4"
+      data-presence={overlayClosing ? "exiting" : "entered"}
+      inert={overlayClosing}
+      className="fixed inset-0 z-[80] flex items-end justify-center bg-zinc-950/55 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] dark:bg-black/65 sm:items-center sm:p-4"
       onClick={(event) => {
         if (event.target === event.currentTarget && !submitting) {
           onOpenChange(false);
@@ -129,20 +138,22 @@ export function FeedbackDialog({
         aria-describedby={descriptionId}
         aria-labelledby={titleId}
         aria-modal="true"
-        className="w-full max-w-lg rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-2xl shadow-zinc-950/15 dark:border-zinc-800/80 dark:bg-zinc-950 dark:shadow-black/40"
+        className="orvia-dialog max-h-[calc(100dvh-2rem)] overflow-y-auto w-full max-w-lg rounded-xl border border-line bg-surface p-5 shadow-2xl shadow-zinc-950/15 dark:shadow-black/40"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
+        ref={dialogRef}
+        tabIndex={-1}
       >
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2
-              className="text-base font-semibold tracking-tight text-zinc-950 dark:text-white"
+              className="text-base font-semibold tracking-tight text-foreground"
               id={titleId}
             >
               {t("feedback.title")}
             </h2>
             <p
-              className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400"
+              className="mt-2 text-sm leading-6 text-muted"
               id={descriptionId}
             >
               {t("feedback.description")}
@@ -153,14 +164,14 @@ export function FeedbackDialog({
             aria-label={t("common.close")}
             disabled={submitting}
             onClick={() => onOpenChange(false)}
-            className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-zinc-500 ring-1 ring-zinc-200/80 transition hover:bg-zinc-50 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-400 dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:text-violet-200"
+            className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted ring-1 ring-line transition hover:bg-zinc-50 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-zinc-900 hover:text-foreground"
           >
             <X className="h-4 w-4" aria-hidden />
           </button>
         </div>
 
         {submitted ? (
-          <div className="mt-5 rounded-xl bg-emerald-50 p-4 text-sm leading-6 text-emerald-800 ring-1 ring-emerald-200/80 dark:bg-emerald-500/10 dark:text-emerald-200 dark:ring-emerald-500/20">
+          <div role="status" className="mt-5 rounded-xl bg-emerald-50 p-4 text-sm leading-6 text-emerald-800 ring-1 ring-emerald-200/80 dark:bg-emerald-500/10 dark:text-emerald-200 dark:ring-emerald-500/20">
             {t("feedback.success")}
           </div>
         ) : (
@@ -172,27 +183,27 @@ export function FeedbackDialog({
             }}
           >
             <label className="block">
-              <span className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted">
                 {t("feedback.typeLabel")}
               </span>
-              <select
+              <Select
                 value={type}
                 onChange={(event) => setType(event.target.value as FeedbackType)}
-                className="mt-2 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 outline-none transition focus:border-violet-300 focus:ring-2 focus:ring-violet-400/30 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white dark:focus:border-violet-500/40"
+                className="mt-2 h-10 w-full"
               >
                 {feedbackTypeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {t(option.labelKey)}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
 
             <label className="block">
-              <span className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted">
                 {t("feedback.messageLabel")}
               </span>
-              <textarea
+              <Textarea
                 value={message}
                 onChange={(event) => {
                   setMessage(event.target.value);
@@ -200,11 +211,11 @@ export function FeedbackDialog({
                 }}
                 maxLength={FEEDBACK_MESSAGE_MAX_LENGTH}
                 placeholder={t("feedback.placeholder")}
-                className="mt-2 min-h-36 w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-3 text-sm leading-6 text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-violet-300 focus:ring-2 focus:ring-violet-400/30 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white dark:placeholder:text-zinc-600 dark:focus:border-violet-500/40"
+                className="mt-2 min-h-36 w-full"
               />
             </label>
 
-            <div className="flex items-center justify-between gap-3 text-xs text-zinc-500 dark:text-zinc-500">
+            <div className="flex items-center justify-between gap-3 text-xs text-muted">
               <span>{t("feedback.privacyNote")}</span>
               <span>
                 {message.length}/{FEEDBACK_MESSAGE_MAX_LENGTH}
@@ -218,7 +229,7 @@ export function FeedbackDialog({
             ) : null}
 
             {submitError ? (
-              <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700 ring-1 ring-red-200/80 dark:bg-red-500/10 dark:text-red-200 dark:ring-red-500/20">
+              <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700 ring-1 ring-red-200/80 dark:bg-red-500/10 dark:text-red-200 dark:ring-red-500/20">
                 {submitError}
               </p>
             ) : null}

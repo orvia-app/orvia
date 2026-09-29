@@ -136,35 +136,28 @@ function TaskMeta({
   source: PrimaryTaskSource;
   t: (key: TranslationKey) => string;
 }) {
-  const { reasons, task } = prioritizedTask;
+  const { task } = prioritizedTask;
   const dueDate = getTaskDueDateKey(task);
 
   return (
     <div className="mt-2 flex flex-wrap items-center gap-1.5">
-      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800">
+      <span className="rounded-full bg-subtle px-2 py-0.5 text-[11px] font-medium text-muted ring-1 ring-line">
         {t(priorityLabelKey(task.priority))}
       </span>
-      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800">
+      <span className="rounded-full bg-subtle px-2 py-0.5 text-[11px] font-medium text-muted ring-1 ring-line">
         {t(statusLabelKey(task.status))}
       </span>
       {shouldShowTaskSource(source) ? (
-        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800">
+        <span className="rounded-full bg-subtle px-2 py-0.5 text-[11px] font-medium text-muted ring-1 ring-line">
           {t(taskSourceLabelKey(source))}
         </span>
       ) : null}
       {dueDate ? (
-        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-800">
+        <span className="rounded-full bg-subtle px-2 py-0.5 text-[11px] font-medium text-muted ring-1 ring-line">
           {dueDate}
         </span>
       ) : null}
-      {reasons.slice(0, 3).map((reason) => (
-        <span
-          key={reason}
-          className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800"
-        >
-          {t(priorityReasonKey(reason))}
-        </span>
-      ))}
+
     </div>
   );
 }
@@ -198,17 +191,17 @@ function EmptyInline({
   title: string;
 }) {
   return (
-    <div className="flex items-start gap-2.5 border-t border-zinc-200/70 pt-3 dark:border-zinc-800/70">
+    <div className="flex items-start gap-2.5 border-t border-line pt-3">
       <CheckCircle2
         className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"
         aria-hidden
       />
       <div>
-        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+        <p className="text-sm font-medium text-foreground">
           {title}
         </p>
         {description ? (
-          <p className="mt-0.5 text-xs leading-5 text-zinc-500 dark:text-zinc-500">
+          <p className="mt-0.5 text-xs leading-5 text-muted">
             {description}
           </p>
         ) : null}
@@ -350,7 +343,7 @@ export default function TodayPage() {
           {todayBoundaryMessage ? (
             <Card
               variant={taskSource === "local-fallback" ? "secondary" : "ghost"}
-              className="mt-5 p-3 text-sm text-zinc-600 dark:text-zinc-400"
+              className="mt-5 p-3 text-sm text-muted"
             >
               {todayBoundaryMessage}
             </Card>
@@ -363,7 +356,7 @@ export default function TodayPage() {
                   title={t("today.doFirst")}
                   description={t("today.doFirstDescription")}
                 />
-                <Card className="p-5 sm:p-6">
+                <Card className="border-l-[3px] border-l-accent p-5 sm:p-6">
                   {!tasksLoaded ? (
                     <div aria-label={t("today.loadingTopPriority")}>
                       <Skeleton className="h-5 w-44" />
@@ -373,10 +366,10 @@ export default function TodayPage() {
                   ) : topPriorityTask ? (
                     <Link
                       href={getTaskUrl(topPriorityTask.task)}
-                      className="group block cursor-pointer"
+                      className="orvia-interactive group -m-5 block rounded-xl p-5 sm:-m-6 sm:p-6"
                     >
                       <div className="flex items-start gap-3">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
+                        <span className="hidden h-10 w-10 shrink-0 sm:flex items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
                           <Target className="h-4 w-4" aria-hidden />
                         </span>
                         <div className="min-w-0 flex-1">
@@ -385,7 +378,7 @@ export default function TodayPage() {
                               <p className="text-xs font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300">
                                 {t("today.recommendedNext")}
                               </p>
-                              <h2 className="mt-1 truncate text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                              <h2 className="mt-1 [overflow-wrap:anywhere] text-lg sm:text-xl font-semibold tracking-tight text-foreground">
                                 {topPriorityTask.task.title}
                               </h2>
                             </div>
@@ -394,11 +387,11 @@ export default function TodayPage() {
                               aria-hidden
                             />
                           </div>
-                          <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                          <p className="mt-2 text-sm leading-6 text-muted">
                             {getReasonSentence(topPriorityTask.reasons, t)}
                           </p>
                           {topPriorityTask.task.description ? (
-                            <p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-500 dark:text-zinc-500">
+                            <p className="mt-2 [overflow-wrap:anywhere] text-sm leading-6 text-muted">
                               {topPriorityTask.task.description}
                             </p>
                           ) : null}
@@ -427,7 +420,7 @@ export default function TodayPage() {
                   title={t("today.focusQueue")}
                   description={t("today.focusQueueDescription")}
                 />
-                <Card className="p-0">
+                <Card variant="ghost" className="p-0">
                   {!tasksLoaded ? (
                     <div
                       className="space-y-3 p-4"
@@ -453,14 +446,14 @@ export default function TodayPage() {
                         <li key={prioritizedTask.task.id}>
                           <Link
                             href={getTaskUrl(prioritizedTask.task)}
-                            className="group flex cursor-pointer items-start gap-3 px-4 py-3 transition hover:bg-violet-50/60 dark:hover:bg-violet-500/5"
+                            className="group flex cursor-pointer items-start gap-3 px-4 py-3 transition hover:bg-hover hover:bg-hover"
                           >
                             <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-xs font-semibold text-violet-700 ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
                               {index + 1}
                             </span>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-start justify-between gap-3">
-                                <p className="truncate text-sm font-semibold text-zinc-950 dark:text-white">
+                                <p className="[overflow-wrap:anywhere] text-sm font-semibold text-foreground">
                                   {prioritizedTask.task.title}
                                 </p>
                                 <ArrowRight
@@ -503,19 +496,19 @@ export default function TodayPage() {
                     <div>
                       {inboxCount === 0 ? (
                         <>
-                          <p className="text-sm font-semibold text-zinc-950 dark:text-white">
+                          <p className="text-sm font-semibold text-foreground">
                             {t("today.inboxClear")}
                           </p>
-                          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
+                          <p className="mt-1 text-sm text-muted">
                             {t("today.nothingWaiting")}
                           </p>
                         </>
                       ) : (
                         <>
-                          <p className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                          <p className="text-2xl font-semibold tracking-tight text-foreground">
                             {inboxCount}
                           </p>
-                          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
+                          <p className="mt-1 text-sm text-muted">
                             {t("today.capturesWaiting")}
                           </p>
                         </>
@@ -531,7 +524,7 @@ export default function TodayPage() {
                   </div>
                   <Link
                     href="/app/inbox"
-                    className="mt-3 inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50 hover:text-violet-800 hover:ring-violet-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-zinc-950/60 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/25 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
+                    className="mt-3 inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-surface px-2.5 py-1.5 text-xs font-medium text-foreground ring-1 ring-line transition hover:bg-hover hover:text-foreground hover:border-line focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:shadow-none hover:bg-hover hover:text-foreground hover:border-line dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
                   >
                     {t("common.openInbox")}
                     <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
@@ -552,10 +545,10 @@ export default function TodayPage() {
                         aria-hidden
                       />
                       <div>
-                        <p className="text-sm font-semibold text-zinc-950 dark:text-white">
+                        <p className="text-sm font-semibold text-foreground">
                           {t("today.signInChangesTitle")}
                         </p>
-                        <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
+                        <p className="mt-1 text-sm leading-5 text-muted">
                           {t("today.signInChangesDescription")}
                         </p>
                       </div>
@@ -579,10 +572,10 @@ export default function TodayPage() {
                         aria-hidden
                       />
                       <div>
-                        <p className="text-sm font-semibold text-zinc-950 dark:text-white">
+                        <p className="text-sm font-semibold text-foreground">
                           {t("today.noRecentChanges")}
                         </p>
-                        <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
+                        <p className="mt-1 text-sm leading-5 text-muted">
                           {activityError ??
                             t("today.noRecentChangesDescription")}
                         </p>
@@ -592,11 +585,11 @@ export default function TodayPage() {
                     <ul className="space-y-2.5">
                       {activityEvents.map((event) => (
                         <li key={event.id}>
-                          <p className="truncate text-sm font-semibold text-zinc-950 dark:text-white">
+                          <p className="[overflow-wrap:anywhere] text-sm font-semibold text-foreground">
                             {event.title}
                           </p>
                           {event.description ? (
-                            <p className="mt-1 line-clamp-2 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
+                            <p className="mt-1 [overflow-wrap:anywhere] text-sm leading-5 text-muted">
                               {event.description}
                             </p>
                           ) : null}
@@ -622,10 +615,10 @@ export default function TodayPage() {
                       aria-hidden
                     />
                     <div>
-                      <p className="text-sm font-semibold text-zinc-950 dark:text-white">
+                      <p className="text-sm font-semibold text-foreground">
                         {t("today.wrapUpTitle")}
                       </p>
-                      <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
+                      <p className="mt-1 text-sm leading-5 text-muted">
                         {t("today.wrapUpBody")}
                       </p>
                     </div>

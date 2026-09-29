@@ -153,17 +153,17 @@ function CompactEmptyState({
   title: string;
 }) {
   return (
-    <div className="border-t border-zinc-200/70 pt-3 dark:border-zinc-800/70">
+    <div className="border-t border-line pt-3">
       <div className="flex items-start gap-2.5">
         <Icon
           className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"
           aria-hidden
         />
         <div className="min-w-0">
-          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          <p className="text-sm font-medium text-foreground">
             {title}
           </p>
-          <p className="mt-0.5 text-xs leading-5 text-zinc-500 dark:text-zinc-500">
+          <p className="mt-0.5 text-xs leading-5 text-muted">
             {description}
           </p>
         </div>
@@ -205,29 +205,29 @@ function TaskSignalList({
           <li key={task.id}>
             <Link
               href={getTaskFilterUrl(task)}
-              className="group block cursor-pointer rounded-xl bg-zinc-50/85 px-3.5 py-3 ring-1 ring-zinc-200/70 transition hover:bg-white hover:ring-zinc-300 dark:bg-zinc-900/45 dark:ring-zinc-800/70 dark:hover:bg-zinc-900 dark:hover:ring-zinc-700"
+              className="orvia-list-row group"
             >
               <div className="flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-zinc-950 dark:text-white">
+                  <p className="[overflow-wrap:anywhere] text-sm font-semibold text-foreground">
                     {task.title}
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800">
+                    <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-muted ring-1 ring-line">
                       {t(taskPriorityKey(task.priority))}
                     </span>
-                    <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800">
+                    <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-muted ring-1 ring-line">
                       {t(taskStatusKey(task.status))}
                     </span>
                     {shouldShowTaskSource(
                       taskSources[task.id] ?? "local-only",
                     ) ? (
-                      <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800">
+                      <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-muted ring-1 ring-line">
                         {t(taskSourceKey(taskSources[task.id] ?? "local-only"))}
                       </span>
                     ) : null}
                     {dueDate ? (
-                      <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:text-zinc-400 dark:ring-zinc-800">
+                      <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-muted ring-1 ring-line">
                         {dueDate}
                       </span>
                     ) : null}
@@ -450,7 +450,7 @@ export default function Home() {
               </Button>
               <Link
                 href="/app/search"
-                className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-violet-800 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-violet-600/85 dark:text-white dark:shadow-none dark:hover:bg-violet-600 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
+                className="orvia-button orvia-button-primary"
               >
                 <Search className="mr-2 h-4 w-4" aria-hidden />
                 {t("dashboard.searchContext")}
@@ -462,21 +462,21 @@ export default function Home() {
           {dashboardBoundaryMessage ? (
             <Card
               variant={taskSource === "local-fallback" ? "secondary" : "ghost"}
-              className="mt-5 p-3 text-sm text-zinc-600 dark:text-zinc-400"
+              className="mt-5 p-3 text-sm text-muted"
             >
               {dashboardBoundaryMessage}
             </Card>
           ) : null}
 
           {showFirstRunGuidance ? (
-            <Card className="mt-5 overflow-hidden p-0">
-              <div className="border-b border-zinc-200/80 p-5 dark:border-zinc-800/80 sm:p-6">
+            <Card variant="ghost" className="mt-5 overflow-hidden p-0">
+              <div className="border-b border-line p-5 sm:p-6">
                 <div>
                   <Badge>{t("dashboard.firstRun")}</Badge>
-                  <h2 className="mt-3 text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                  <h2 className="mt-3 text-xl font-semibold tracking-tight text-foreground">
                     {t("dashboard.firstRunTitle")}
                   </h2>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
                     {t("dashboard.firstRunDescription")}
                   </p>
                 </div>
@@ -504,18 +504,18 @@ export default function Home() {
                     <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-violet-200/70 bg-violet-50 text-sm font-semibold text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300">
                       {item.step}
                     </span>
-                    <h3 className="mt-4 text-sm font-semibold text-zinc-950 dark:text-white">
+                    <h3 className="mt-4 text-sm font-semibold text-foreground">
                       {item.title}
                     </h3>
-                    <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                    <p className="mt-2 text-sm leading-6 text-muted">
                       {item.description}
                     </p>
                   </div>
                 ))}
               </div>
 
-              <div className="flex flex-col gap-3 border-t border-zinc-200/80 bg-zinc-50/80 p-5 dark:border-zinc-800/80 dark:bg-zinc-950/35 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              <div className="flex flex-col gap-3 border-t border-line bg-subtle p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                <p className="text-sm text-muted">
                   {t("dashboard.bestFirstStep")}
                 </p>
                 <div className="flex flex-col gap-2 sm:flex-row">
@@ -528,7 +528,7 @@ export default function Home() {
                   </Button>
                   <Link
                     href="/app/inbox"
-                    className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50 hover:text-violet-800 hover:ring-violet-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-zinc-950/60 dark:text-zinc-300 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/25 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
+                    className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-surface px-4 py-2.5 text-sm font-medium text-muted ring-1 ring-line transition hover:bg-hover hover:text-foreground hover:border-line focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:shadow-none hover:bg-hover hover:text-foreground hover:border-line dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
                   >
                     {t("dashboard.goToInbox")}
                   </Link>
@@ -561,17 +561,18 @@ export default function Home() {
                   return (
                     <Card
                       key={bucket.title}
-                      className="flex min-h-48 flex-col p-4"
+                      variant="ghost"
+                      className="flex min-h-48 flex-col border-t border-line px-0 py-4"
                     >
                       <div className="flex items-start gap-3">
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-700 ring-1 ring-violet-200/75 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
                           <Icon className="h-4 w-4" aria-hidden />
                         </span>
                         <div>
-                          <h2 className="text-sm font-semibold text-zinc-950 dark:text-white">
+                          <h2 className="text-sm font-semibold text-foreground">
                             {bucket.title}
                           </h2>
-                          <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-500">
+                          <p className="mt-1 text-xs leading-5 text-muted">
                             {bucket.description}
                           </p>
                         </div>
@@ -593,13 +594,13 @@ export default function Home() {
           </PageSection>
 
           <div className="mt-7 grid gap-3 lg:grid-cols-2">
-            <Card className="p-4">
+            <Card variant="ghost" className="border-t border-line px-0 py-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-lg font-semibold tracking-tight text-zinc-950 dark:text-white">
+                  <h2 className="text-lg font-semibold tracking-tight text-foreground">
                     {t("dashboard.inboxTitle")}
                   </h2>
-                  <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
+                  <p className="mt-1 text-sm leading-5 text-muted">
                     {inboxSource === "cloud"
                       ? t("source.savedAccount")
                       : inboxSource === "local-fallback"
@@ -615,22 +616,22 @@ export default function Home() {
                   )}
                 </span>
               </div>
-              <div className="mt-4 border-t border-zinc-200/70 pt-3 dark:border-zinc-800/70">
+              <div className="mt-4 border-t border-line pt-3">
                 {inboxCount === 0 ? (
                   <>
-                    <p className="text-sm font-semibold text-zinc-950 dark:text-white">
+                    <p className="text-sm font-semibold text-foreground">
                       {t("dashboard.inboxClear")}
                     </p>
-                    <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
+                    <p className="mt-1 text-sm text-muted">
                       {t("dashboard.nothingWaiting")}
                     </p>
                   </>
                 ) : (
                   <>
-                    <p className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                    <p className="text-3xl font-semibold tracking-tight text-foreground">
                       {inboxCount}
                     </p>
-                    <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
+                    <p className="mt-1 text-sm text-muted">
                       {t("dashboard.capturesReady")}
                     </p>
                   </>
@@ -638,36 +639,36 @@ export default function Home() {
               </div>
               <Link
                 href="/app/inbox"
-                className="mt-4 inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50 hover:text-violet-800 hover:ring-violet-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-zinc-950/60 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/25 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
+                className="mt-4 inline-flex w-fit cursor-pointer items-center justify-center rounded-lg bg-surface px-3 py-2 text-sm font-medium text-foreground ring-1 ring-line transition hover:bg-hover hover:text-foreground hover:border-line focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:shadow-none hover:bg-hover hover:text-foreground hover:border-line dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
               >
                 {t("common.openInbox")}
                 <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
               </Link>
             </Card>
 
-            <Card className="p-4">
+            <Card variant="ghost" className="border-t border-line px-0 py-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold tracking-tight text-zinc-950 dark:text-white">
+                  <h2 className="text-lg font-semibold tracking-tight text-foreground">
                     {t("dashboard.findContext")}
                   </h2>
-                  <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
+                  <p className="mt-1 text-sm leading-5 text-muted">
                     {t("dashboard.findContextDescription")}
                   </p>
                 </div>
                 <Link
                   href="/app/search"
-                  className="inline-flex w-fit shrink-0 cursor-pointer items-center justify-center rounded-lg bg-violet-800 px-3 py-2 text-sm font-medium text-white shadow-sm shadow-violet-950/15 transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-violet-600/85 dark:text-white dark:shadow-none dark:hover:bg-violet-600 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
+                  className="orvia-button orvia-button-primary w-fit"
                 >
                   {t("dashboard.openSearch")}
                   <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
                 </Link>
               </div>
-              <div className="mt-4 border-t border-zinc-200/70 pt-3 dark:border-zinc-800/70">
-                <p className="text-sm font-semibold text-zinc-950 dark:text-white">
+              <div className="mt-4 border-t border-line pt-3">
+                <p className="text-sm font-semibold text-foreground">
                   {t("dashboard.findHalfRemembered")}
                 </p>
-                <p className="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-500">
+                <p className="mt-1 text-sm leading-5 text-muted">
                   {t("dashboard.findHalfRememberedDescription")}
                 </p>
               </div>
@@ -679,7 +680,7 @@ export default function Home() {
               title={t("dashboard.recentActivity")}
               description={t("dashboard.recentActivityDescription")}
             />
-            <Card className="p-4">
+            <Card variant="ghost" className="border-t border-line px-0 py-5">
               {!accessToken && !authLoading ? (
                 <EmptyState
                   icon={Clock}
@@ -695,7 +696,7 @@ export default function Home() {
                   {[0, 1, 2].map((item) => (
                     <div
                       key={item}
-                      className="rounded-xl border border-zinc-200/80 bg-white/70 px-4 py-3 dark:border-zinc-800/80 dark:bg-zinc-900/45"
+                      className="rounded-xl border border-line bg-surface px-4 py-3"
                     >
                       <div className="flex items-center gap-2">
                         <Skeleton className="h-5 w-24 rounded-full" />
@@ -733,13 +734,13 @@ export default function Home() {
               title={t("dashboard.nextAction")}
               description={t("dashboard.nextActionDescription")}
             />
-            <Card className="p-4 sm:p-5">
+            <Card variant="ghost" className="border-t border-line px-0 py-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="text-base font-semibold text-zinc-950 dark:text-white">
+                  <h2 className="text-base font-semibold text-foreground">
                     {t("dashboard.addContext")}
                   </h2>
-                  <p className="mt-1 max-w-2xl text-sm leading-5 text-zinc-500 dark:text-zinc-500">
+                  <p className="mt-1 max-w-2xl text-sm leading-5 text-muted">
                     {t("dashboard.addContextDescription")}
                   </p>
                 </div>

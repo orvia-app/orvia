@@ -217,61 +217,61 @@ export default function SettingsPage() {
     <AppShell>
       <div className="px-4 py-6 sm:p-10">
         <div className="mx-auto max-w-3xl">
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
+          <h1 className="text-[1.45rem] font-semibold tracking-tight text-foreground sm:text-[1.6rem]">
             {t("settings.title")}
           </h1>
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">
+          <p className="mt-2 border-b border-line pb-6 text-sm leading-6 text-muted">
             {t("settings.subtitle")}
           </p>
 
-          <Section className="mt-10">
-            <Card>
+          <Section className="mt-6">
+            <Card variant="row">
               <SectionHeader
                 title={t("settings.profile")}
                 subtitle={t("settings.profileSectionSubtitle")}
               />
               <div className="mt-5 grid gap-3">
-                <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+                <div className="rounded-xl border border-line bg-subtle p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted">
                       {t("settings.accountStatus")}
                     </span>
                     <Badge variant={isAuthenticated ? "success" : "warning"}>
                       {accountStatus}
                     </Badge>
                   </div>
-                  <p className="mt-3 truncate text-sm font-medium text-zinc-950 dark:text-white">
+                  <p className="mt-3 [overflow-wrap:anywhere] text-sm font-medium text-foreground">
                     {accountEmail}
                   </p>
-                  <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-500">
+                  <p className="mt-1 text-xs leading-5 text-muted">
                     {t("settings.accountStatusDescription")}
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+                <div className="rounded-xl border border-line bg-subtle p-4">
                   <div className="flex flex-wrap gap-2">
                     <Badge>{t("settings.availableNow")}</Badge>
                     <Badge variant="info">{t("settings.privateBeta")}</Badge>
                   </div>
                   <div className="mt-3 grid gap-2 text-sm">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-zinc-500 dark:text-zinc-500">
+                      <span className="text-muted">
                         {t("settings.currentLanguage")}
                       </span>
-                      <span className="font-medium text-zinc-950 dark:text-white">
+                      <span className="font-medium text-foreground">
                         {currentLanguageLabel}
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-zinc-500 dark:text-zinc-500">
+                      <span className="text-muted">
                         {t("settings.currentTheme")}
                       </span>
-                      <span className="font-medium text-zinc-950 dark:text-white">
+                      <span className="font-medium text-foreground">
                         {currentThemeLabel}
                       </span>
                     </div>
                   </div>
-                  <p className="mt-3 text-xs leading-5 text-zinc-500 dark:text-zinc-500">
+                  <p className="mt-3 text-xs leading-5 text-muted">
                     {t("settings.profileComingLater")}
                   </p>
                 </div>
@@ -280,13 +280,13 @@ export default function SettingsPage() {
           </Section>
 
           <Section className="mt-8">
-            <Card>
+            <Card variant="row">
               <SectionHeader
                 title={t("settings.appearance")}
                 subtitle={
                   <>
                     {t("settings.currentSelection")}{" "}
-                    <span className="font-medium text-zinc-950 dark:text-white">
+                    <span className="font-medium text-foreground">
                       {currentThemeLabel}
                     </span>
                   </>
@@ -301,11 +301,12 @@ export default function SettingsPage() {
                       <button
                         key={value}
                         type="button"
+                        aria-pressed={active}
                         onClick={() => setTheme(value)}
                         className={
                           active
-                            ? "flex flex-1 flex-col items-start gap-2 rounded-xl border border-zinc-900 bg-zinc-900 p-4 text-left text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950 sm:min-w-[140px]"
-                            : "flex flex-1 flex-col items-start gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-left transition hover:border-zinc-300 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900/40 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 sm:min-w-[140px]"
+                            ? "flex flex-1 flex-col items-start gap-2 rounded-xl border border-accent bg-accent-soft p-4 text-left text-foreground sm:min-w-[140px]"
+                            : "flex flex-1 flex-col items-start gap-2 rounded-xl border border-line bg-subtle p-4 text-left transition hover:border-zinc-300 hover:bg-zinc-100 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 sm:min-w-[140px]"
                         }
                       >
                         <Icon className="h-5 w-5" aria-hidden />
@@ -315,8 +316,8 @@ export default function SettingsPage() {
                         <span
                           className={
                             active
-                              ? "text-xs text-zinc-300 dark:text-zinc-600"
-                              : "text-xs text-zinc-600 dark:text-zinc-400"
+                              ? "text-xs text-muted"
+                              : "text-xs text-muted"
                           }
                         >
                           {t(descriptionKey)}
@@ -330,7 +331,7 @@ export default function SettingsPage() {
           </Section>
 
           <Section className="mt-8">
-            <Card>
+            <Card variant="row">
               <SectionHeader
                 title={t("settings.language")}
                 subtitle={t("settings.languageSubtitle")}
@@ -354,17 +355,18 @@ export default function SettingsPage() {
                     <button
                       key={option.value}
                       type="button"
+                      aria-pressed={active}
                       onClick={() => setLocale(option.value)}
                       className={
                         active
                           ? "rounded-xl border border-violet-200/80 bg-violet-50 p-4 text-left text-violet-950 ring-1 ring-violet-200/60 dark:border-violet-500/25 dark:bg-violet-500/10 dark:text-violet-100 dark:ring-violet-500/15"
-                          : "rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-left transition hover:border-violet-200 hover:bg-white dark:border-zinc-800 dark:bg-zinc-900/40 dark:hover:border-violet-500/25 dark:hover:bg-zinc-900"
+                          : "rounded-xl border border-line bg-subtle p-4 text-left transition hover:border-line hover:bg-surface hover:border-line dark:hover:bg-zinc-900"
                       }
                     >
                       <span className="text-sm font-semibold">
                         {option.label}
                       </span>
-                      <span className="mt-1 block text-xs leading-5 text-zinc-500 dark:text-zinc-500">
+                      <span className="mt-1 block text-xs leading-5 text-muted">
                         {option.description}
                       </span>
                     </button>
@@ -375,7 +377,7 @@ export default function SettingsPage() {
           </Section>
 
           <Section className="mt-8">
-            <Card>
+            <Card variant="row">
               <SectionHeader
                 title={t("settings.dataPrivacy")}
                 subtitle={t("settings.dataPrivacyDescription")}
@@ -385,23 +387,23 @@ export default function SettingsPage() {
                 <Badge variant="warning">{t("settings.comingLater")}</Badge>
               </div>
               <div className="mt-4">
-                <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
+                <h3 className="text-sm font-semibold text-foreground">
                   {t("settings.backupRestore")}
                 </h3>
-                <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                <p className="mt-1 text-sm leading-6 text-muted">
                   {t("settings.backupRestoreDescription")}
                 </p>
               </div>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <div className="flex min-h-[190px] flex-col rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+                <div className="flex min-h-[190px] flex-col rounded-xl border border-line bg-subtle p-4">
                   <div>
-                    <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
+                    <h3 className="text-sm font-semibold text-foreground">
                       {t("settings.createBackup")}
                     </h3>
-                    <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                    <p className="mt-1 text-sm leading-6 text-muted">
                       {t("settings.createBackupDescription")}
                     </p>
-                    <p className="mt-2 text-xs font-medium text-zinc-500 dark:text-zinc-500">
+                    <p className="mt-2 text-xs font-medium text-muted">
                       {t("settings.supportedBackup")}
                     </p>
                   </div>
@@ -415,15 +417,15 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <div className="flex min-h-[190px] flex-col rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+                <div className="flex min-h-[190px] flex-col rounded-xl border border-line bg-subtle p-4">
                   <div>
-                    <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
+                    <h3 className="text-sm font-semibold text-foreground">
                       {t("settings.restoreBackup")}
                     </h3>
-                    <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                    <p className="mt-1 text-sm leading-6 text-muted">
                       {t("settings.restoreBackupDescription")}
                     </p>
-                    <p className="mt-2 text-xs font-medium text-zinc-500 dark:text-zinc-500">
+                    <p className="mt-2 text-xs font-medium text-muted">
                       {t("settings.supportedBackup")}
                     </p>
                   </div>
@@ -441,45 +443,45 @@ export default function SettingsPage() {
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <Link
                   href="/legal/privacy"
-                  className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 text-sm font-medium text-zinc-800 transition hover:bg-white hover:text-violet-800 hover:ring-1 hover:ring-violet-200/70 dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:text-zinc-200 dark:hover:bg-zinc-900 dark:hover:text-violet-200 dark:hover:ring-violet-500/20"
+                  className="rounded-xl border border-line bg-subtle p-4 text-sm font-medium text-foreground transition hover:bg-surface hover:text-foreground hover:ring-1 hover:border-line dark:hover:bg-zinc-900 hover:text-foreground hover:border-line"
                 >
                   {t("settings.privacyPolicy")}
                 </Link>
                 <Link
                   href="/legal/terms"
-                  className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 text-sm font-medium text-zinc-800 transition hover:bg-white hover:text-violet-800 hover:ring-1 hover:ring-violet-200/70 dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:text-zinc-200 dark:hover:bg-zinc-900 dark:hover:text-violet-200 dark:hover:ring-violet-500/20"
+                  className="rounded-xl border border-line bg-subtle p-4 text-sm font-medium text-foreground transition hover:bg-surface hover:text-foreground hover:ring-1 hover:border-line dark:hover:bg-zinc-900 hover:text-foreground hover:border-line"
                 >
                   {t("settings.termsService")}
                 </Link>
               </div>
-              <p className="mt-4 text-sm leading-6 text-zinc-500 dark:text-zinc-500">
+              <p className="mt-4 text-sm leading-6 text-muted">
                 {t("settings.dataPrivacyDetail")}
               </p>
             </Card>
           </Section>
 
           <Section className="mt-8">
-            <Card>
+            <Card variant="row">
               <SectionHeader
                 title={t("settings.localDataReset")}
                 subtitle={t("settings.localDataResetDescription")}
               />
-              <div className="mt-5 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+              <div className="mt-5 rounded-xl border border-line bg-subtle p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
+                    <h3 className="text-sm font-semibold text-foreground">
                       {t("settings.resetLocalData")}
                     </h3>
-                    <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                    <p className="mt-1 text-sm leading-6 text-muted">
                       {t("settings.resetLocalDataBody")}
                     </p>
-                    <p className="mt-2 text-xs font-medium text-zinc-500 dark:text-zinc-500">
+                    <p className="mt-2 text-xs font-medium text-muted">
                       {t("settings.cannotBeUndone")}
                     </p>
                   </div>
                   <button
                     type="button"
-                    className="inline-flex h-9 w-full shrink-0 items-center justify-center rounded-xl border border-red-200/80 bg-white px-3 text-sm font-medium text-red-700 transition hover:border-red-300 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300/70 dark:border-red-500/25 dark:bg-zinc-950/40 dark:text-red-300 dark:hover:border-red-500/35 dark:hover:bg-red-500/10 dark:focus-visible:ring-red-500/30 sm:w-auto"
+                    className="inline-flex h-9 w-full shrink-0 items-center justify-center rounded-xl border border-red-200/80 bg-surface px-3 text-sm font-medium text-red-700 transition hover:border-red-300 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300/70 dark:border-red-500/25 dark:text-red-300 dark:hover:border-red-500/35 dark:hover:bg-red-500/10 dark:focus-visible:ring-red-500/30 sm:w-auto"
                     onClick={resetData}
                   >
                     {t("settings.resetLocalData")}
@@ -490,25 +492,25 @@ export default function SettingsPage() {
           </Section>
 
           <Section className="mt-8">
-            <Card>
+            <Card variant="row">
               <SectionHeader
                 title={t("settings.workspace")}
                 subtitle={t("settings.workspaceDescription")}
               />
-              <div className="mt-3 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
-                <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
+              <div className="mt-3 rounded-xl border border-line bg-subtle p-4">
+                <h3 className="text-sm font-semibold text-foreground">
                   {t("settings.workspaceCustomization")}
                 </h3>
-                <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                <p className="mt-1 text-sm leading-6 text-muted">
                   {t("settings.workspaceCustomizationDescription")}
                 </p>
               </div>
 
-              <div className="mt-3 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
-                <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
+              <div className="mt-3 rounded-xl border border-line bg-subtle p-4">
+                <h3 className="text-sm font-semibold text-foreground">
                   {t("settings.onboarding")}
                 </h3>
-                <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                <p className="mt-1 text-sm leading-6 text-muted">
                   {t("settings.onboardingDescription")}
                 </p>
                 <Button
@@ -523,30 +525,30 @@ export default function SettingsPage() {
           </Section>
 
           <Section className="mt-8">
-            <Card>
+            <Card variant="row">
               <SectionHeader
                 title={t("settings.localDataSync")}
                 subtitle={t("settings.localDataSyncDescription")}
               />
-              <div className="mt-5 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+              <div className="mt-5 rounded-xl border border-line bg-subtle p-4">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">
+                    <h3 className="text-sm font-semibold text-foreground">
                       {t("settings.oneTimeImport")}
                     </h3>
-                    <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                    <p className="mt-1 text-sm leading-6 text-muted">
                       {authLoading
                         ? t("settings.checkingSignIn")
                         : isAuthenticated
                         ? t("settings.importSignedIn")
                         : t("settings.importSignedOut")}
                     </p>
-                    <p className="mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-500">
+                    <p className="mt-2 text-sm leading-6 text-muted">
                       {t("settings.noAutoImport")}
                     </p>
-                    <div className="mt-3 grid gap-2 text-sm text-zinc-700 dark:text-zinc-300 sm:grid-cols-2">
-                      <div className="rounded-lg bg-white px-3 py-2 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:ring-zinc-800">
-                        <span className="block text-xs text-zinc-500 dark:text-zinc-500">
+                    <div className="mt-3 grid gap-2 text-sm text-muted sm:grid-cols-2">
+                      <div className="rounded-lg bg-surface px-3 py-2 ring-1 ring-line">
+                        <span className="block text-xs text-muted">
                           {t("settings.taskCandidates")}
                         </span>
                         <span className="font-semibold">
@@ -555,8 +557,8 @@ export default function SettingsPage() {
                             : importPlan.taskCount}
                         </span>
                       </div>
-                      <div className="rounded-lg bg-white px-3 py-2 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:ring-zinc-800">
-                        <span className="block text-xs text-zinc-500 dark:text-zinc-500">
+                      <div className="rounded-lg bg-surface px-3 py-2 ring-1 ring-line">
+                        <span className="block text-xs text-muted">
                           {t("settings.noteCandidates")}
                         </span>
                         <span className="font-semibold">
@@ -620,17 +622,17 @@ export default function SettingsPage() {
           </Section>
 
           <Section className="mt-8">
-            <Card>
+            <Card variant="row">
               <SectionHeader
                 title={t("settings.integrations")}
                 subtitle={t("settings.integrationsDescription")}
               />
-              <div className="mt-5 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+              <div className="mt-5 rounded-xl border border-line bg-subtle p-4">
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="warning">{t("settings.comingSoon")}</Badge>
                   <Badge variant="info">{t("settings.privateBeta")}</Badge>
                 </div>
-                <p className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                <p className="mt-3 text-sm leading-6 text-muted">
                   {t("settings.integrationsDetail")}
                 </p>
                 <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -642,7 +644,7 @@ export default function SettingsPage() {
                   ].map((item) => (
                     <div
                       key={item}
-                      className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-zinc-700 ring-1 ring-zinc-200/80 dark:bg-zinc-950 dark:text-zinc-300 dark:ring-zinc-800"
+                      className="rounded-lg bg-surface px-3 py-2 text-sm font-medium text-muted ring-1 ring-line"
                     >
                       {item}
                     </div>
@@ -653,17 +655,17 @@ export default function SettingsPage() {
           </Section>
 
           <Section className="mt-8">
-            <Card>
+            <Card variant="row">
               <SectionHeader
                 title={t("settings.billing")}
                 subtitle={t("settings.billingDescription")}
               />
-              <div className="mt-5 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+              <div className="mt-5 rounded-xl border border-line bg-subtle p-4">
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="info">{t("settings.privateBeta")}</Badge>
                   <Badge variant="warning">{t("settings.comingLater")}</Badge>
                 </div>
-                <p className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                <p className="mt-3 text-sm leading-6 text-muted">
                   {t("settings.billingDetail")}
                 </p>
               </div>
@@ -671,7 +673,7 @@ export default function SettingsPage() {
           </Section>
 
           <Section className="mt-8">
-            <Card>
+            <Card variant="row">
               <SectionHeader
                 title={t("settings.feedbackTitle")}
                 subtitle={t("settings.feedbackDescription")}
@@ -698,7 +700,7 @@ export default function SettingsPage() {
           </Section>
 
           <Section className="mt-8">
-            <Card>
+            <Card variant="row">
               <SectionHeader
                 title={t("settings.helpLegal")}
                 subtitle={t("settings.helpLegalDescription")}
@@ -706,7 +708,7 @@ export default function SettingsPage() {
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 <Link
                   href="/help-center"
-                  className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 text-sm font-medium text-zinc-800 transition hover:bg-white hover:text-violet-800 hover:ring-1 hover:ring-violet-200/70 dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:text-zinc-200 dark:hover:bg-zinc-900 dark:hover:text-violet-200 dark:hover:ring-violet-500/20"
+                  className="rounded-xl border border-line bg-subtle p-4 text-sm font-medium text-foreground transition hover:bg-surface hover:text-foreground hover:ring-1 hover:border-line dark:hover:bg-zinc-900 hover:text-foreground hover:border-line"
                 >
                   {t("settings.helpCenter")}
                 </Link>

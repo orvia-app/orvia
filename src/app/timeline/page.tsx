@@ -208,20 +208,18 @@ export default function TimelinePage() {
             <PageSection className="mt-0">
               <PageSectionHeader
                 title={t("timeline.activity")}
-                description={`${events.length} ${
-                  events.length === 1 ? t("common.event") : t("common.events")
-                }`}
+                description={t("common.eventCount").replace("{count}", String(events.length))}
               />
               <div className="space-y-7">
                 {timelineGroups.map((group) => (
                   <section key={group.key} aria-labelledby={`timeline-${group.key}`}>
                     <h2
                       id={`timeline-${group.key}`}
-                      className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-500"
+                      className="mb-2 flex items-center gap-3 text-sm font-semibold text-foreground before:h-2 before:w-2 before:rounded-full before:bg-accent"
                     >
                       {t(group.titleKey)}
                     </h2>
-                    <div className="space-y-3">
+                    <div className="ml-1 border-l border-line pl-4">
                       {group.events.map((event) => (
                         <TimelineEventCard
                           key={event.id}

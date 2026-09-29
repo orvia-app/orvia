@@ -1,6 +1,7 @@
 "use client";
 
 import { useI18n } from "@/components/i18n/I18nProvider";
+import { LocaleSwitcher } from "@/components/i18n/LocaleSwitcher";
 import { PublicInfoNav } from "@/components/public/PublicInfoNav";
 import { Card } from "@/components/ui/Card";
 import { Page, PageHeader, PageSection } from "@/components/ui/Page";
@@ -52,8 +53,9 @@ export default function PrivacyPolicyPage() {
   const { t } = useI18n();
 
   return (
-    <main className="min-h-screen bg-zinc-100 text-zinc-950 dark:bg-zinc-950 dark:text-white">
+    <main className="min-h-screen bg-subtle text-foreground">
       <Page>
+        <LocaleSwitcher />
         <PageHeader
           title={t("legal.privacyTitle")}
           description={t("legal.privacyDescription")}
@@ -61,15 +63,15 @@ export default function PrivacyPolicyPage() {
 
         <PageSection className="space-y-4">
           <PublicInfoNav />
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">{t("legal.lastUpdated")}</p>
+          <p className="text-sm text-muted">{t("legal.lastUpdated")}</p>
 
-          <Card className="space-y-6 p-6">
+          <Card variant="ghost" className="mx-auto max-w-[720px] space-y-8 px-0 py-6">
             {sections.map((section) => (
               <section key={section.titleKey}>
-                <h2 className="text-base font-semibold text-zinc-950 dark:text-white">
+                <h2 className="text-base font-semibold text-foreground">
                   {t(section.titleKey)}
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                <p className="mt-2 text-sm leading-6 text-muted">
                   {t(section.bodyKey)}
                 </p>
               </section>

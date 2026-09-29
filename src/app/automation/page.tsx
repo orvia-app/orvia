@@ -1,37 +1,41 @@
+"use client";
+
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { AppShell } from "@/components/AppShell";
 
 const automations = [
-  { title: "Telegram Bot", description: "Bridge updates and commands." },
-  { title: "Scheduled Workflows", description: "Run routines on a cadence." },
-  { title: "Context Reminders", description: "Local signals for future nudges." },
-];
+  { title: "automation.telegram", description: "automation.telegramDescription" },
+  { title: "automation.scheduled", description: "automation.scheduledDescription" },
+  { title: "automation.reminders", description: "automation.remindersDescription" },
+] as const;
 
 export default function AutomationPage() {
+  const { t } = useI18n();
   return (
     <AppShell>
       <div className="px-4 py-6 sm:p-10">
         <div className="mx-auto max-w-5xl">
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
-            Automation
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            {t("nav.automation")}
           </h1>
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">
-            Connect tools and let the system work in the background.
+          <p className="mt-2 text-sm text-muted sm:text-base">
+            {t("automation.description")}
           </p>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-3">
             {automations.map((item) => (
               <div
-                key={item.title}
-                className="flex flex-col rounded-2xl bg-white p-6 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/70 dark:bg-zinc-950 dark:shadow-none dark:ring-zinc-800/70"
+                key={t(item.title)}
+                className="flex flex-col rounded-xl bg-surface p-6 ring-1 ring-line dark:shadow-none"
               >
-                <h2 className="text-lg font-semibold text-zinc-950 dark:text-white">
-                  {item.title}
+                <h2 className="text-lg font-semibold text-foreground">
+                  {t(item.title)}
                 </h2>
-                <p className="mt-2 flex-1 text-sm text-zinc-600 dark:text-zinc-400">
-                  {item.description}
+                <p className="mt-2 flex-1 text-sm text-muted">
+                  {t(item.description)}
                 </p>
-                <span className="mt-6 inline-flex w-fit rounded-full bg-zinc-200 px-3 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                  Coming soon
+                <span className="mt-6 inline-flex w-fit rounded-full bg-zinc-200 px-3 py-1 text-xs font-medium text-muted dark:bg-zinc-800">
+                  {t("common.comingSoon")}
                 </span>
               </div>
             ))}

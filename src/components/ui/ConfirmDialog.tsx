@@ -1,7 +1,11 @@
 "use client";
+import { usePresence } from "@/components/ui/usePresence";
+
+import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 import { useEffect, useId } from "react";
 
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { Button } from "@/components/ui/Button";
 
 type ConfirmDialogTone = "danger" | "default";
@@ -29,7 +33,9 @@ export function ConfirmDialog({
   onCancel,
   confirming = false,
 }: ConfirmDialogProps) {
+  const { t } = useI18n();
   const titleId = useId();
+  const dialogRef = useDialogFocus(open);
   const descriptionId = useId();
 
   useEffect(() => {
@@ -50,13 +56,16 @@ export function ConfirmDialog({
     };
   }, [confirming, onCancel, open]);
 
-  if (!open) {
+  const { present: overlayPresent, closing: overlayClosing } = usePresence(open);
+  if (!overlayPresent) {
     return null;
   }
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-end justify-center bg-zinc-950/55 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-sm dark:bg-black/65 sm:items-center sm:p-4"
+      data-presence={overlayClosing ? "exiting" : "entered"}
+      inert={overlayClosing}
+      className="fixed inset-0 z-[70] flex items-end justify-center bg-zinc-950/55 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] dark:bg-black/65 sm:items-center sm:p-4"
       onClick={(event) => {
         if (event.target === event.currentTarget && !confirming) {
           onCancel();
@@ -68,19 +77,21 @@ export function ConfirmDialog({
         aria-describedby={descriptionId}
         aria-labelledby={titleId}
         aria-modal="true"
-        className="w-full max-w-md rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-2xl shadow-zinc-950/15 dark:border-zinc-800/80 dark:bg-zinc-950 dark:shadow-black/40"
+        className="orvia-dialog max-h-[calc(100dvh-2rem)] overflow-y-auto w-full max-w-md rounded-xl border border-line bg-surface p-5 shadow-2xl shadow-zinc-950/15 dark:shadow-black/40"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
+        ref={dialogRef}
+        tabIndex={-1}
       >
         <div>
           <h2
-            className="text-base font-semibold tracking-tight text-zinc-950 dark:text-white"
+            className="text-base font-semibold tracking-tight text-foreground"
             id={titleId}
           >
             {title}
           </h2>
           <p
-            className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400"
+            className="mt-2 text-sm leading-6 text-muted"
             id={descriptionId}
           >
             {description}
@@ -106,7 +117,7 @@ export function ConfirmDialog({
             type="button"
             variant={tone === "danger" ? "danger" : "primary"}
           >
-            {confirming ? "Working..." : confirmLabel}
+            {confirming ? t("common.working") : confirmLabel}
           </Button>
         </div>
       </div>
