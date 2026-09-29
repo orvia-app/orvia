@@ -1,4 +1,6 @@
 "use client";
+import { Select } from "@/components/ui/Field";
+
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -188,7 +190,7 @@ export default function AdminFeedbackPage() {
             <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-200/70 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
               <MessageSquare className="h-4.5 w-4.5" aria-hidden />
             </div>
-            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+            <p className="text-sm font-medium text-foreground">
               {t("admin.feedback.checking")}
             </p>
           </Card>
@@ -202,20 +204,20 @@ export default function AdminFeedbackPage() {
       <AppShell>
         <Page width="narrow">
           <Card className="space-y-4 p-6 text-center">
-            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200/75 dark:bg-zinc-900 dark:text-zinc-300 dark:ring-zinc-800">
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-subtle text-muted ring-1 ring-line">
               <MessageSquare className="h-4.5 w-4.5" aria-hidden />
             </div>
             <div>
-              <h1 className="text-lg font-semibold tracking-tight text-zinc-950 dark:text-white">
+              <h1 className="text-lg font-semibold tracking-tight text-foreground">
                 {t("admin.feedback.accessDeniedTitle")}
               </h1>
-              <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+              <p className="mt-2 text-sm leading-6 text-muted">
                 {t("admin.feedback.accessDeniedDescription")}
               </p>
             </div>
             <Link
               href="/app"
-              className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-sm shadow-zinc-950/[0.03] ring-1 ring-zinc-200/80 transition hover:bg-violet-50/70 hover:text-violet-800 hover:ring-violet-200/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:bg-zinc-950/60 dark:text-zinc-200 dark:shadow-none dark:ring-zinc-800 dark:hover:bg-violet-500/10 dark:hover:text-violet-200 dark:hover:ring-violet-500/20 dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
+              className="inline-flex items-center justify-center rounded-xl bg-surface px-4 py-2.5 text-sm font-medium text-foreground ring-1 ring-line transition hover:bg-hover hover:text-foreground hover:border-line focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:shadow-none hover:bg-hover hover:text-foreground hover:border-line dark:focus-visible:ring-violet-400 dark:focus-visible:ring-offset-zinc-950"
             >
               {t("admin.feedback.backToApp")}
             </Link>
@@ -243,7 +245,7 @@ export default function AdminFeedbackPage() {
         />
 
         <PageSection>
-          <Card className="space-y-4">
+          <Card variant="ghost" className="space-y-4 px-0">
             <div className="flex flex-wrap gap-2">
               {feedbackFilters.map((option) => {
                 const active = filter === option.value;
@@ -254,6 +256,7 @@ export default function AdminFeedbackPage() {
                     type="button"
                     variant={active ? "primary" : "secondary"}
                     className="px-3 py-2 text-xs"
+                    aria-pressed={active}
                     onClick={() => setFilter(option.value)}
                   >
                     {t(option.labelKey)}
@@ -269,7 +272,7 @@ export default function AdminFeedbackPage() {
             ) : null}
 
             {filteredFeedback.length === 0 ? (
-              <div className="rounded-xl bg-zinc-100/70 px-4 py-8 text-center text-sm text-zinc-600 dark:bg-zinc-900/55 dark:text-zinc-400">
+              <div className="px-4 py-8 text-center text-sm text-muted">
                 {t("admin.feedback.empty")}
               </div>
             ) : (
@@ -277,7 +280,7 @@ export default function AdminFeedbackPage() {
                 <div className="hidden overflow-x-auto lg:block">
                   <table className="min-w-full divide-y divide-zinc-200 text-left text-sm dark:divide-zinc-800">
                     <thead>
-                      <tr className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                      <tr className="text-xs font-medium uppercase tracking-wide text-muted">
                         <th className="px-3 py-3">{t("admin.feedback.date")}</th>
                         <th className="px-3 py-3">{t("common.type")}</th>
                         <th className="px-3 py-3">{t("common.status")}</th>
@@ -290,7 +293,7 @@ export default function AdminFeedbackPage() {
                     <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
                       {filteredFeedback.map((item) => (
                         <tr key={item.id} className="align-top">
-                          <td className="whitespace-nowrap px-3 py-4 text-xs text-zinc-500 dark:text-zinc-500">
+                          <td className="whitespace-nowrap px-3 py-4 text-xs text-muted">
                             {formatDate(item.created_at, locale)}
                           </td>
                           <td className="px-3 py-4">
@@ -303,9 +306,9 @@ export default function AdminFeedbackPage() {
                               <Badge variant={statusBadgeVariants[item.status]}>
                                 {t(statusLabelKeys[item.status])}
                               </Badge>
-                              <select
+                              <Select
                                 aria-label={t("common.status")}
-                                className="h-9 rounded-lg border border-zinc-200 bg-white px-2 text-xs text-zinc-800 outline-none transition focus:border-violet-300 focus:ring-2 focus:ring-violet-200/70 disabled:cursor-wait disabled:opacity-60 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200 dark:focus:border-violet-500/40 dark:focus:ring-violet-500/20"
+                                className="h-9"
                                 disabled={updatingId === item.id}
                                 value={item.status}
                                 onChange={(event) =>
@@ -320,15 +323,15 @@ export default function AdminFeedbackPage() {
                                     {t(status.labelKey)}
                                   </option>
                                 ))}
-                              </select>
+                              </Select>
                             </div>
                           </td>
-                          <td className="max-w-[13rem] px-3 py-4 text-xs text-zinc-500 dark:text-zinc-500">
+                          <td className="max-w-[13rem] px-3 py-4 text-xs text-muted">
                             <span className="break-all font-mono">
                               {item.user_id}
                             </span>
                           </td>
-                          <td className="max-w-xl px-3 py-4 text-sm leading-6 text-zinc-800 dark:text-zinc-200">
+                          <td className="max-w-xl px-3 py-4 text-sm leading-6 text-foreground">
                             <p className="whitespace-pre-wrap break-words">
                               {item.message}
                             </p>
@@ -343,7 +346,7 @@ export default function AdminFeedbackPage() {
                   {filteredFeedback.map((item) => (
                     <div
                       key={item.id}
-                      className="rounded-xl bg-zinc-100/70 p-3 ring-1 ring-zinc-200/75 dark:bg-zinc-900/55 dark:ring-zinc-800/75"
+                      className="rounded-xl bg-subtle p-3 ring-1 ring-line"
                     >
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge variant={typeBadgeVariants[item.type]}>
@@ -353,16 +356,16 @@ export default function AdminFeedbackPage() {
                           {t(statusLabelKeys[item.status])}
                         </Badge>
                       </div>
-                      <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-zinc-800 dark:text-zinc-200">
+                      <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-foreground">
                         {item.message}
                       </p>
-                      <div className="mt-3 grid gap-2 text-xs text-zinc-500 dark:text-zinc-500">
+                      <div className="mt-3 grid gap-2 text-xs text-muted">
                         <span>{formatDate(item.created_at, locale)}</span>
                         <span className="break-all font-mono">{item.user_id}</span>
                       </div>
-                      <select
+                      <Select
                         aria-label={t("common.status")}
-                        className="mt-3 h-10 w-full rounded-lg border border-zinc-200 bg-white px-2 text-sm text-zinc-800 outline-none transition focus:border-violet-300 focus:ring-2 focus:ring-violet-200/70 disabled:cursor-wait disabled:opacity-60 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200 dark:focus:border-violet-500/40 dark:focus:ring-violet-500/20"
+                        className="mt-3 h-10 w-full"
                         disabled={updatingId === item.id}
                         value={item.status}
                         onChange={(event) =>
@@ -377,7 +380,7 @@ export default function AdminFeedbackPage() {
                             {t(status.labelKey)}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     </div>
                   ))}
                 </div>

@@ -1,8 +1,13 @@
 "use client";
+import { Select, Input, Textarea } from "@/components/ui/Field";
+
+
+import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Wallet, X } from "lucide-react";
 
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { AppShell } from "@/components/AppShell";
 import {
   CURRENCIES,
@@ -22,10 +27,12 @@ const emptyForm = {
 };
 
 export default function FinancePage() {
+  const { t, locale } = useI18n();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [storageReady, setStorageReady] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const dialogRef = useDialogFocus(modalOpen);
 
   useEffect(() => {
     setTransactions(getTransactions());
@@ -52,11 +59,20 @@ export default function FinancePage() {
   }, [transactions]);
 
   function formatMoney(n: number) {
-    return n.toLocaleString(undefined, {
+    return n.toLocaleString(locale === "ua" ? "uk-UA" : "en-US", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
     });
   }
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { setModalOpen(false); setForm(emptyForm); }
+    };
+    window.addEventListener("keydown", onEscape);
+    return () => window.removeEventListener("keydown", onEscape);
+  }, [modalOpen]);
 
   function openModal() {
     setModalOpen(true);
@@ -74,7 +90,7 @@ export default function FinancePage() {
     if (!category || !Number.isFinite(amountNum) || amountNum <= 0) return;
 
     const tx: Transaction = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       type: form.type,
       category,
       amount: amountNum,
@@ -92,94 +108,95 @@ export default function FinancePage() {
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-emerald-300/50 bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-500/10">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-emerald-300/50 bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-500/10">
                 <Wallet className="h-6 w-6 text-emerald-700 dark:text-emerald-300" aria-hidden />
               </div>
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
-                  Finance
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                  {t("nav.finance")}
                 </h1>
-                <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">
-                  Track income, expenses, and cashflow.
+                <p className="mt-2 text-sm text-muted sm:text-base">
+                  {t("finance.description")}
                 </p>
               </div>
             </div>
             <button
               type="button"
               onClick={openModal}
-              className="shrink-0 rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              className="shrink-0 rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
             >
-              + Add Transaction
+              {t("finance.add")}
             </button>
           </div>
 
+          <p className="mt-4 text-sm text-muted">{t("labs.localNotice")}</p>
           <div className="mt-10 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-              <p className="text-xs font-medium uppercase tracking-wide text-zinc-600 dark:text-zinc-500">
-                Income total
+            <div className="rounded-xl border border-line bg-surface p-5">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted">
+                {t("finance.incomeTotal")}
               </p>
               <p className="mt-2 text-2xl font-semibold text-emerald-600 dark:text-emerald-400">
                 {formatMoney(incomeTotal)}
               </p>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-600">
-                All currencies summed
+                {t("finance.mixedCurrencies")}
               </p>
             </div>
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-              <p className="text-xs font-medium uppercase tracking-wide text-zinc-600 dark:text-zinc-500">
-                Expense total
+            <div className="rounded-xl border border-line bg-surface p-5">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted">
+                {t("finance.expenseTotal")}
               </p>
               <p className="mt-2 text-2xl font-semibold text-rose-600 dark:text-rose-400">
                 {formatMoney(expenseTotal)}
               </p>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-600">
-                All currencies summed
+                {t("finance.mixedCurrencies")}
               </p>
             </div>
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-              <p className="text-xs font-medium uppercase tracking-wide text-zinc-600 dark:text-zinc-500">
-                Cashflow
+            <div className="rounded-xl border border-line bg-surface p-5">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted">
+                {t("finance.cashflow")}
               </p>
               <p
                 className={
                   cashflow >= 0
-                    ? "mt-2 text-2xl font-semibold text-zinc-950 dark:text-white"
+                    ? "mt-2 text-2xl font-semibold text-foreground"
                     : "mt-2 text-2xl font-semibold text-amber-600 dark:text-amber-400"
                 }
               >
                 {formatMoney(cashflow)}
               </p>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-600">
-                Income − expenses
+                {t("finance.difference")}
               </p>
             </div>
           </div>
 
           <div className="mt-10">
-            <h2 className="text-lg font-semibold text-zinc-950 dark:text-white">
-              Transactions
+            <h2 className="text-lg font-semibold text-foreground">
+              {t("finance.transactions")}
             </h2>
             {transactions.length === 0 ? (
-              <div className="mt-4 rounded-2xl border border-dashed border-zinc-300 bg-zinc-100/80 px-6 py-14 text-center text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950/50 dark:text-zinc-500">
-                No transactions yet. Add income or expenses to see them here.
+              <div className="mt-4 rounded-xl border border-dashed border-line bg-subtle px-6 py-14 text-center text-sm text-muted">
+                {t("finance.empty")}
               </div>
             ) : (
               <ul className="mt-4 space-y-2">
                 {transactions.map((t) => (
                   <li
                     key={t.id}
-                    className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950 sm:flex-row sm:items-center sm:justify-between"
+                    className="flex flex-col gap-2 rounded-xl border border-line bg-surface px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <div>
-                      <p className="font-medium text-zinc-950 dark:text-white">
+                    <div className="min-w-0 [overflow-wrap:anywhere]">
+                      <p className="font-medium text-foreground">
                         {t.category}
                       </p>
-                      <p className="mt-0.5 text-xs text-zinc-600 dark:text-zinc-500">
-                        {new Date(t.createdAt).toLocaleString()} ·{" "}
+                      <p className="mt-0.5 text-xs text-muted">
+                        {new Date(t.createdAt).toLocaleString(locale === "ua" ? "uk-UA" : "en-US")} ·{" "}
                         {t.currency}
                       </p>
                       {t.note ? (
-                        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                        <p className="mt-1 text-sm text-muted">
                           {t.note}
                         </p>
                       ) : null}
@@ -212,23 +229,25 @@ export default function FinancePage() {
         >
           <div
             role="dialog"
+        ref={dialogRef}
+        tabIndex={-1}
             aria-modal="true"
             aria-labelledby="tx-modal-title"
-            className="max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-zinc-800 dark:bg-zinc-950 sm:max-h-[90vh] sm:p-6"
+            className="orvia-dialog max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-xl border border-line bg-surface p-5 shadow-xl sm:max-h-[90vh] sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
               <h2
                 id="tx-modal-title"
-                className="text-lg font-semibold text-zinc-950 dark:text-white"
+                className="text-lg font-semibold text-foreground"
               >
-                New transaction
+                {t("finance.new")}
               </h2>
               <button
                 type="button"
-                aria-label="Close"
+                aria-label={t("common.close")}
                 onClick={closeModal}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white dark:focus-visible:ring-zinc-600"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:hover:bg-zinc-800 dark:hover:text-white dark:focus-visible:ring-zinc-600"
               >
                 <X className="h-4 w-4 shrink-0" aria-hidden strokeWidth={2.25} />
               </button>
@@ -237,11 +256,11 @@ export default function FinancePage() {
               <div>
                 <label
                   htmlFor="tx-type"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-muted"
                 >
-                  Type
+                  {t("common.type")}
                 </label>
-                <select
+                <Select
                   id="tx-type"
                   value={form.type}
                   onChange={(e) =>
@@ -250,37 +269,37 @@ export default function FinancePage() {
                       type: e.target.value as TransactionType,
                     }))
                   }
-                  className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                  className="mt-1.5 w-full"
                 >
-                  <option value="income">income</option>
-                  <option value="expense">expense</option>
-                </select>
+                  <option value="income">{t("finance.income")}</option>
+                  <option value="expense">{t("finance.expense")}</option>
+                </Select>
               </div>
               <div>
                 <label
                   htmlFor="tx-category"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-muted"
                 >
-                  Category <span className="text-red-400">*</span>
+                  {t("finance.category")} <span className="text-red-400">*</span>
                 </label>
-                <input
+                <Input
                   id="tx-category"
                   required
                   value={form.category}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, category: e.target.value }))
                   }
-                  className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                  className="mt-1.5 w-full"
                 />
               </div>
               <div>
                 <label
                   htmlFor="tx-amount"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-muted"
                 >
-                  Amount <span className="text-red-400">*</span>
+                  {t("finance.amount")} <span className="text-red-400">*</span>
                 </label>
-                <input
+                <Input
                   id="tx-amount"
                   required
                   type="number"
@@ -291,17 +310,17 @@ export default function FinancePage() {
                   onChange={(e) =>
                     setForm((f) => ({ ...f, amount: e.target.value }))
                   }
-                  className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                  className="mt-1.5 w-full"
                 />
               </div>
               <div>
                 <label
                   htmlFor="tx-currency"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-muted"
                 >
-                  Currency
+                  {t("finance.currency")}
                 </label>
-                <select
+                <Select
                   id="tx-currency"
                   value={form.currency}
                   onChange={(e) =>
@@ -310,45 +329,45 @@ export default function FinancePage() {
                       currency: e.target.value as CurrencyCode,
                     }))
                   }
-                  className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                  className="mt-1.5 w-full"
                 >
                   {CURRENCIES.map((currency) => (
                     <option key={currency} value={currency}>
                       {currency}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
               <div>
                 <label
                   htmlFor="tx-note"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-muted"
                 >
-                  Note
+                  {t("finance.note")}
                 </label>
-                <textarea
+                <Textarea
                   id="tx-note"
                   rows={3}
                   value={form.note}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, note: e.target.value }))
                   }
-                  className="mt-1.5 w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                  className="mt-1.5 w-full"
                 />
               </div>
               <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="rounded-xl border border-zinc-300 bg-transparent px-4 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                  className="rounded-xl border border-line bg-transparent px-4 py-2.5 text-sm font-medium text-muted transition hover:bg-zinc-100 dark:hover:bg-zinc-900"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button
                   type="submit"
                   className="rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
                 >
-                  Save
+                  {t("common.save")}
                 </button>
               </div>
             </form>

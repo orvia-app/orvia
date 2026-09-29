@@ -3,20 +3,174 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #fafafa;
-  --foreground: #18181b;
+  color-scheme: light;
+  --canvas: #fafaf9;
+  --surface: #ffffff;
+  --subtle: #f2f2f0;
+  --hover: #eaeae8;
+  --sidebar: #f3f3f1;
+  --line: #dededb;
+  --foreground: #202124;
+  --muted: #62636a;
+  --accent: #6446c7;
+  --accent-hover: #5335b4;
+  --accent-soft: #eeebfa;
+  --on-accent: #ffffff;
+  --success: #21734b;
+  --success-soft: #edf6ef;
+  --warning: #876014;
+  --warning-soft: #fbf4e5;
+  --danger: #b23838;
+  --danger-soft: #fceeee;
+  --background: var(--canvas);
+}
+
+.dark {
+  color-scheme: dark;
+  --canvas: #191a1d;
+  --surface: #202125;
+  --subtle: #27282d;
+  --hover: #303137;
+  --sidebar: #16171a;
+  --line: #36373e;
+  --foreground: #ededf0;
+  --muted: #a4a5ae;
+  --accent: #a28aec;
+  --accent-hover: #b29df2;
+  --accent-soft: #30293f;
+  --on-accent: #191322;
+  --success: #88ccaa;
+  --success-soft: #203329;
+  --warning: #e3c182;
+  --warning-soft: #352e20;
+  --danger: #f0a1a1;
+  --danger-soft: #3a2528;
 }
 
 @theme inline {
-  --color-background: var(--background);
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-subtle: var(--subtle);
+  --color-hover: var(--hover);
+  --color-sidebar: var(--sidebar);
+  --color-line: var(--line);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-background: var(--canvas);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
   min-height: 100%;
+  background: var(--canvas);
+  color: var(--foreground);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer components {
+  .orvia-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    max-width: 100%;
+    min-height: 2.5rem;
+    padding: .6rem 1rem;
+    border: 1px solid transparent;
+    border-radius: .5rem;
+    font-size: .875rem;
+    font-weight: 500;
+    line-height: 1.4;
+    text-align: center;
+    overflow-wrap: anywhere;
+    transition: background-color 140ms, border-color 140ms, color 140ms, transform 140ms;
+  }
+  .orvia-button svg { flex-shrink: 0; }
+  .orvia-button:active:not(:disabled) { transform: translateY(1px); }
+  .orvia-button:disabled { opacity: .5; cursor: not-allowed; }
+  .orvia-button-primary { background: var(--accent); color: var(--on-accent); }
+  .orvia-button-primary:hover:not(:disabled) { background: var(--accent-hover); }
+  .orvia-button-secondary { background: var(--surface); border-color: var(--line); color: var(--foreground); }
+  .orvia-button-secondary:hover:not(:disabled), .orvia-button-ghost:hover:not(:disabled) { background: var(--hover); }
+  .orvia-button-ghost { color: var(--muted); }
+  .orvia-button-danger { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
+  .orvia-button-danger:hover:not(:disabled) { filter: brightness(.95); }
+  .orvia-card { min-width: 0; border-radius: .75rem; padding: 1.25rem; }
+  .orvia-card-primary { background: var(--surface); border: 1px solid var(--line); }
+  .orvia-card-secondary { background: var(--subtle); }
+  .orvia-card-ghost { background: transparent; border-radius: 0; }
+  .orvia-card-row { border-radius: 0; border-bottom: 1px solid var(--line); padding: 1.25rem 0; }
+  .orvia-field {
+    width: 100%; min-width: 0; min-height: 2.75rem;
+    border: 1px solid var(--line); border-radius: .5rem;
+    background: var(--surface); color: var(--foreground);
+    padding: .625rem .75rem; font-size: 1rem; line-height: 1.5;
+    transition: border-color 140ms, box-shadow 140ms;
+  }
+  .orvia-field::placeholder { color: var(--muted); opacity: 1; }
+  .orvia-field:focus { border-color: var(--accent); outline: 2px solid var(--accent); outline-offset: 2px; }
+  .orvia-field:disabled { opacity: .55; cursor: not-allowed; }
+  .orvia-field[aria-invalid="true"] { border-color: var(--danger); }
+  .orvia-textarea { min-height: 7rem; resize: vertical; }
+  .orvia-auth { display: flex; min-height: 100dvh; align-items: center; justify-content: center; padding: 3rem 1.25rem; background: var(--canvas); }
+  .orvia-auth-panel { width: 100%; max-width: 24rem; padding: 0; border: 0; background: transparent; }
+  .orvia-status { border-left: 2px solid var(--success); padding: .5rem 0 .5rem .875rem; color: var(--foreground); font-size: .875rem; line-height: 1.6; }
+  .orvia-list-row { display: block; border-bottom: 1px solid var(--line); padding: .875rem 0; transition: background-color 140ms; }
+  .orvia-list-row:hover { background: var(--subtle); }
+  .orvia-dialog { background: var(--surface); border: 1px solid var(--line); border-radius: .75rem; box-shadow: 0 24px 80px #0003; animation: orvia-enter 180ms ease-out; }
+  .orvia-page { animation: orvia-enter 180ms ease-out; }
+  .orvia-nav { display: flex; align-items: center; gap: .625rem; min-height: 2.5rem; padding: .5rem .75rem; border-radius: .375rem; font-size: .875rem; color: var(--muted); transition: color 140ms, background-color 140ms; }
+  .orvia-nav:hover { background: var(--hover); color: var(--foreground); }
+  .orvia-nav[aria-current="page"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .orvia-badge { display: inline-flex; max-width: 100%; width: fit-content; align-items: center; border-radius: .25rem; padding: .125rem .5rem; font-size: .75rem; font-weight: 500; line-height: 1.5; overflow-wrap: anywhere; background: var(--subtle); color: var(--muted); }
+  .orvia-badge-success { background: var(--success-soft); color: var(--success); }
+  .orvia-badge-warning { background: var(--warning-soft); color: var(--warning); }
+  .orvia-badge-danger { background: var(--danger-soft); color: var(--danger); }
+  .orvia-badge-info { background: var(--accent-soft); color: var(--accent); }
+}
+
+@layer components {
+  .orvia-icon-button { display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; border-radius: .5rem; color: var(--muted); transition: background-color 140ms, transform 140ms; }
+  .orvia-icon-button:hover { background: var(--hover); color: var(--foreground); }
+  .orvia-icon-button:active { transform: scale(.96); }
+  .orvia-account-trigger { display: flex; align-items: center; gap: .625rem; width: 100%; padding: .625rem; border: 1px solid var(--line); border-radius: .625rem; text-align: left; background: var(--surface); transition: background-color 140ms; }
+  .orvia-account-trigger:hover, .orvia-account-trigger[aria-expanded="true"] { background: var(--hover); }
+  .orvia-popover { position: absolute; z-index: 80; top: calc(100% + .375rem); min-width: 12rem; width: max-content; max-width: min(20rem, calc(100vw - 3rem)); padding: .375rem; border: 1px solid var(--line); border-radius: .625rem; background: var(--surface); box-shadow: 0 8px 28px #0002; animation: orvia-enter 160ms ease-out; }
+  .orvia-menu-action { display: flex; align-items: center; gap: .5rem; width: 100%; min-height: 2.5rem; padding: .5rem .75rem; border-radius: .375rem; font-size: .875rem; text-align: left; transition: background-color 140ms; }
+  .orvia-menu-action:hover { background: var(--hover); }
+  .orvia-menu-action:disabled { opacity: .5; }
+  .orvia-menu-danger { color: var(--danger); }
+  .orvia-item { transition: background-color 160ms, border-color 160ms, opacity 160ms; animation: orvia-enter 180ms ease-out; }
+  .orvia-item:hover { background: var(--subtle); }
+  .orvia-item[data-complete="true"] h2 { color: var(--muted); text-decoration: line-through; }
+  .orvia-item[data-pending="true"] { opacity: .55; }
+  .orvia-interactive { transition: background-color 160ms, box-shadow 160ms, transform 160ms; }
+  .orvia-interactive:hover { background: var(--subtle); box-shadow: inset 3px 0 var(--accent); }
+  .orvia-interactive:active { transform: translateY(1px); }
+  .orvia-feedback { color: var(--success); padding: .5rem 0; font-size: .875rem; animation: orvia-enter 200ms ease-out; }
+  .orvia-search-field { border-radius: .75rem; min-height: 3.5rem; background: var(--surface); box-shadow: 0 2px 8px #00000005; }
+  .orvia-search-field:focus { outline-offset: 3px; box-shadow: 0 0 0 5px var(--accent-soft); }
+  .fixed[data-presence="entered"] { animation: orvia-overlay-in 180ms ease-out; }
+  .fixed[data-presence="exiting"] { animation: orvia-overlay-out 160ms ease-in forwards; }
+  .orvia-status { animation: orvia-enter 180ms ease-out; }
+  [data-presence="exiting"] { pointer-events: none; }
+  [data-presence="exiting"] .orvia-dialog, .orvia-popover[data-presence="exiting"] { animation: orvia-exit 160ms ease-in forwards; }
+}
+@keyframes orvia-overlay-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes orvia-overlay-out { to { opacity: 0; } }
+@keyframes orvia-exit { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(6px) scale(.985); } }
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 3px;
+}
+@keyframes orvia-enter { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@media (min-width: 640px) { .orvia-field { font-size: .875rem; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
 
 button:not(:disabled),

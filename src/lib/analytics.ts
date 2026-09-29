@@ -1,3 +1,11 @@
+import {
+  sendAnonymousAnalyticsEvent,
+  type AnalyticsTransport,
+} from "@/lib/analytics-transport";
+import { betaAnalyticsEventNames, isAnalyticsUuid, type BetaAnalyticsEventName } from "@/lib/analytics-contract";
+export { betaAnalyticsEventNames } from "@/lib/analytics-contract";
+export type { BetaAnalyticsEventName } from "@/lib/analytics-contract";
+
 import { safeReadStorage, safeWriteStorage, STORAGE_KEYS } from "@/lib/storage";
 
 export const analyticsEventNames = [
@@ -8,6 +16,7 @@ export const analyticsEventNames = [
   "email_confirmed",
   "login_completed",
   "first_task_created",
+  "feedback_submitted",
   "quick_capture_created",
   "inbox_opened",
   "capture_processed_to_task",
@@ -24,17 +33,6 @@ export const analyticsEventNames = [
 
 export type AnalyticsEventName = (typeof analyticsEventNames)[number];
 
-export const betaAnalyticsEventNames = [
-  "landing_view",
-  "signup_started",
-  "signup_completed",
-  "email_confirmed",
-  "login_completed",
-  "first_task_created",
-] as const;
-
-export type BetaAnalyticsEventName = (typeof betaAnalyticsEventNames)[number];
-
 export type BetaAnalyticsLocale = "en" | "ua";
 
 export type BetaAnalyticsEventRecord = {
@@ -50,6 +48,8 @@ export type TrackBetaEventInput = {
   authenticated: boolean;
   locale?: BetaAnalyticsLocale;
   timestamp?: string;
+  emailConfirmedAt?: string | null;
+  userId?: string;
 };
 
 export type AnalyticsAuthState = "signed_in" | "signed_out";
@@ -105,7 +105,9 @@ export const analyticsMetadataKeys = allowedMetadataKeys;
 
 const MAX_STORED_BETA_EVENTS = 200;
 
-let betaAnalyticsSessionId: string | null = null;
+let fallbackSession: { id: string; expiresAt: number } | null = null;
+let anonymousFallbackId: string | null = null;
+const observedConfirmedAccounts = new Set<string>();
 
 const stringMetadataKeys = new Set<keyof AnalyticsMetadata>([
   "activity_count_bucket",
@@ -135,16 +137,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function createLocalIdentifier(prefix: string): string {
-  const randomId = globalThis.crypto?.randomUUID?.();
-
-  if (randomId) {
-    return `${prefix}_${randomId}`;
-  }
-
-  return `${prefix}_${Date.now().toString(36)}_${Math.random()
-    .toString(36)
-    .slice(2)}`;
+function createLocalIdentifier(): string {
+  // No fingerprint or weak random fallback. Unsupported browsers simply drop analytics.
+  return globalThis.crypto.randomUUID();
 }
 
 function isBetaAnalyticsLocale(value: unknown): value is BetaAnalyticsLocale {
@@ -162,13 +157,16 @@ function isBetaAnalyticsEventRecord(
 ): value is BetaAnalyticsEventRecord {
   return (
     isRecord(value) &&
-    typeof value.anonymousId === "string" &&
+    Object.keys(value).length === 6 &&
+    isAnalyticsUuid(value.anonymousId) &&
     typeof value.authenticated === "boolean" &&
     typeof value.eventName === "string" &&
     isBetaAnalyticsEventName(value.eventName) &&
     isBetaAnalyticsLocale(value.locale) &&
-    typeof value.sessionId === "string" &&
-    typeof value.timestamp === "string"
+    isAnalyticsUuid(value.sessionId) &&
+    typeof value.timestamp === "string" &&
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value.timestamp) &&
+    Number.isFinite(Date.parse(value.timestamp))
   );
 }
 
@@ -184,22 +182,36 @@ function getOrCreateAnonymousId(): string {
     null,
   );
 
-  if (typeof existingId === "string" && existingId.trim().length > 0) {
+  if (isAnalyticsUuid(existingId)) {
+    anonymousFallbackId = null;
     return existingId;
   }
 
-  const nextId = createLocalIdentifier("anon");
+  const nextId = anonymousFallbackId ?? createLocalIdentifier();
   safeWriteStorage(STORAGE_KEYS.betaAnalyticsAnonymousId, nextId);
+  anonymousFallbackId = safeReadStorage(STORAGE_KEYS.betaAnalyticsAnonymousId, null) === nextId
+    ? null
+    : nextId;
 
   return nextId;
 }
 
 function getOrCreateSessionId(): string {
-  if (!betaAnalyticsSessionId) {
-    betaAnalyticsSessionId = createLocalIdentifier("session");
-  }
-
-  return betaAnalyticsSessionId;
+  const saved = safeReadStorage<unknown>(STORAGE_KEYS.betaAnalyticsSession, null);
+  const now = Date.now();
+  const candidate = saved ?? fallbackSession;
+  const valid = isRecord(candidate) && isAnalyticsUuid(candidate.id) &&
+    typeof candidate.expiresAt === "number" && candidate.expiresAt > now &&
+    candidate.expiresAt <= now + 30 * 60_000;
+  const next = {
+    id: valid ? candidate.id as string : createLocalIdentifier(),
+    expiresAt: now + 30 * 60_000,
+  };
+  safeWriteStorage(STORAGE_KEYS.betaAnalyticsSession, next);
+  fallbackSession = safeReadStorage(STORAGE_KEYS.betaAnalyticsSession, null) === null
+    ? next
+    : null;
+  return next.id;
 }
 
 function readBetaAnalyticsEvents(): BetaAnalyticsEventRecord[] {
@@ -221,8 +233,9 @@ function writeBetaAnalyticsEvents(events: BetaAnalyticsEventRecord[]): void {
 }
 
 function hasTrackedBetaEvent(eventName: BetaAnalyticsEventName): boolean {
+  const sessionId = getOrCreateSessionId();
   return readBetaAnalyticsEvents().some(
-    (event) => event.eventName === eventName,
+    (event) => event.eventName === eventName && event.sessionId === sessionId,
   );
 }
 
@@ -284,7 +297,10 @@ export function getStoredBetaAnalyticsEvents(): BetaAnalyticsEventRecord[] {
 }
 
 export function clearStoredBetaAnalyticsEventsForTests(): void {
-  betaAnalyticsSessionId = null;
+  fallbackSession = null;
+  anonymousFallbackId = null;
+  observedConfirmedAccounts.clear();
+  safeWriteStorage(STORAGE_KEYS.betaAnalyticsSession, null);
   safeWriteStorage(STORAGE_KEYS.betaAnalyticsEvents, []);
   safeWriteStorage(STORAGE_KEYS.betaAnalyticsAnonymousId, "");
 }
@@ -292,8 +308,13 @@ export function clearStoredBetaAnalyticsEventsForTests(): void {
 export function trackBetaEvent(
   eventName: BetaAnalyticsEventName,
   input: TrackBetaEventInput,
+  transport?: AnalyticsTransport,
 ): void {
   try {
+    if (typeof window === "undefined" || !isBetaAnalyticsEventName(eventName)) return;
+    // Authoritative success events are emitted by database triggers, never clients.
+    if (eventName === "first_task_created" || eventName === "feedback_submitted") return;
+    if ((eventName === "login_completed" || eventName === "email_confirmed") && !transport) return;
     const event: BetaAnalyticsEventRecord = {
       anonymousId: getOrCreateAnonymousId(),
       authenticated: input.authenticated,
@@ -303,7 +324,16 @@ export function trackBetaEvent(
       timestamp: input.timestamp ?? new Date().toISOString(),
     };
 
+    if (!isBetaAnalyticsEventRecord(event)) return;
     writeBetaAnalyticsEvents([...readBetaAnalyticsEvents(), event]);
+    // No old-buffer uploads, retries or credentials in the event object.
+    void (transport ?? sendAnonymousAnalyticsEvent)({
+      id: createLocalIdentifier(),
+      event_name: eventName,
+      anonymous_id: event.anonymousId,
+      session_id: event.sessionId,
+      locale: event.locale,
+    }).catch(() => { /* Telemetry must not interrupt the product. */ });
   } catch {
     // Analytics must never interrupt product behavior.
   }
@@ -312,42 +342,30 @@ export function trackBetaEvent(
 export function trackBetaEventOnce(
   eventName: BetaAnalyticsEventName,
   input: TrackBetaEventInput,
+  transport?: AnalyticsTransport,
 ): void {
   try {
     if (hasTrackedBetaEvent(eventName)) {
       return;
     }
 
-    trackBetaEvent(eventName, input);
+    trackBetaEvent(eventName, input, transport);
   } catch {
     // Analytics must never interrupt product behavior.
   }
 }
 
-export function trackFirstTaskCreated(input: TrackBetaEventInput): void {
-  trackBetaEventOnce("first_task_created", input);
-}
-
-export function trackEmailConfirmedFromUrl(
+/** Confirmation is observed from an authenticated Supabase user, never URL text. */
+export function trackEmailConfirmed(
   input: TrackBetaEventInput,
+  transport: AnalyticsTransport | undefined,
 ): void {
-  try {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const searchParams = new URLSearchParams(window.location.search);
-    const hashParams = new URLSearchParams(
-      window.location.hash.startsWith("#")
-        ? window.location.hash.slice(1)
-        : window.location.hash,
-    );
-    const type = searchParams.get("type") ?? hashParams.get("type");
-
-    if (type === "signup") {
-      trackBetaEventOnce("email_confirmed", input);
-    }
-  } catch {
-    // Analytics must never interrupt product behavior.
+  if (!input.authenticated || !transport || !input.emailConfirmedAt) return;
+  if (input.userId && observedConfirmedAccounts.has(input.userId)) return;
+  if (input.userId) {
+    if (observedConfirmedAccounts.size >= 32) observedConfirmedAccounts.clear();
+    observedConfirmedAccounts.add(input.userId);
   }
+  // The database deduplicates per account across sessions and devices.
+  trackBetaEvent("email_confirmed", input, transport);
 }

@@ -21,7 +21,7 @@ import {
   createTimelineEventsFromActivities,
   type TimelineEvent,
 } from "@/lib/timeline";
-import type { TranslationKey } from "@/lib/i18n";
+import { translations, type TranslationKey } from "@/lib/i18n";
 import type { Task } from "@/types";
 
 export type UnifiedSearchResultType = "task" | "note" | "inbox" | "timeline";
@@ -119,12 +119,13 @@ function timelineEventDescription(event: TimelineEvent): string {
 function taskToSearchResult(
   task: Task,
   source: PrimaryTaskSource | undefined,
+  t: (key: TranslationKey) => string,
 ): UnifiedSearchResult {
   const description = compactText([
     task.description,
-    task.status,
-    task.priority,
-    task.dueDate ? `Due ${task.dueDate}` : undefined,
+    t(task.status === "in-progress" ? "status.inProgress" : task.status === "done" ? "status.done" : "status.todo"),
+    t(`priority.${task.priority}`),
+    task.dueDate,
   ]);
 
   return {
@@ -251,17 +252,19 @@ export async function loadUnifiedSearchDataset(
 
 export function createUnifiedSearchResults(
   dataset: UnifiedSearchDataset,
+  t: (key: TranslationKey) => string = (key) => translations.en[key],
 ): UnifiedSearchResult[] {
   return sortResultsNewestFirst([
     ...dataset.tasks.map((task) =>
-      taskToSearchResult(task, dataset.taskSources[task.id]),
+      taskToSearchResult(task, dataset.taskSources[task.id], t),
     ),
     ...dataset.notes.map((note) =>
       noteToSearchResult(note, dataset.noteSources[note.id]),
     ),
-    ...dataset.inboxCaptures.map((capture) =>
-      inboxCaptureToSearchResult(capture, dataset.captureSources[capture.id]),
-    ),
+    ...dataset.inboxCaptures.map((capture) => ({
+      ...inboxCaptureToSearchResult(capture, dataset.captureSources[capture.id]),
+      description: t("search.inboxCapture"),
+    })),
     ...dataset.timelineEvents.map(timelineEventToSearchResult),
   ]);
 }

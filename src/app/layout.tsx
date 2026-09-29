@@ -57,7 +57,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="min-h-full flex flex-col bg-zinc-50 text-zinc-950 dark:bg-black dark:text-white">
+      <body className="min-h-full flex flex-col bg-subtle text-foreground">
         <ThemeProvider>
           <I18nProvider>
             <AuthProvider>{children}</AuthProvider>

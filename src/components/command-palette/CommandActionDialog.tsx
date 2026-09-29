@@ -1,6 +1,11 @@
 "use client";
+import { Input, Textarea } from "@/components/ui/Field";
 
-import type { FormEvent, RefObject } from "react";
+
+import { usePresence } from "@/components/ui/usePresence";
+import { useDialogFocus } from "@/components/ui/useDialogFocus";
+
+import { useEffect, useState, type FormEvent, type RefObject } from "react";
 import { X } from "lucide-react";
 
 import { useI18n } from "@/components/i18n/I18nProvider";
@@ -38,12 +43,17 @@ export function CommandActionDialog({
   taskTitle,
 }: CommandActionDialogProps) {
   const { t } = useI18n();
+  const dialogRef = useDialogFocus(Boolean(action));
 
-  if (!action) {
+  const { present, closing } = usePresence(Boolean(action));
+  const [lastType, setLastType] = useState(action?.type);
+  useEffect(() => { if (action) setLastType(action.type); }, [action]);
+
+  if (!present) {
     return null;
   }
 
-  const isTask = action.type === "create-task";
+  const isTask = (action?.type ?? lastType) === "create-task";
   const title = isTask ? t("command.dialogCreateTask") : t("command.dialogCreateNote");
   const description = isTask
     ? t("command.dialogTaskDescription")
@@ -51,7 +61,9 @@ export function CommandActionDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-end justify-center bg-zinc-950/60 p-4 backdrop-blur-sm dark:bg-black/70 sm:items-center"
+      data-presence={closing ? "exiting" : "entered"}
+      inert={closing}
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-zinc-950/60 p-4 dark:bg-black/70 sm:items-center"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
@@ -62,24 +74,26 @@ export function CommandActionDialog({
       <div
         aria-labelledby="command-action-title"
         aria-modal="true"
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl shadow-zinc-950/15 dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-black/40"
+        className="orvia-dialog max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-line bg-surface p-6 shadow-2xl shadow-zinc-950/15 dark:shadow-black/40"
         role="dialog"
+        ref={dialogRef}
+        tabIndex={-1}
       >
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2
               id="command-action-title"
-              className="text-lg font-semibold text-zinc-950 dark:text-white"
+              className="text-lg font-semibold text-foreground"
             >
               {title}
             </h2>
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-1 text-sm text-muted">
               {description}
             </p>
           </div>
           <Button
             aria-label={t("common.close")}
-            className="h-8 w-8 p-0 text-zinc-700 hover:text-zinc-950 dark:text-zinc-200 dark:hover:text-white"
+            className="h-8 w-8 p-0 text-zinc-700 hover:text-foreground dark:hover:text-white"
             onClick={onClose}
             type="button"
             variant="ghost"
@@ -93,17 +107,17 @@ export function CommandActionDialog({
             <div>
               <label
                 htmlFor="command-task-title"
-                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                className="block text-sm font-medium text-muted"
               >
                 {t("common.title")} <span className="text-red-400">*</span>
               </label>
-              <input
+              <Input
                 id="command-task-title"
                 ref={firstFieldRef}
                 required
                 value={taskTitle}
                 onChange={(event) => onTaskTitleChange(event.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                className="mt-1.5 w-full"
                 placeholder={t("tasks.titlePlaceholder")}
               />
             </div>
@@ -112,28 +126,28 @@ export function CommandActionDialog({
               <div>
                 <label
                   htmlFor="command-note-title"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-muted"
                 >
                   {t("common.title")} <span className="text-red-400">*</span>
                 </label>
-                <input
+                <Input
                   id="command-note-title"
                   ref={firstFieldRef}
                   required
                   value={noteTitle}
                   onChange={(event) => onNoteTitleChange(event.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                  className="mt-1.5 w-full"
                   placeholder={t("notes.titlePlaceholder")}
                 />
               </div>
               <div>
                 <label
                   htmlFor="command-note-content"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-muted"
                 >
                   {t("common.content")} <span className="text-red-400">*</span>
                 </label>
-                <textarea
+                <Textarea
                   id="command-note-content"
                   required
                   rows={5}
@@ -141,14 +155,14 @@ export function CommandActionDialog({
                   onChange={(event) =>
                     onNoteContentChange(event.target.value)
                   }
-                  className="mt-1.5 w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                  className="mt-1.5 w-full"
                   placeholder={t("notes.contentPlaceholder")}
                 />
               </div>
             </>
           )}
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:flex-wrap sm:justify-end">
             <Button variant="secondary" onClick={onClose}>
               {t("common.cancel")}
             </Button>

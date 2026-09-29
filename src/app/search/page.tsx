@@ -1,13 +1,14 @@
 "use client";
+import { Input } from "@/components/ui/Field";
+
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, ArrowUpRight, CheckSquare, FileText, Inbox, Clock3 } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { useAuthSession } from "@/components/auth/useAuthSession";
 import { useI18n } from "@/components/i18n/I18nProvider";
-import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
@@ -75,28 +76,33 @@ function SearchResultCard({
   result: UnifiedSearchResult;
   t: (key: TranslationKey) => string;
 }) {
+  const Icon = { task: CheckSquare, note: FileText, inbox: Inbox, timeline: Clock3 }[result.type];
   const content = (
     <Card
-      variant={result.type === "timeline" ? "secondary" : "primary"}
-      className="p-4 transition hover:bg-zinc-50 hover:ring-1 hover:ring-zinc-300 dark:hover:bg-zinc-900/70 dark:hover:ring-zinc-700 sm:p-5"
+      variant="row"
+      className={`orvia-item px-3 py-4 ${result.href ? "orvia-interactive" : ""}`}
     >
-      <div className="flex min-w-0 flex-col gap-3">
+      <div className="flex min-w-0 items-start gap-3">
+        <span className="mt-1 rounded-lg bg-subtle p-2 text-muted"><Icon className="h-4 w-4" aria-hidden /></span>
+        <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge>{t(sourceLabelKey(result.source))}</Badge>
-          <span className="text-xs font-medium text-zinc-500 dark:text-zinc-500">
+          <span className="text-xs font-medium text-muted">{t(sourceLabelKey(result.source))}</span>
+          <span className="text-xs font-medium text-muted">
             {result.createdAt ? result.createdAt.slice(0, 10) : t("search.local")}
           </span>
         </div>
         <div className="min-w-0">
-          <h3 className="truncate text-[15px] font-semibold text-zinc-950 dark:text-white">
+          <h3 className="[overflow-wrap:anywhere] text-[15px] font-semibold text-foreground">
             {result.title}
           </h3>
           {result.description ? (
-            <p className="mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+            <p className="mt-1 [overflow-wrap:anywhere] text-sm leading-6 text-muted">
               {result.description}
             </p>
           ) : null}
         </div>
+        </div>
+        {result.href && <ArrowUpRight className="mt-2 h-4 w-4 shrink-0 text-muted" aria-hidden />}
       </div>
     </Card>
   );
@@ -106,7 +112,7 @@ function SearchResultCard({
   }
 
   return (
-    <Link href={result.href} className="block cursor-pointer">
+    <Link href={result.href} className="block rounded-lg focus-visible:outline-offset-2">
       {content}
     </Link>
   );
@@ -122,18 +128,19 @@ function SearchGuidance({
   return (
     <div className="space-y-4">
       <EmptyState
+        icon={Search}
         title={t("search.guidanceTitle")}
         description={t("search.guidanceDescription")}
       />
 
       {counts ? (
-        <div className="grid gap-3 sm:grid-cols-4">
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
           {UNIFIED_SEARCH_GROUPS.map((group) => (
-            <Card key={group.key} variant="secondary" className="p-4">
-              <p className="text-2xl font-semibold text-zinc-950 dark:text-white">
+            <Card key={group.key} variant="ghost" className="flex items-baseline gap-2 p-0">
+              <p className="text-base font-semibold text-foreground">
                 {counts[group.key]}
               </p>
-              <p className="mt-1 text-sm font-medium text-zinc-500 dark:text-zinc-500">
+              <p className="mt-1 text-sm font-medium text-muted">
                 {t(groupLabelKey(group.key))}
               </p>
             </Card>
@@ -171,7 +178,7 @@ export default function SearchPage() {
           return;
         }
 
-        setAllResults(createUnifiedSearchResults(dataset));
+        setAllResults(createUnifiedSearchResults(dataset, t));
         setCounts(getUnifiedSearchCounts(dataset));
       } finally {
         if (active) {
@@ -208,7 +215,7 @@ export default function SearchPage() {
 
           <Card
             variant="ghost"
-            className="mt-5 p-3 text-sm text-zinc-600 dark:text-zinc-400"
+            className="mt-5 p-3 text-sm text-muted"
           >
             {accessToken
               ? t("search.accountMessage")
@@ -220,23 +227,26 @@ export default function SearchPage() {
               className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-violet-600 dark:text-violet-300"
               aria-hidden
             />
-            <input
+            <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("search.placeholder")}
-              className="w-full rounded-2xl bg-white/90 py-4 pl-12 pr-4 text-base text-zinc-950 shadow-sm shadow-zinc-950/[0.035] outline-none ring-1 ring-zinc-200/80 transition placeholder:text-zinc-500 focus:ring-2 focus:ring-violet-300 dark:bg-zinc-900/70 dark:text-white dark:shadow-none dark:ring-zinc-800 dark:focus:ring-violet-500/40"
+              aria-label={t("common.search")}
+              className="orvia-search-field w-full pl-12"
             />
           </div>
 
           <div className="mt-7">
             {!loaded ? (
-              <Card className="text-sm text-zinc-500 dark:text-zinc-400">
+              <Card variant="ghost" role="status" className="orvia-item flex items-center gap-3 text-sm text-muted">
+                <Search className="h-4 w-4 animate-pulse" aria-hidden />
                 {t("search.preparing")}
               </Card>
             ) : !hasQuery ? (
               <SearchGuidance counts={counts} t={t} />
             ) : !hasResults ? (
               <EmptyState
+                icon={Search}
                 title={t("search.noResults")}
                 description={t("search.noResultsDescription")}
               />
@@ -253,11 +263,7 @@ export default function SearchPage() {
                     <PageSection key={group.key} className="mt-0">
                       <PageSectionHeader
                         title={t(groupLabelKey(group.key))}
-                        description={`${groupItems.length} ${
-                          groupItems.length === 1
-                            ? t("common.result")
-                            : t("common.results")
-                        }`}
+                        description={t("common.resultCount").replace("{count}", String(groupItems.length))}
                       />
                       <div className="space-y-2.5">
                         {groupItems.map((result) => (

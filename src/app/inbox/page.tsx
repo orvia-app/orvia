@@ -1,4 +1,7 @@
 "use client";
+import { ActionPopover } from "@/components/ui/ActionPopover";
+import { Textarea } from "@/components/ui/Field";
+
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -289,18 +292,24 @@ export default function InboxPage() {
     };
   }, [accessToken, authLoading, ownerId]);
 
+  useEffect(() => {
+    if (!queueStatus) return;
+    const timer = window.setTimeout(() => setQueueStatus(null), 6000);
+    return () => window.clearTimeout(timer);
+  }, [queueStatus]);
+
   return (
     <AppShell>
       <Page>
         <PageHeader
           icon={Inbox}
           title={t("inbox.title")}
-          description={t("inbox.description")}
+          description={t("inbox.workflow")}
         />
 
         <Card
           variant="ghost"
-          className="mt-4 text-sm leading-6 text-zinc-600 dark:text-zinc-400"
+          className="mt-3 px-0 py-1 text-xs leading-5 text-muted"
         >
           {inboxBoundaryMessage}
           {signedIn
@@ -327,7 +336,7 @@ export default function InboxPage() {
           {queueStatus ? (
             <div
               role="status"
-              className="mb-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 ring-1 ring-emerald-200/70 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20"
+              className="orvia-feedback mb-3"
             >
               {queueStatus}
             </div>
@@ -354,30 +363,17 @@ export default function InboxPage() {
                 const disabled = processingCaptureAction !== null;
 
                 return (
-                  <Card key={capture.id}>
+                  <Card variant="row" key={capture.id} className="orvia-item px-3 py-4" data-pending={processingTask || processingNote || processingArchive}>
                     <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                       <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">{t(inboxTypeLabelKeys[preview.detectedType])}</span>
-                          <Badge>{captureSourceLabel(source, t)}</Badge>
-                          <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                            {capture.createdAt.slice(0, 10)}
-                          </span>
-                        </div>
-
-                        <h3 className="mt-2 break-words text-sm font-semibold text-zinc-950 dark:text-white">
-                          {preview.suggestedTitle}
-                        </h3>
-                        <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                          {capture.text}
-                        </p>
-
-                        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
-                          {t(inboxWorkspaceLabelKeys[getWorkspaceKey(preview.suggestedWorkspace)])}
-                        </p>
+                        <details className="group">
+                          <summary className="cursor-pointer text-base font-semibold text-foreground marker:text-muted">{preview.suggestedTitle}</summary>
+                          {capture.text !== preview.suggestedTitle && <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-muted">{capture.text}</p>}
+                          <p className="mt-2 text-xs text-muted">{t(inboxTypeLabelKeys[preview.detectedType])} · {captureSourceLabel(source, t)} · {capture.createdAt.slice(0, 10)} · {t(inboxWorkspaceLabelKeys[getWorkspaceKey(preview.suggestedWorkspace)])}</p>
+                        </details>
                       </div>
 
-                      <div className="flex flex-wrap gap-2 xl:shrink-0 xl:flex-col">
+                      <div className="flex flex-wrap items-center gap-2 xl:shrink-0">
                         <Button
                           type="button"
                           variant="secondary"
@@ -416,28 +412,9 @@ export default function InboxPage() {
                           )}
                           {t("inbox.convertNote")}
                         </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="gap-2"
-                          disabled={disabled}
-                          onClick={() =>
-                            void handleProcessQueuedCapture(
-                              capture,
-                              "archive",
-                            )
-                          }
-                        >
-                          {processingArchive ? (
-                            <Loader2
-                              className="h-4 w-4 animate-spin"
-                              aria-hidden
-                            />
-                          ) : (
-                            <Archive className="h-4 w-4" aria-hidden />
-                          )}
-                          {t("inbox.archive")}
-                        </Button>
+                        <ActionPopover label={`${t("common.actions")}: ${preview.suggestedTitle}`}>
+                          {(close) => <button type="button" className="orvia-menu-action" disabled={disabled} onClick={() => { close(); void handleProcessQueuedCapture(capture, "archive"); }}><Archive className="h-4 w-4" aria-hidden />{t("inbox.archive")}</button>}
+                        </ActionPopover>
                       </div>
                     </div>
                   </Card>
@@ -447,31 +424,18 @@ export default function InboxPage() {
           )}
         </PageSection>
 
-        <Card className="mt-7">
-          <div className="mb-4">
-            <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200/70 dark:bg-zinc-900 dark:text-zinc-300 dark:ring-zinc-800">
-                <Inbox className="h-5 w-5" aria-hidden />
-              </span>
-              <div>
-                <h2 className="text-base font-semibold text-zinc-950 dark:text-white">
-                  {t("inbox.addTitle")}
-                </h2>
-                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  {t("inbox.addDescription")}
-                </p>
-              </div>
-            </div>
-          </div>
-
+        <details className="mt-7 border-t border-line py-4">
+          <summary className="cursor-pointer text-sm font-medium text-muted marker:text-accent">{t("inbox.addTitle")}</summary>
+          <div className="pt-4">
+          <p className="mb-3 text-sm text-muted">{t("inbox.addDescription")}</p>
           <div>
-            <textarea
+            <Textarea
               aria-label={t("inbox.addTitle")}
               value={input}
               onChange={(event) => setInput(event.target.value)}
               placeholder={t("inbox.example1")}
               rows={4}
-              className="min-h-32 w-full resize-y rounded-2xl bg-zinc-50 p-4 text-base leading-7 text-zinc-950 outline-none ring-1 ring-zinc-200/80 transition placeholder:text-zinc-400 focus:bg-white focus:ring-2 focus:ring-zinc-300 dark:bg-black/70 dark:text-white dark:ring-zinc-800 dark:placeholder:text-zinc-500 dark:focus:ring-zinc-700"
+              className="min-h-32 w-full"
             />
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -480,7 +444,7 @@ export default function InboxPage() {
                   key={line}
                   type="button"
                   onClick={() => setInput(line)}
-                  className="rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-600 ring-1 ring-zinc-200/70 transition hover:bg-white hover:text-zinc-950 hover:ring-zinc-300 dark:bg-zinc-900/45 dark:text-zinc-400 dark:ring-zinc-800 dark:hover:bg-zinc-900 dark:hover:text-white dark:hover:ring-zinc-700"
+                  className="rounded-full bg-subtle px-3 py-1.5 text-xs font-medium text-muted ring-1 ring-line transition hover:bg-surface hover:text-zinc-950 hover:ring-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white dark:hover:ring-zinc-700"
                 >
                   {line}
                 </button>
@@ -488,7 +452,7 @@ export default function InboxPage() {
             </div>
 
             <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="max-w-xl text-sm leading-6 text-zinc-500 dark:text-zinc-400">
+              <p className="max-w-xl text-sm leading-6 text-muted">
                 {t("inbox.previewNote")}
               </p>
 
@@ -512,47 +476,48 @@ export default function InboxPage() {
               </Button>
             </div>
           </div>
-        </Card>
+          </div>
+        </details>
 
         {result ? (
           <Card className="mt-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-zinc-950 dark:text-white">
+                <h2 className="text-lg font-semibold text-foreground">
                   {t("inbox.capturePreview")}
                 </h2>
-                <p className="mt-1 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
+                <p className="mt-1 text-sm leading-6 text-muted">
                   {t("inbox.capturePreviewDescription")}
                 </p>
               </div>
 
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">{t("inbox.ruleBased")}</p>
+              <p className="text-xs text-muted">{t("inbox.ruleBased")}</p>
             </div>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <div className="min-w-0 rounded-xl bg-zinc-100/60 p-4 dark:bg-zinc-900/40">
-                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              <div className="min-w-0 rounded-xl bg-subtle p-4">
+                <p className="text-xs font-medium text-muted">
                   {t("common.title")}
                 </p>
-                <p className="mt-2 break-words text-sm font-medium text-zinc-950 dark:text-white">
+                <p className="mt-2 break-words text-sm font-medium text-foreground">
                   {result.suggestedTitle}
                 </p>
               </div>
 
-              <div className="min-w-0 rounded-xl bg-zinc-100/60 p-4 dark:bg-zinc-900/40">
-                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              <div className="min-w-0 rounded-xl bg-subtle p-4">
+                <p className="text-xs font-medium text-muted">
                   {t("inbox.detectedType")}
                 </p>
-                <p className="mt-2 break-words text-sm font-medium text-zinc-950 dark:text-white">
+                <p className="mt-2 break-words text-sm font-medium text-foreground">
                   {t(inboxTypeLabelKeys[result.detectedType])}
                 </p>
               </div>
 
-              <div className="min-w-0 rounded-xl bg-zinc-100/60 p-4 dark:bg-zinc-900/40">
-                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              <div className="min-w-0 rounded-xl bg-subtle p-4">
+                <p className="text-xs font-medium text-muted">
                   {t("inbox.suggestedWorkspace")}
                 </p>
-                <p className="mt-2 break-words text-sm font-medium text-zinc-950 dark:text-white">
+                <p className="mt-2 break-words text-sm font-medium text-foreground">
                   {t(inboxWorkspaceLabelKeys[getWorkspaceKey(result.suggestedWorkspace)])}
                 </p>
               </div>

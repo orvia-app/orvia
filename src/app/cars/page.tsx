@@ -1,8 +1,13 @@
 "use client";
+import { Input, Textarea } from "@/components/ui/Field";
+
+
+import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 import { useEffect, useState, type FormEvent } from "react";
 import { Car, X } from "lucide-react";
 
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { AppShell } from "@/components/AppShell";
 import {
   ensureCarsSeeded,
@@ -11,11 +16,11 @@ import {
 } from "@/lib/cars";
 
 const SERVICE_REMINDERS = [
-  "Oil change",
-  "Insurance",
-  "Tires",
-  "Alignment",
-  "Brakes",
+  "cars.oil",
+  "cars.insurance",
+  "cars.tires",
+  "cars.alignment",
+  "cars.brakes",
 ] as const;
 
 const emptyForm = {
@@ -26,10 +31,12 @@ const emptyForm = {
 };
 
 export default function CarsPage() {
+  const { t } = useI18n();
   const [cars, setCars] = useState<CarRecord[]>([]);
   const [storageReady, setStorageReady] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const dialogRef = useDialogFocus(modalOpen);
 
   useEffect(() => {
     setCars(ensureCarsSeeded());
@@ -40,6 +47,15 @@ export default function CarsPage() {
     if (!storageReady) return;
     saveCars(cars);
   }, [cars, storageReady]);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { setModalOpen(false); setForm(emptyForm); }
+    };
+    window.addEventListener("keydown", onEscape);
+    return () => window.removeEventListener("keydown", onEscape);
+  }, [modalOpen]);
 
   function openModal() {
     setModalOpen(true);
@@ -55,7 +71,7 @@ export default function CarsPage() {
     const name = form.name.trim();
     if (!name) return;
     const newCar: CarRecord = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       name,
       owner: form.owner.trim(),
       mileage: form.mileage.trim(),
@@ -71,65 +87,66 @@ export default function CarsPage() {
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-zinc-300 bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
-                <Car className="h-6 w-6 text-zinc-800 dark:text-zinc-200" aria-hidden />
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-line bg-zinc-200 dark:bg-zinc-900">
+                <Car className="h-6 w-6 text-foreground" aria-hidden />
               </div>
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
-                  Cars
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                  {t("nav.cars")}
                 </h1>
-                <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 sm:text-base">
-                  Track service, expenses, reminders, and maintenance.
+                <p className="mt-2 [overflow-wrap:anywhere] text-sm text-muted sm:text-base">
+                  {t("cars.description")}
                 </p>
               </div>
             </div>
             <button
               type="button"
               onClick={openModal}
-              className="shrink-0 rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              className="shrink-0 rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
             >
-              + Add Car
+              {t("cars.add")}
             </button>
           </div>
 
+          <p className="mt-4 text-sm text-muted">{t("labs.localNotice")}</p>
           <div className="mt-10 grid gap-6 lg:grid-cols-3">
             <div className="space-y-4 lg:col-span-2">
               {cars.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-100/80 px-6 py-14 text-center text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950/50 dark:text-zinc-500">
-                  No vehicles yet.
+                <div className="rounded-xl border border-dashed border-line bg-subtle px-6 py-14 text-center text-sm text-muted">
+                  {t("cars.empty")}
                 </div>
               ) : (
                 cars.map((car) => (
                   <div
                     key={car.id}
-                    className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950 sm:p-6"
+                    className="rounded-xl border border-line bg-surface p-5 sm:p-6"
                   >
-                    <h2 className="text-lg font-semibold text-zinc-950 dark:text-white sm:text-xl">
+                    <h2 className="min-w-0 [overflow-wrap:anywhere] text-lg font-semibold text-foreground sm:text-xl">
                       {car.name}
                     </h2>
                     <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                       <div>
-                        <dt className="text-xs uppercase tracking-wide text-zinc-600 dark:text-zinc-500">
-                          Owner
+                        <dt className="text-xs uppercase tracking-wide text-muted">
+                          {t("cars.owner")}
                         </dt>
-                        <dd className="mt-1 text-zinc-800 dark:text-zinc-200">
+                        <dd className="mt-1 [overflow-wrap:anywhere] text-foreground">
                           {car.owner || "—"}
                         </dd>
                       </div>
                       <div>
-                        <dt className="text-xs uppercase tracking-wide text-zinc-600 dark:text-zinc-500">
-                          Mileage
+                        <dt className="text-xs uppercase tracking-wide text-muted">
+                          {t("cars.mileage")}
                         </dt>
-                        <dd className="mt-1 text-zinc-800 dark:text-zinc-200">
+                        <dd className="mt-1 [overflow-wrap:anywhere] text-foreground">
                           {car.mileage || "—"}
                         </dd>
                       </div>
                     </dl>
                     <div className="mt-4">
-                      <p className="text-xs uppercase tracking-wide text-zinc-600 dark:text-zinc-500">
-                        Notes
+                      <p className="text-xs uppercase tracking-wide text-muted">
+                        {t("common.notes")}
                       </p>
-                      <p className="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                      <p className="mt-1 [overflow-wrap:anywhere] text-sm leading-relaxed text-muted">
                         {car.notes || "—"}
                       </p>
                     </div>
@@ -138,18 +155,18 @@ export default function CarsPage() {
               )}
             </div>
 
-            <section className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950/80">
-              <h2 className="text-lg font-semibold text-zinc-950 dark:text-white">
-                Service reminders
+            <section className="rounded-xl border border-line bg-surface p-5">
+              <h2 className="min-w-0 [overflow-wrap:anywhere] text-lg font-semibold text-foreground">
+                {t("cars.reminders")}
               </h2>
-              <ul className="mt-4 space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
+              <ul className="mt-4 space-y-2 text-sm text-muted">
                 {SERVICE_REMINDERS.map((item) => (
                   <li
-                    key={item}
-                    className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800/80 dark:bg-black/30"
+                    key={t(item)}
+                    className="flex items-center gap-2 rounded-lg border border-line bg-subtle px-3 py-2"
                   >
                     <span className="h-1.5 w-1.5 rounded-full bg-violet-600 dark:bg-violet-400" />
-                    {item}
+                    {t(item)}
                   </li>
                 ))}
               </ul>
@@ -168,23 +185,25 @@ export default function CarsPage() {
         >
           <div
             role="dialog"
+        ref={dialogRef}
+        tabIndex={-1}
             aria-modal="true"
             aria-labelledby="new-car-title"
-            className="max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-zinc-800 dark:bg-zinc-950 sm:max-h-[90vh] sm:p-6"
+            className="orvia-dialog max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-xl border border-line bg-surface p-5 shadow-xl sm:max-h-[90vh] sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
               <h2
                 id="new-car-title"
-                className="text-lg font-semibold text-zinc-950 dark:text-white"
+                className="min-w-0 [overflow-wrap:anywhere] text-lg font-semibold text-foreground"
               >
-                Add car
+                {t("cars.add")}
               </h2>
               <button
                 type="button"
-                aria-label="Close"
+                aria-label={t("common.close")}
                 onClick={closeModal}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white dark:focus-visible:ring-zinc-600"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 dark:hover:bg-zinc-800 dark:hover:text-white dark:focus-visible:ring-zinc-600"
               >
                 <X className="h-4 w-4 shrink-0" aria-hidden strokeWidth={2.25} />
               </button>
@@ -193,82 +212,82 @@ export default function CarsPage() {
               <div>
                 <label
                   htmlFor="car-name"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-muted"
                 >
-                  Name <span className="text-red-400">*</span>
+                  {t("cars.name")} <span className="text-red-400">*</span>
                 </label>
-                <input
+                <Input
                   id="car-name"
                   required
                   value={form.name}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, name: e.target.value }))
                   }
-                  className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                  className="mt-1.5 w-full"
                 />
               </div>
               <div>
                 <label
                   htmlFor="car-owner"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-muted"
                 >
-                  Owner
+                  {t("cars.owner")}
                 </label>
-                <input
+                <Input
                   id="car-owner"
                   value={form.owner}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, owner: e.target.value }))
                   }
-                  className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                  className="mt-1.5 w-full"
                 />
               </div>
               <div>
                 <label
                   htmlFor="car-mileage"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-muted"
                 >
-                  Mileage
+                  {t("cars.mileage")}
                 </label>
-                <input
+                <Input
                   id="car-mileage"
                   value={form.mileage}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, mileage: e.target.value }))
                   }
-                  className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                  className="mt-1.5 w-full"
                 />
               </div>
               <div>
                 <label
                   htmlFor="car-notes"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block text-sm font-medium text-muted"
                 >
-                  Notes
+                  {t("common.notes")}
                 </label>
-                <textarea
+                <Textarea
                   id="car-notes"
                   rows={3}
                   value={form.notes}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, notes: e.target.value }))
                   }
-                  className="mt-1.5 w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+                  className="mt-1.5 w-full"
                 />
               </div>
               <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="rounded-xl border border-zinc-300 bg-transparent px-4 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                  className="rounded-xl border border-line bg-transparent px-4 py-2.5 text-sm font-medium text-muted transition hover:bg-zinc-100 dark:hover:bg-zinc-900"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button
                   type="submit"
                   className="rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
                 >
-                  Save
+                  {t("common.save")}
                 </button>
               </div>
             </form>

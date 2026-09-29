@@ -1,16 +1,21 @@
 "use client";
+import { Input } from "@/components/ui/Field";
+
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { LocaleSwitcher } from "@/components/i18n/LocaleSwitcher";
 import { BrandMark } from "@/components/BrandMark";
 import { useAuthSession } from "@/components/auth/useAuthSession";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { createAuthenticatedAnalyticsTransport } from "@/lib/analytics-transport";
 import { trackBetaEvent } from "@/lib/analytics";
 import { getSupabaseBrowserAuthClient } from "@/lib/supabase/auth";
+import { consumeSignupNotice, type SignupNotice } from "@/lib/signup-handoff";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,6 +25,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [signupNotice, setSignupNotice] = useState<SignupNotice | null>(null);
+
+  useEffect(() => {
+    const notice = consumeSignupNotice();
+    if (notice) {
+      setEmail(notice.email);
+      setSignupNotice(notice);
+    }
+  }, []);
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
@@ -39,7 +53,7 @@ export default function LoginPage() {
 
     try {
       const supabase = getSupabaseBrowserAuthClient();
-      const { error: signInError } =
+      const { data, error: signInError } =
         await supabase.auth.signInWithPassword({
           email: email.trim(),
           password,
@@ -53,7 +67,7 @@ export default function LoginPage() {
       trackBetaEvent("login_completed", {
         authenticated: true,
         locale,
-      });
+      }, createAuthenticatedAnalyticsTransport(data.session?.access_token));
     } catch {
       setError(t("login.errorConfig"));
     } finally {
@@ -62,45 +76,54 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 py-10 text-zinc-950 dark:bg-black dark:text-white">
-      <Card className="w-full max-w-md p-6 sm:p-7">
+    <main className="orvia-auth">
+      <Card className="orvia-auth-panel">
+        <LocaleSwitcher />
         <Link
           href="/"
-          className="mb-5 inline-flex text-sm font-medium text-zinc-500 transition hover:text-violet-800 dark:text-zinc-500 dark:hover:text-violet-200"
+          className="mb-5 inline-flex text-sm font-medium text-muted transition hover:text-foreground hover:text-foreground"
         >
           {t("auth.backToLanding")}
         </Link>
 
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-100 text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-line bg-subtle text-foreground">
             <BrandMark className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">
               {t("login.title")}
             </h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-500">
+            <p className="text-sm text-muted">
               {t("login.subtitle")}
             </p>
           </div>
         </div>
 
+        {signupNotice ? (
+          <div role="status" className="orvia-status mt-5 space-y-1">
+            <p className="font-semibold">{t(signupNotice.outcome === "confirmation" ? "register.success" : "login.signupCheckTitle")}</p>
+            <p className="[overflow-wrap:anywhere]">{t(signupNotice.outcome === "confirmation" ? "login.signupConfirmation" : "login.signupCheck").replace("{email}", signupNotice.email)}</p>
+            <p>{t("login.signupNext")}</p>
+          </div>
+        ) : null}
+
         <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
           <div>
             <label
               htmlFor="login-email"
-              className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              className="block text-sm font-medium text-muted"
             >
               {t("common.email")}
             </label>
-            <input
+            <Input
               id="login-email"
               type="email"
               autoComplete="email"
               required
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+              className="mt-1.5 w-full"
               placeholder="you@example.com"
             />
           </div>
@@ -109,25 +132,25 @@ export default function LoginPage() {
             <div className="flex items-center justify-between gap-3">
               <label
                 htmlFor="login-password"
-                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                className="block text-sm font-medium text-muted"
               >
                 {t("common.password")}
               </label>
               <Link
                 href="/forgot-password"
-                className="text-xs font-medium text-zinc-500 hover:text-violet-800 dark:text-zinc-500 dark:hover:text-violet-200"
+                className="text-xs font-medium text-muted hover:text-foreground hover:text-foreground"
               >
                 {t("login.forgotPassword")}
               </Link>
             </div>
-            <input
+            <Input
               id="login-password"
               type="password"
               autoComplete="current-password"
               required
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-950 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-800 dark:bg-black dark:text-white dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+              className="mt-1.5 w-full"
               placeholder={t("common.password")}
             />
           </div>
@@ -143,11 +166,11 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <p className="mt-5 text-center text-sm text-zinc-500 dark:text-zinc-500">
+        <p className="mt-5 text-center text-sm text-muted">
           {t("login.newToOrvia")}{" "}
           <Link
             href="/register"
-            className="font-medium text-zinc-800 hover:text-zinc-950 dark:text-zinc-200 dark:hover:text-white"
+            className="font-medium text-foreground hover:text-zinc-950 dark:hover:text-white"
           >
             {t("common.createAccount")}
           </Link>
