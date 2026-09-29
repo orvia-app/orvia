@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/Card";
 import { createAuthenticatedAnalyticsTransport } from "@/lib/analytics-transport";
 import { trackBetaEvent } from "@/lib/analytics";
 import { getSupabaseBrowserAuthClient } from "@/lib/supabase/auth";
+import { consumeSignupNotice, type SignupNotice } from "@/lib/signup-handoff";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,6 +22,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [signupNotice, setSignupNotice] = useState<SignupNotice | null>(null);
+
+  useEffect(() => {
+    const notice = consumeSignupNotice();
+    if (notice) {
+      setEmail(notice.email);
+      setSignupNotice(notice);
+    }
+  }, []);
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
@@ -85,6 +95,14 @@ export default function LoginPage() {
             </p>
           </div>
         </div>
+
+        {signupNotice ? (
+          <div role="status" className="orvia-status mt-5 space-y-1">
+            <p className="font-semibold">{t(signupNotice.outcome === "confirmation" ? "register.success" : "login.signupCheckTitle")}</p>
+            <p className="[overflow-wrap:anywhere]">{t(signupNotice.outcome === "confirmation" ? "login.signupConfirmation" : "login.signupCheck").replace("{email}", signupNotice.email)}</p>
+            <p>{t("login.signupNext")}</p>
+          </div>
+        ) : null}
 
         <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
           <div>

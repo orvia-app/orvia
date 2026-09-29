@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { trackBetaEvent } from "@/lib/analytics";
 import { getSupabaseBrowserAuthClient } from "@/lib/supabase/auth";
+import { getSignupOutcome, rememberSignupNotice } from "@/lib/signup-handoff";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [completed, setCompleted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -31,12 +32,11 @@ export default function RegisterPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (submitting) {
+    if (submitting || completed) {
       return;
     }
 
     setError(null);
-    setSuccess(null);
     setSubmitting(true);
 
     try {
@@ -46,7 +46,7 @@ export default function RegisterPage() {
         locale,
       });
 
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
       });
@@ -56,12 +56,24 @@ export default function RegisterPage() {
         return;
       }
 
+      const outcome = getSignupOutcome(data);
+      if (outcome === "invalid") {
+        setError(t("register.error"));
+        return;
+      }
+
       trackBetaEvent("signup_completed", {
         authenticated: false,
         locale,
       });
-      setSuccess(t("register.success"));
+      setCompleted(true);
       setPassword("");
+      if (outcome !== "authenticated") {
+        rememberSignupNotice({ email, outcome });
+        router.replace("/login");
+      }
+      // With confirmation disabled, AuthProvider receives SIGNED_IN and the
+      // existing authenticated effect above redirects to /app.
     } catch {
       setError(t("login.errorConfig"));
     } finally {
@@ -139,17 +151,17 @@ export default function RegisterPage() {
             </p>
           ) : null}
 
-          {success ? (
+          {completed ? (
             <p
               className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700 ring-1 ring-emerald-200/70 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20"
               role="status"
             >
-              {success}
+              {t("register.continuing")}
             </p>
           ) : null}
 
-          <Button type="submit" disabled={submitting} className="w-full">
-            {submitting ? t("register.submitting") : t("register.submit")}
+          <Button type="submit" disabled={submitting || completed} className="w-full">
+            {completed ? t("register.continuing") : submitting ? t("register.submitting") : t("register.submit")}
           </Button>
         </form>
 

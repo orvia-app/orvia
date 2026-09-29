@@ -5,6 +5,11 @@ export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "en";
 
 const en = {
+  "login.signupNext": "No email? Check your spam folder and make sure the address is correct.",
+  "login.signupCheck": "Check {email} for a confirmation link. If you already have an account, sign in below.",
+  "login.signupCheckTitle": "Check your email or sign in",
+  "login.signupConfirmation": "We sent a confirmation link to {email}. Confirm your email, then sign in below.",
+  "register.continuing": "Continuing…",
   "common.orvia": "Orvia",
   "common.loading": "Loading",
   "common.email": "Email",
@@ -128,7 +133,7 @@ const en = {
   "register.submitting": "Creating account...",
   "register.alreadyHaveAccount": "Already have an account?",
   "register.success":
-    "Account created. Check your email if confirmation is required, then log in.",
+    "Account created",
   "register.error": "Could not create an account with those details.",
   "forgot.title": "Reset your password",
   "forgot.subtitle": "Send a secure recovery link to your email.",
@@ -795,6 +800,11 @@ const en = {
 export type TranslationKey = keyof typeof en;
 
 const ua: Record<TranslationKey, string> = {
+  "login.signupNext": "Не бачите листа? Перевірте папку «Спам» і правильність адреси.",
+  "login.signupCheck": "Перевірте, чи є на {email} лист із підтвердженням. Якщо ви вже маєте акаунт, увійдіть нижче.",
+  "login.signupCheckTitle": "Перевірте пошту або увійдіть",
+  "login.signupConfirmation": "Ми надіслали лист із посиланням для підтвердження на {email}. Підтвердьте email, а потім увійдіть нижче.",
+  "register.continuing": "Переходимо далі…",
   "common.orvia": "Orvia",
   "common.loading": "Завантаження",
   "common.email": "Email",
@@ -918,7 +928,7 @@ const ua: Record<TranslationKey, string> = {
   "register.submitting": "Створення акаунта...",
   "register.alreadyHaveAccount": "Вже маєте акаунт?",
   "register.success":
-    "Акаунт створено. Якщо потрібне підтвердження, перевірте email, а потім увійдіть.",
+    "Акаунт створено",
   "register.error": "Не вдалося створити акаунт з цими даними.",
   "forgot.title": "Скинути пароль",
   "forgot.subtitle": "Надішліть безпечне посилання для відновлення на email.",
