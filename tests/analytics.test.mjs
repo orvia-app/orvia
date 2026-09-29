@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+import { createLoader } from "./helpers/load-typescript.mjs";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -40,11 +42,14 @@ function loadAnalytics() {
         STORAGE_KEYS: {
           betaAnalyticsAnonymousId: "personal-os.beta-analytics.anonymous-id",
           betaAnalyticsEvents: "personal-os.beta-analytics.events",
+          betaAnalyticsSession: "personal-os.beta-analytics.session",
           language: "personal-os.language",
         },
       };
     }
 
+    if (id === "@/lib/analytics-transport") return { sendAnonymousAnalyticsEvent: async () => {} };
+    if (id === "@/lib/analytics-contract") return createLoader()("src/lib/analytics-contract.ts");
     return require(id);
   }
   const testWindow = {
@@ -56,8 +61,10 @@ function loadAnalytics() {
 
   vm.runInNewContext(transpiled.outputText, {
     console,
+    fetch: async () => ({ ok: true }),
+    AbortSignal,
     crypto: {
-      randomUUID: () => `uuid-${Math.random().toString(36).slice(2)}`,
+      randomUUID,
     },
     Date,
     exports: module.exports,
@@ -81,9 +88,8 @@ const {
   isAnalyticsEventName,
   sanitizeAnalyticsMetadata,
   trackBetaEvent,
-  trackEmailConfirmedFromUrl,
+  trackEmailConfirmed,
   trackEvent,
-  trackFirstTaskCreated,
 } = loadAnalytics();
 
 function plain(value) {
@@ -106,6 +112,7 @@ test("beta-critical event names are accepted", () => {
     "email_confirmed",
     "login_completed",
     "first_task_created",
+    "feedback_submitted",
   ]);
 });
 
@@ -208,35 +215,22 @@ test("beta analytics never stores supplied personal content metadata", () => {
   assert.equal(serialized.includes("private search"), false);
 });
 
-test("first task and email confirmation events are recorded once", () => {
+test("email confirmation requires session evidence, never URL text", () => {
   clearStoredBetaAnalyticsEventsForTests();
-
-  trackFirstTaskCreated({
-    authenticated: true,
-    locale: "en",
-    timestamp: "2026-06-12T10:00:00.000Z",
-  });
-  trackFirstTaskCreated({
-    authenticated: true,
-    locale: "en",
-    timestamp: "2026-06-12T10:01:00.000Z",
-  });
-
   __testWindow.location.hash = "#access_token=redacted&type=signup";
-  __testWindow.location.search = "";
-  trackEmailConfirmedFromUrl({
-    authenticated: true,
-    locale: "en",
-    timestamp: "2026-06-12T10:02:00.000Z",
-  });
-  trackEmailConfirmedFromUrl({
-    authenticated: true,
-    locale: "en",
-    timestamp: "2026-06-12T10:03:00.000Z",
-  });
+  trackEmailConfirmed({ authenticated: true });
+  trackEmailConfirmed({ authenticated: false, emailConfirmedAt: "2026-06-12T10:00:00Z" });
+  assert.equal(getStoredBetaAnalyticsEvents().length, 0);
+  trackEmailConfirmed({ authenticated: true, emailConfirmedAt: "2026-06-12T10:00:00Z" }, async () => {});
+  assert.deepEqual(plain(getStoredBetaAnalyticsEvents().map((event) => event.eventName)), ["email_confirmed"]);
+  assert.equal(JSON.stringify(getStoredBetaAnalyticsEvents()).includes("transport-only"), false);
+});
 
-  assert.deepEqual(
-    plain(getStoredBetaAnalyticsEvents().map((event) => event.eventName)),
-    ["first_task_created", "email_confirmed"],
-  );
+test("clients cannot record authoritative first-task or feedback success", () => {
+  clearStoredBetaAnalyticsEventsForTests();
+  for (let i = 0; i < 2; i++) {
+    trackBetaEvent("first_task_created", { authenticated: true });
+    trackBetaEvent("feedback_submitted", { authenticated: true });
+  }
+  assert.equal(getStoredBetaAnalyticsEvents().length, 0);
 });

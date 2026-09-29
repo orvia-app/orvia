@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  ChartNoAxesColumn,
   CalendarDays,
   Car,
   CheckSquare,
@@ -60,6 +61,7 @@ const settingsNavItems: NavItem[] = [
 ];
 
 const adminNavItems: NavItem[] = [
+  { labelKey: "admin.analytics.nav", href: "/app/admin/analytics", icon: ChartNoAxesColumn },
   { labelKey: "admin.feedback.nav", href: "/app/admin/feedback", icon: ShieldCheck },
 ];
 

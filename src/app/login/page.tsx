@@ -9,6 +9,7 @@ import { useAuthSession } from "@/components/auth/useAuthSession";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { createAuthenticatedAnalyticsTransport } from "@/lib/analytics-transport";
 import { trackBetaEvent } from "@/lib/analytics";
 import { getSupabaseBrowserAuthClient } from "@/lib/supabase/auth";
 
@@ -39,7 +40,7 @@ export default function LoginPage() {
 
     try {
       const supabase = getSupabaseBrowserAuthClient();
-      const { error: signInError } =
+      const { data, error: signInError } =
         await supabase.auth.signInWithPassword({
           email: email.trim(),
           password,
@@ -53,7 +54,7 @@ export default function LoginPage() {
       trackBetaEvent("login_completed", {
         authenticated: true,
         locale,
-      });
+      }, createAuthenticatedAnalyticsTransport(data.session?.access_token));
     } catch {
       setError(t("login.errorConfig"));
     } finally {

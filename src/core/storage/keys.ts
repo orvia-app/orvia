@@ -10,6 +10,7 @@ export const STORAGE_KEYS = {
   onboardingCompleted: "personal-os.onboarding.completed",
   commandHistory: "personal-os.command-history",
   betaAnalyticsAnonymousId: "personal-os.beta-analytics.anonymous-id",
+  betaAnalyticsSession: "personal-os.beta-analytics.session",
   betaAnalyticsEvents: "personal-os.beta-analytics.events",
 } as const;
 

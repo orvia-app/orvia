@@ -198,7 +198,13 @@ export type SupabaseDatabase = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      ingest_beta_analytics: {
+        Args: { p_id: string; p_event_name: string; p_anonymous_id: string; p_session_id: string; p_locale: string; p_user_id: string | null };
+        Returns: boolean;
+      };
+      beta_analytics_report: { Args: { p_days: number }; Returns: unknown };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

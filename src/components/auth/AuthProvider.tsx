@@ -18,7 +18,8 @@ import {
   loadSupabaseBrowserAuthSession,
   reportUnexpectedSupabaseAuthError,
 } from "@/lib/supabase/auth";
-import { trackEmailConfirmedFromUrl } from "@/lib/analytics";
+import { createAuthenticatedAnalyticsTransport } from "@/lib/analytics-transport";
+import { trackEmailConfirmed } from "@/lib/analytics";
 import { setMonitoringUserId } from "@/lib/monitoring/sentry-user";
 
 type AuthActionResult =
@@ -108,9 +109,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             commitSession(nextSession);
             if (event === "SIGNED_IN") {
-              trackEmailConfirmedFromUrl({
+              trackEmailConfirmed({
                 authenticated: nextSession !== null,
-              });
+                emailConfirmedAt: nextSession?.user.email_confirmed_at,
+                userId: nextSession?.user.id,
+              }, createAuthenticatedAnalyticsTransport(nextSession?.access_token));
             }
             setAuthError(null);
             setLoading(false);
@@ -139,9 +142,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           setAuthError(null);
           commitSession(sessionResult.session);
-          trackEmailConfirmedFromUrl({
+          trackEmailConfirmed({
             authenticated: sessionResult.session !== null,
-          });
+            emailConfirmedAt: sessionResult.session?.user.email_confirmed_at,
+            userId: sessionResult.session?.user.id,
+          }, createAuthenticatedAnalyticsTransport(sessionResult.session?.access_token));
           setLoading(false);
           subscribeToAuthStateChanges();
         } catch (error) {
