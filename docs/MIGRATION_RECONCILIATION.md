@@ -1,5 +1,55 @@
 # Production migration reconciliation
 
+## Current verification status — 2026-09-30
+
+The historical preparation narrative below predates deployment. All 12 active
+versions were verified Local = Remote during the release gate, including analytics
+202609250001 and privilege hardening 202609250002. The historical proposal remains
+as documentation. The active hardening file's “PROPOSAL ONLY / not deployed” comment
+is stale; its approved deployed bytes must not be edited to fix that comment.
+
+The disposable PGlite 0.3.14 runtime was restored offline from the existing npm
+cache outside the repository. No project dependency or lockfile changed.
+The original catalog.sql and pre-analytics production-schema.json were missing.
+They have **not** been represented as recovered originals:
+
+- `scripts/fixtures/reconciliation-catalog.sql` reconstructs read-only catalog
+  inspection from the surviving capture's field schema. It reads catalog metadata
+  only. PostgreSQL's pretty-print flags and whitespace-stripped function-body MD5
+  reproduce the captured representations; no comparison category was removed.
+- `scripts/reconstruct-disposable-inputs.mjs` projects the five runtime tables and
+  their objects from the surviving `schema-after-hardening.json`, removing only
+  the analytics table, analytics functions and two named analytics triggers.
+  Its expected schema is captured evidence, not generated from the migrations
+  under test. It asserts the original documented category counts.
+- Pre-hardening effective grants and postgres default table grants come from
+  `privilege-preflight.json`. Synthetic direct grants reproduce those effective
+  permissions; they do not establish historical direct-ACL/inheritance provenance.
+  Other captured defaults are retained from the post-hardening snapshot.
+- Derived JSON records input SHA-256 hashes and these qualifications. Original
+  captures remain unchanged outside Git. These tests cannot prove historical
+  migration execution or current live production configuration.
+
+Local reproduction (requires those retained metadata captures):
+
+```sh
+node scripts/reconstruct-disposable-inputs.mjs /tmp/orvia-migration-reconciliation /tmp/orvia-disposable-reconstructed
+node scripts/verify-beta-analytics-db.mjs /tmp/orvia-analytics-pg-test/node_modules/@electric-sql/pglite/dist/index.js
+node scripts/verify-migration-reconciliation.mjs /tmp/orvia-analytics-pg-test/node_modules/@electric-sql/pglite/dist/index.js scripts/fixtures/reconciliation-catalog.sql /tmp/orvia-disposable-reconstructed/reconstructed-baseline.json
+node scripts/verify-runtime-privilege-hardening.mjs /tmp/orvia-analytics-pg-test/node_modules/@electric-sql/pglite/dist/index.js scripts/fixtures/reconciliation-catalog.sql /tmp/orvia-disposable-reconstructed/reconstructed-baseline.json
+```
+
+All three runtime verifiers PASS using these inputs. Reconciliation executes all
+12 active SQL files, preserves the pre-analytics structural/CRUD comparison, and
+checks the four revoked privileges after hardening. The hardening verifier also
+checks own-user CRUD, cross-user denial, feedback restrictions, unchanged schema,
+service/analytics grants and future-table defaults, including a second execution
+of the exact unmodified migration with the literal postgres owner.
+No production access was made during this reconstruction. Application validation
+was not repeated; these are verification-only changes awaiting review/commit.
+
+## Historical preparation record
+
 Local preparation only. No production history repair or migration deployment has
 been performed by this preparation. Production project: **personal-os-prod**;
 project reference: **uxyofppteklwjyqxzneg** (eu-central-1).

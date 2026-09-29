@@ -1,6 +1,7 @@
 /** Local-only clean migration validation. No connections or dependencies installed.
  * node scripts/verify-migration-reconciliation.mjs <pglite-module> <catalog.sql> <snapshot.json>
- * The catalog and approved production snapshot remain outside the repository.
+ * Accepts the labelled reconstructed snapshot described in docs/MIGRATION_RECONCILIATION.md.
+ * Expected schema must come from captured metadata, not the migrations under test.
  */
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
@@ -12,7 +13,7 @@ const production = JSON.parse(readFileSync(snapshotPath, "utf8")).rows[0].schema
 assert.equal(production.connection.read_only, "on");
 const catalog = readFileSync(catalogPath, "utf8").replace(/^begin transaction read only;\s*/i, "").replace(/\s*commit;\s*$/i, "");
 const files = readdirSync("supabase/migrations").filter(f => f.endsWith(".sql")).sort();
-assert.deepEqual(files.map(f => f.split("_")[0]), ["202605280001", "202605290001", "202606010001", "202606010002", "202606010003", "202606010004", "202606010005", "202606010006", "202606010007", "202606010008", "202609250001"]);
+assert.deepEqual(files.map(f => f.split("_")[0]), ["202605280001", "202605290001", "202606010001", "202606010002", "202606010003", "202606010004", "202606010005", "202606010006", "202606010007", "202606010008", "202609250001", "202609250002"]);
 const db = new PGlite();
 const normalize = (rows, category) => rows.map(row => {
   const copy = { ...row };
@@ -59,6 +60,14 @@ try {
     await db.exec(readFileSync(`supabase/migrations/${file}`, "utf8"));
     console.log(`APPLIED locally: ${file}`);
   }
+  // Verify the final hardening effect in addition to executing the full stream.
+  for (const table of ["tasks", "notes", "captures", "activities", "feedback"]) {
+    for (const role of ["anon", "authenticated"]) {
+      for (const privilege of ["TRUNCATE", "REFERENCES", "TRIGGER", "MAINTAIN"]) {
+        assert.equal((await db.query("select has_table_privilege($1,$2,$3) allowed", [role, `public.${table}`, privilege])).rows[0].allowed, false);
+      }
+    }
+  }
   assert.equal((await db.query("select count(*)::integer n from analytics_events")).rows[0].n, 0);
-  console.log("PASS clean active migration chain, including analytics");
+  console.log("PASS clean 12-migration chain, including analytics and runtime privilege hardening");
 } finally { await db.close(); }
