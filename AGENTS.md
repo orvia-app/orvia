@@ -1,415 +1,142 @@
 # Orvia — Agent Instructions
 
-## Product Vision
-
-Orvia is a future commercial AI productivity/life operating system for US/EU markets.
-
-Treat this project as a real SaaS product, not a demo or toy app.
-
-The product direction:
-- local-first
-- privacy-first
-- AI-native
-- mobile-friendly
-- secure by default
-- scalable toward multi-user SaaS
-- designed for future backend, auth, sync, payments, AI memory, and integrations
-
-Positioning:
-- “Personal AI Operating System”
-- “Your second brain that actually takes action”
-
-The product should help users capture, organize, retrieve, and act on personal/work/life information across:
-- tasks
-- notes
-- inbox capture
-- AI chat
-- finance
-- cars
-- automation
-- search
-- daily planning
-- future AI memory
-- future calendar/email/messenger integrations
-
----
-
-## Tech Stack
-
-Current stack:
-- Next.js App Router
-- TypeScript
-- Tailwind CSS
-- React client components where needed
-- Vercel deployment
-
-GitHub repo:
-- https://github.com/MaximAndriienko/personal-os
-
-Current storage:
-- localStorage only for MVP
-- local-first architecture
-- future backend expected
-
-Do not add new dependencies unless clearly necessary and justified.
-
----
-
-## Current Architecture
-
-Important files/directories:
-- `src/app/*` — route pages
-- `src/components/AppShell.tsx` — layout/navigation/theme
-- `src/components/ThemeProvider.tsx`
-- `src/components/ui/*` — reusable UI primitives
-- `src/lib/storage.ts` — safe localStorage access
-- `src/lib/tasks.ts`
-- `src/lib/notes.ts`
-- `src/data/mock.ts`
-- `src/types/index.ts`
-
-Current localStorage keys:
-- `personal-os.tasks`
-- `personal-os.notes`
-- `personal-os.finance.transactions`
-- `personal-os.cars`
-- `personal-os.theme`
-- `personal-os.quick-captures`
-
----
-
-## Engineering Standards
-
-Always write production-quality code that can be reviewed by senior developers or CTOs.
-
-Follow the guardrails in `docs/ENGINEERING_RULES.md` for every code change.
-
-Prioritize:
-- type safety
-- readability
-- maintainability
-- scalability
-- security
-- privacy
-- reusable components
-- SSR-safe browser handling
-- clean architecture
-- small focused functions
-- responsive UI
-- dark/light support
-
-Avoid:
-- `any`
-- duplicated logic
-- duplicated storage access
-- duplicated validation
-- direct localStorage usage inside pages
-- extensionless TypeScript modules
-- stale duplicate files such as `src/lib/storage` beside `src/lib/storage.ts`
-- giant messy page files
-- frontend secrets
-- API keys in client code
-- unsafe browser APIs
-- unrelated file changes
-- overengineering too early
+## Product and evidence scope
 
----
+Orvia is a commercial productivity product being prepared for a controlled private beta. Privacy, reliability, mobile usability and secure account isolation are current constraints. “Personal AI Operating System” is a product vision, not evidence of implemented autonomous AI.
 
-## Architecture Rules
+Repository evidence reviewed on 2026-09-28: Git origin is `git@github.com:orvia-app/orvia.git`. The local directory and package name still use `personal-os`; do not rename persisted keys or package identifiers incidentally. This document describes the working tree, including uncommitted work, not a verified production release.
 
-Pages should mostly orchestrate UI/state only.
+Core navigation currently covers Dashboard, Today, Inbox, Tasks, Notes, Search, Timeline and Settings. Admin analytics and feedback have separate authorization. Cars, Finance and Automation are grouped under Labs; AI Chat is mock functionality. Do not promote experimental modules, payments, real AI or integrations into beta priorities without an explicit product decision.
 
-Business/domain logic belongs in:
-- `src/lib/*`
-- repositories
-- services
-- typed helpers
+## Professional Operating Rules
 
-Storage access must go through:
-- `src/lib/storage.ts`
-- repositories like:
-  - `tasks.ts`
-  - `notes.ts`
-  - future `finance.ts`
-  - future `cars.ts`
+### Truth and evidence
 
-Prefer:
-```ts
-getTasks()
-saveTasks(tasks)
-createTask(task)
-````
+- Never invent, fabricate, embellish, bluff, or present assumptions as facts. Never silently fill missing information with plausible guesses.
+- Never claim something was found, verified, tested, fixed, implemented, deployed, reviewed, completed or production-ready without direct evidence.
+- Distinguish VERIFIED FACT / ASSUMPTION / UNKNOWN / RISK / RECOMMENDATION where useful. If evidence is unavailable, report UNKNOWN.
+- Never report PASS from incomplete validation. Automated tests alone do not establish UX, visual or accessibility quality, end-to-end correctness, security, production readiness or beta readiness.
+- Documentation may be stale. Verify important claims against current code, configuration and relevant evidence. Identify conflicts, correct only supported claims, and report unresolved ambiguity.
 
-Avoid:
+### Professional decision standard
 
-```ts
-localStorage.getItem(...)
-localStorage.setItem(...)
-JSON.parse(...)
-```
+Use the combined judgment expected from a Product Manager, Product Owner, Software Architect, Senior/Staff Engineer, QA Lead, Security Reviewer, UX/Product Reviewer and Release Manager. Apply a 20+ year professional quality bar to reasoning and decisions, without claiming personal experience.
 
-Always guard browser APIs:
+Do not blindly implement weak requirements. Identify and challenge unnecessary features, scope creep, architectural mistakes, security/privacy risks, UX problems, weak acceptance criteria, premature abstractions, unnecessary dependencies and material technical debt. Prefer the simplest secure, maintainable solution that scales enough for the actual product stage and fits Orvia.
 
-```ts
-typeof window !== "undefined"
-```
+### Completion discipline
 
-All TypeScript modules must use `.ts` or `.tsx` extensions. Never create extensionless TypeScript files. After moving or renaming files, check for stale extensionless duplicates with `rg --files`.
+Do not say “done”, “ready”, “fixed”, “safe” or “PASS” without relevant evidence. For meaningful changes report these levels separately:
 
-Before finishing code changes, run:
+- Implementation complete.
+- Automated validation complete.
+- Manual functional validation complete.
+- Visual validation complete.
+- Security validation complete.
+- Production validation complete.
 
-```bash
-git diff --check
-npm run build
-```
+Claim only levels actually verified. Name skipped checks, limitations and remaining risks. Historical test results and user-reported deployments are not fresh validation.
 
-Do not stop while the build is red. If Next/Turbopack reports strange parser, module resolution, or fetch/cache errors after file renames, clear the local cache with `rm -rf .next` and rebuild.
+## Current stack and architecture
 
----
+- Next.js App Router (package version 16.3.6), React 19.2.4, strict TypeScript and Tailwind CSS 4. Verify package versions before framework-dependent changes.
+- Supabase JS is pinned to 2.106.2; Auth, PostgreSQL-backed APIs and RLS migrations already exist. Storage is not localStorage-only.
+- Sentry integration exists with privacy filtering and environment-dependent enablement; configuration in the repo does not prove live monitoring is enabled.
+- Public/auth routes and API handlers live in `src/app`. Canonical application routes are under `src/app/app`; several re-export legacy page implementations. `next.config.ts` redirects legacy product URLs to `/app` routes.
+- `src/components/AppShell.tsx` handles navigation and the client auth gate. `middleware.ts` currently passes through; it does not validate server sessions. UI route visibility is never authorization.
+- Pages orchestrate UI/state. Put domain behavior in typed helpers/repositories under `src/lib` and `src/core`, and privileged operations behind server API boundaries.
+- Shared UI lives in `src/components/ui`. `src/components/ThemeProvider.tsx` manages theme; `src/lib/i18n.ts` and `src/components/i18n` provide English/Ukrainian localization. Keep both locales and themes usable.
 
-## Future SaaS Readiness
+## Storage and data boundaries
 
-Design code so localStorage can later be replaced with:
+- Browser storage is centralized in `src/core/storage`, with `src/lib/storage.ts` as a compatibility bridge. Key definitions live in `src/core/storage/keys.ts`.
+- Existing repositories include `src/lib/tasks.ts`, `src/lib/notes.ts`, `src/lib/finance.ts` and `src/lib/cars.ts`. Do not create competing repositories.
+- Account-backed tasks, notes and captures coexist with local repositories, user-scoped cache/fallback data and API adapters. Activities provide the account timeline; feedback has its own server boundary.
+- Legacy keys retain the `personal-os.*` prefix. Account keys use `personal-os.user.<userId>...`; theme, language, onboarding, command history and beta analytics also have browser keys. Use the key module rather than an incomplete copied list.
+- `src/lib/local-cloud-sync.ts` implements explicit local import behavior, not a complete background/offline synchronization engine. Do not claim automatic conflict resolution or full multi-device/offline guarantees.
+- Settings export/reset uses `src/lib/data-export`. Local export/reset is not cloud account deletion or proof of GDPR compliance. Do not silently upload local fallback data, clear unrelated storage, or rename keys without a migration plan.
+- Finance/Cars are local experimental functionality; Automation is a placeholder. Future AI, billing and external integrations require separately approved scope.
 
-* API routes
-* Supabase
-* PostgreSQL
-* server actions
-* sync engine
+## Authentication, authorization and RLS
 
-Future architecture must support:
+- Reuse `src/components/auth/AuthProvider.tsx` and `src/lib/supabase/auth.ts`. The centralized loader coalesces session requests; the provider cleans up its auth subscription.
+- Supabase currently persists browser sessions through its SDK (`persistSession: true`). This is not cookie-based server authentication and browser storage is not a secure vault. Do not add separate token copies, analytics fields, logs or another auth system.
+- Known stale/missing/corrupted sessions use `src/lib/supabase/auth-errors.ts` and `src/lib/supabase/auth-storage.ts`. Clear only this project's exact auth keys; preserve application and unrelated data. Unexpected/network/programming errors must not be classified as ordinary signed-out recovery.
+- `scripts/patch-supabase-auth.mjs` runs at postinstall to narrowly handle expected SDK recovery logging. SDK upgrades require reviewing the patch and regression tests; never replace it with global console suppression.
+- `src/server/api/auth.ts` validates bearer credentials using Supabase `getUser`. Runtime data routes then use the service-role client in `src/lib/supabase.ts` and explicit owner filters/server-derived user IDs. Service-role requests bypass RLS: ownership checks in every route are critical, not optional defense in depth.
+- RLS and client-role grants are defined in active migrations for tasks, notes, captures, activities and feedback. Review both RLS and API ownership checks; neither client navigation nor a static source scan proves live isolation.
+- `src/server/admin.ts` validates the user and compares email against server-only `ADMIN_EMAILS`. Admin feedback and analytics routes must authorize before privileged reads/writes. Hidden navigation is not an admin permission check.
 
-* multiple users
-* auth
-* cloud sync
-* offline/local-first mode
-* AI memory
-* payments
-* GDPR/privacy requests
-* export/delete data
-* mobile capture
+## Analytics, privacy and secrets
 
-Do not implement these yet unless requested, but avoid decisions that block them later.
+- `src/lib/analytics-contract.ts` defines bounded event/report contracts; `src/lib/analytics-transport.ts` separates bearer credentials from serialized event data. Access tokens belong only in the Authorization credential boundary, never event fields, metadata, error payloads or logs.
+- `src/app/api/analytics/route.ts` validates browser ingestion; task activation and feedback counts also use database triggers. Admin reports in `src/app/api/admin/analytics/route.ts` support 7/30-day aggregate reports after admin authorization.
+- The analytics migration defines restricted table/function grants. Do not add task/note/feedback content, search queries, email, arbitrary metadata, URLs, raw errors or tokens to analytics. Pseudonymous identifiers remain privacy-relevant data.
+- Keep service-role/provider keys and private credentials server-side. Public Supabase configuration is intentionally browser-visible; never treat `NEXT_PUBLIC_*` as secret. Centralize environment access through `src/env/client.ts` and `src/env/server.ts`.
+- Never print/commit secrets or real user records. Do not modify environment secrets, add remote scripts or send user content to new external services without authorization.
+- Activity metadata and monitoring must remain minimized; feedback text must not leak into analytics or monitoring. Existing policies are requirements, not proof every logging call complies. Review touched paths for raw error/content logging.
+- Real AI/provider calls must be server-side, privacy-aware and explicitly scoped. Do not advertise mock/deterministic features as real AI.
 
----
+## Migrations and production safety
 
-## Security Rules
+- Active SQL is under `supabase/migrations`. The incompatible initial draft is under `supabase/migration-archive`; never replay it or treat it as an active runtime schema.
+- The reconstructed legacy tasks prerequisite starts the active stream. Analytics and runtime privilege-hardening migrations are present. File presence or schema equivalence does not prove historical execution or current production state.
+- `docs/MIGRATION_RECONCILIATION.md` records earlier preparation; some pending/not-applied wording is historical. Do not use it to infer current deployment state. Verify the target and current evidence before any separately authorized database operation.
+- Do not deploy, change production data/auth/RLS, repair migration history, commit, push or open/merge PRs without task authorization. Preserve existing work; do not reset, clean, stash or overwrite unrelated changes.
 
-Security is high priority.
+## Engineering and UI standards
 
-Never:
+Follow `docs/ENGINEERING_RULES.md` for code changes. Its future-backend wording is stale: current ownership/API requirements above already apply. Existing authorized API use is not a request to introduce a new external integration.
 
-* expose API/OpenAI keys in frontend
-* commit secrets
-* store sensitive tokens in localStorage
-* add random third-party packages casually
-* add remote scripts without approval
-* send user data to external services without explicit approval
+Use strict types, explicit domain contracts, unions and validators; prefer `unknown` before validation and avoid broad `any` or unsafe casts. Use stable IDs such as `crypto.randomUUID()` where appropriate. Validate parsed storage/JSON and handle missing/corrupted data.
 
-Future AI/API calls must be:
+Keep functions focused and UI reusable. Avoid giant pages, duplicated storage/validation, unnecessary dependencies and premature abstractions. No direct domain localStorage access in pages/components. Guard browser APIs and keep initial rendering deterministic and SSR-safe.
 
-* server-side only
-* routed through backend/API routes
-* privacy-aware
+TypeScript modules must have `.ts` or `.tsx` filenames. After moves/renames use `rg --files` to check for stale duplicates. Do not rename unrelated modules or delete unexplained files incidentally.
 
-Validate all parsed storage data before use.
+Preserve responsive layouts, readable contrast, explicit button types, accessible labels, keyboard/focus behavior, dialog cleanup, loading/error/empty states and destructive-action confirmation. Keep English/Ukrainian copy consistent. Functional tests do not replace visual/accessibility review.
 
-Handle:
+`docs/ORVIA_DESIGN_SYSTEM.md` documents the implemented local redesign: semantic theme tokens, shared native field wrappers, restrained surfaces and motion. See `docs/testing/redesign-review.md` for rendered coverage and limitations. Local implementation and synthetic visual review do not establish production or beta readiness.
 
-* corrupted storage
-* invalid JSON
-* missing values
+## Workflow and validation
 
----
+Before edits: read these instructions and relevant docs/source, inspect branch/index/worktree, explain focused changes and preserve prior work. Use repository evidence when older plans conflict with implementation.
 
-## Privacy / GDPR Direction
+Available package scripts:
 
-Because the product may target Europe:
+- `npm run typecheck`: TypeScript check.
+- `npm run build`: Next production build; `npm run build -- --webpack` selects Webpack when explicitly appropriate.
+- `npm run check`: typecheck followed by build.
+- `npm run test`: Node test runner for `tests/*.test.mjs` via `test:run`.
+- `npm run security:guard`: repository security checks.
+- `npm run verify:rls`: static migration/API ownership assertions, not live RLS validation.
+- `npm run verify:ownership:runtime`: environment-backed ownership probes that create/change test records; not read-only. Inspect target, fixtures and authorization before running.
+- `npm run lint`: ESLint.
+- `npm run dev` / `npm run start`: development / production server.
+- `npm run postinstall`: version-sensitive Supabase SDK patch.
 
-* user data should be exportable later
-* user data should be deletable later
-* avoid unnecessary tracking
-* avoid hidden analytics
-* keep data structures understandable
-* prefer privacy-first defaults
+Standalone disposable database verifiers are `scripts/verify-beta-analytics-db.mjs`, `scripts/verify-migration-reconciliation.mjs` and `scripts/verify-runtime-privilege-hardening.mjs`. They require an external PGlite module; reconciliation/hardening also use external catalog fixtures. Read their arguments first. They are not included in `npm run test` and do not establish live Supabase equivalence.
 
-Do not make architecture decisions that would block GDPR compliance later.
+For code changes run relevant tests, `npm run typecheck`, `npm run build`, `npm run security:guard` and `git diff --check`; report failures honestly and fix task-related regressions. Documentation-only work defaults to the engineering rules' build requirement unless explicitly waived. The earlier repository truth audit had a task-specific validation waiver; it does not apply to subsequent code changes.
 
----
+Do not claim checks ran merely because a script exists. Distinguish source review, disposable database tests, authenticated E2E, visual review and production verification. Do not silently turn a failed build into a pass by switching tools or removing checks.
 
-## UI / UX Standards
+## Current priorities and documentation trust
 
-Target feel:
+Private-beta work should prioritize core capture/organization/retrieval reliability, account isolation, honest storage/auth feedback, localization and accessible responsive behavior. This is a scope constraint, not a newly invented ordered roadmap. Future strategy beyond that remains a product decision.
 
-* Linear
-* Raycast
-* Notion
-* Mem
-* Vercel
-* Cursor
-* ChatGPT
+The old list asking for repositories, Cmd+K and future auth is obsolete: those implementations already exist. Inspect current limitations before planning more architecture.
 
-Rules:
+Read `docs/DATA_BOUNDARY.md`, `docs/ANALYTICS.md`, `docs/FEEDBACK_ADMIN.md`, `docs/ENVIRONMENT.md` and `docs/testing/auth-session-recovery.md` alongside source. `docs/PRODUCT.md`, `docs/PROJECT_OVERVIEW.md`, `docs/ARCHITECTURE.md`, `docs/SECURITY.md` and `docs/SUPABASE_MIGRATIONS.md` contain historical local-only/future-backend statements; do not treat them as current implementation inventories. Resolve relevant conflicts explicitly rather than trusting a document title.
 
-* support dark/light mode
-* keep layouts responsive
-* reuse UI primitives from `src/components/ui`
-* avoid duplicated Tailwind blocks
-* maintain spacing consistency
-* keep accessibility reasonable
-* buttons must have proper `type`
-* avoid low contrast
-* avoid unreadable text
+See `docs/REPOSITORY_TRUTH_AUDIT.md` for the evidence, prior-change attribution and unresolved risks from this audit. Keep commits small and meaningful when separately authorized; never commit broken builds or mix unrelated work.
 
----
+<!-- BEGIN:nextjs-agent-rules -->
 
-## TypeScript Standards
+# This is NOT the Next.js you know
 
-Use strict TypeScript.
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
-Prefer:
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
-* explicit domain types
-* reusable validators
-* type guards
-* union types
-* `unknown` before validation
-
-Avoid:
-
-* unsafe casts
-* broad `any`
-* assuming JSON shape blindly
-
----
-
-## Data Model Direction
-
-Prefer:
-
-```ts
-crypto.randomUUID()
-```
-
-Prefer stable enums/unions:
-
-```ts
-type WorkspaceKey =
-  | "personal"
-  | "work"
-  | "cars"
-  | "business"
-  | "knowledge";
-```
-
-Avoid magic IDs:
-
-```ts
-"1"
-"2"
-"3"
-```
-
----
-
-## AI Architecture Direction
-
-Future AI logic should live in:
-
-* `src/lib/ai/*`
-* `src/lib/inbox.ts`
-* backend/API routes
-
-Avoid mixing:
-
-* UI
-* parsing
-* storage
-* AI provider logic
-
-inside one page file.
-
-Mock AI is acceptable for MVP if architecture stays replaceable.
-
----
-
-## Workflow Rules
-
-Before coding:
-
-1. Read `AGENTS.md`
-2. Inspect relevant files
-3. Explain intended changes briefly
-4. Keep changes focused
-
-When coding:
-
-1. Preserve existing behavior unless requested otherwise
-2. Keep build green
-3. Keep dark/light mode working
-4. Reuse existing architecture/components
-
-After coding:
-
-1. Run `npm run build`
-2. Fix build/type errors
-3. Summarize changed files
-4. Mention remaining technical debt
-
----
-
-## Git Standards
-
-Use small meaningful commits.
-
-Good:
-
-* `Add finance repository`
-* `Refactor dashboard storage access`
-* `Add shared UI primitives`
-
-Bad:
-
-* `fix`
-* `changes`
-* `stuff`
-* `final`
-
-Do not commit broken builds.
-
----
-
-## Current Priority
-
-Priority order:
-
-1. Fix repo hygiene issues
-2. Finish shared UI usage
-3. Add repositories for Finance/Cars/QuickCaptures
-4. Refactor Dashboard/Today to shared typed accessors
-5. Refactor Inbox parsing into `src/lib/inbox.ts`
-6. Add Cmd+K command palette
-7. Prepare AI abstraction layer
-8. Prepare future backend/auth/sync safely
-
----
-
-## Review Mindset
-
-Assume experienced senior developers and CTOs will review the code.
-
-Code should show:
-
-* clear architecture
-* clean naming
-* scalability awareness
-* safe browser handling
-* no obvious AI-generated spaghetti
-* no secret leaks
-* strong engineering discipline
-
-When unsure:
-choose the simpler, safer, more maintainable option.
-
-```
-```
+<!-- END:nextjs-agent-rules -->
