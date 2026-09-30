@@ -34,8 +34,8 @@ type PageSectionHeaderProps = {
 };
 
 const pageWidthClassNames: Record<PageWidth, string> = {
-  default: "max-w-[1120px]",
-  narrow: "max-w-[800px]",
+  default: "max-w-6xl",
+  narrow: "max-w-5xl",
 };
 
 export function Page({
@@ -46,7 +46,7 @@ export function Page({
 }: PageProps) {
   return (
     <div
-      className={["orvia-page px-5 py-6 sm:px-8 sm:py-10 lg:px-10", className].join(" ")}
+      className={["orvia-page px-4 py-5 sm:px-8 sm:py-8 lg:px-10", className].join(" ")}
       {...props}
     >
       <div className={["mx-auto", pageWidthClassNames[width]].join(" ")}>
@@ -84,11 +84,11 @@ export function PageHeader({
   title,
 }: PageHeaderProps) {
   return (
-    <div className="border-b border-line pb-6">
+    <div className="rounded-2xl bg-white/85 px-4 py-3.5 shadow-sm shadow-zinc-950/[0.025] ring-1 ring-zinc-200/75 dark:bg-zinc-900/70 dark:shadow-none dark:ring-zinc-800/75 sm:px-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <div className="flex min-w-0 gap-3">
           {Icon ? (
-            <div className="hidden h-8 w-6 shrink-0 items-center text-muted sm:flex">
+            <div className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-50/80 text-violet-700 ring-1 ring-violet-200/65 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20 sm:flex">
               <Icon className="h-4.5 w-4.5" aria-hidden />
             </div>
           ) : null}
