@@ -1,4 +1,4 @@
-# ORVIA — PRODUCT SPECIFICATION v1.0
+# ORVIA — PRODUCT SPECIFICATION v1.1
 
 **Status:** Product Source of Truth  
 **Date:** 30 September 2026  
@@ -41,20 +41,18 @@ Ideal user statement:
 ### Primary navigation
 - Home
 - Plan
+- Calendar
 - Inbox
 - Tasks & Notes
 - Search
 - Settings
 
 ### Secondary capabilities
-- Calendar
 - Projects
 - Workspaces
 - History / Timeline
 - Feedback
 - Help
-
-Calendar may be accessible through Plan and/or secondary navigation. Exact placement is a UX-design decision.
 
 Existing/experimental Finance, Cars, AI Chat, Automation, and Labs are not part of the new core simply because code exists for them.
 
@@ -71,13 +69,13 @@ Decision-oriented, centered on **What should I do now?** with a recommended task
 Orvia forms approximately **3–5 main priorities for the day**. They do not silently change. If context changes significantly, Orvia proposes rebuilding the plan and the user decides.
 
 ## 7. Plan
-Plan answers **How does my day look?** as a timeline combining meetings, Orvia events, planned tasks, free time, and priorities. Users can manually change it.
+Plan answers **“What am I going to do / how should I use my available time?”** Its daily timeline combines meetings/events, planned tasks, free/available time, and priorities. Users can manually rearrange it, and Orvia may suggest placements and planning changes.
 
 ### Still to place
 Show unscheduled work so it is not lost. Orvia may suggest where it fits.
 
 ## 8. Calendar
-Orvia has its own **Day / Week / Month** calendar showing Orvia events, personal events, and connected external-calendar events.
+Calendar answers **“What does my time look like?”** It is the factual time and schedule view, showing Orvia events, personal events, and connected external-calendar events in its own **Day / Week / Month** calendar. Calendar provides time context to Plan.
 
 ### External calendars — v1
 Google Calendar / Outlook are initially **read-only**. Orvia reads them as context and does not modify them.
@@ -328,7 +326,6 @@ Maintain a Decision Log.
 
 ## 69. Current Open Decisions
 Do not invent these without explicit product decisions:
-- exact Calendar placement in navigation;
 - which external/mobile capture channel enters beta;
 - exact Priority Engine scoring rules;
 - intelligence confidence thresholds;
@@ -340,8 +337,12 @@ Do not invent these without explicit product decisions:
 - monetization/pricing;
 - final visual system and logo.
 
-## 70. Decision Log — v1.0
-**2026-09-30**
+## 70. Decision Log — v1.1
+**v1.1 — 2026-09-30**
+- Calendar is a separate primary destination alongside Plan; its navigation placement is decided.
+- Calendar answers **“What does my time look like?”**; Plan answers **“What am I going to do / how should I use my available time?”** Plan retains its daily timeline, meetings/events, planned tasks, free/available time, priorities, Still to place, manual rearrangement, and Orvia planning suggestions.
+
+**v1.0 — 2026-09-30**
 - Product core: **Capture → Understand → Prioritize → Act**.
 - Home informational in morning, decision-oriented during day.
 - Daily Top 3–5 stable unless user approves replanning.
@@ -384,7 +385,7 @@ Do not invent these without explicit product decisions:
 - This specification supersedes conflicting older product/roadmap documentation.
 
 ## 71. Next Product Phase
-Next: **UX Architecture** for desktop + mobile structures of Home, Plan, Calendar, Capture, Inbox, Tasks & Notes, Projects, Search, Settings.
+Next: **feature specifications and acceptance criteria** for the approved UX Architecture v1.0, covering desktop + mobile structures of Home, Plan, Calendar, Capture, Inbox, Tasks & Notes, Projects, Search, and Settings.
 
 Only after UX architecture is approved should repository documentation be reconciled using **KEEP / UPDATE / REPLACE / ARCHIVE / DELETE**.
 
