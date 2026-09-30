@@ -41,7 +41,10 @@ function loadModule(relativePath, stubs = {}) {
   return module.exports;
 }
 
+const scheduleDomain = loadModule("src/core/schedule/domain.ts");
+
 const sharedStubs = {
+  "@/core/schedule/domain": scheduleDomain,
   "@/lib/local-fallback-cache": {
     getUserScopedFallbackIds: () => [],
     getUserScopedHiddenIds: () => [],

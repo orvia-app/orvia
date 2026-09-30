@@ -16,6 +16,7 @@ import {
   unmarkUserScopedFallbackId,
 } from "@/lib/local-fallback-cache";
 import type { Task, TaskPriority, TaskStatus } from "@/types";
+import { isLocalDate, isPositiveDurationMinutes } from "@/core/schedule/domain";
 
 type ApiTaskRow = {
   id?: unknown;
@@ -25,6 +26,9 @@ type ApiTaskRow = {
   priority?: unknown;
   workspace_id?: unknown;
   due_date?: unknown;
+  planned_start?: unknown;
+  estimated_duration_minutes?: unknown;
+  plan_day?: unknown;
   created_at?: unknown;
 };
 
@@ -247,6 +251,28 @@ function mapApiTaskToTask(
   const dueDate = optionalString(row.due_date) ?? fallback.dueDate;
   const workspaceId = optionalString(row.workspace_id) ?? fallback.workspaceId;
 
+  let plannedStart: string | null | undefined;
+  if (row.planned_start === null) {
+    plannedStart = null;
+  } else if (typeof row.planned_start === "string") {
+    // PostgREST can serialize a timestamptz with an explicit +00:00 offset.
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(row.planned_start)) {
+      return null;
+    }
+    const instant = new Date(row.planned_start);
+    if (!Number.isFinite(instant.getTime())) return null;
+    plannedStart = instant.toISOString();
+  } else if (row.planned_start !== undefined) {
+    return null;
+  }
+
+  const estimatedDurationMinutes = row.estimated_duration_minutes;
+  if (estimatedDurationMinutes !== undefined && estimatedDurationMinutes !== null &&
+      !isPositiveDurationMinutes(estimatedDurationMinutes)) return null;
+
+  const planDay = row.plan_day;
+  if (planDay !== undefined && planDay !== null && !isLocalDate(planDay)) return null;
+
   return {
     id,
     title,
@@ -255,6 +281,9 @@ function mapApiTaskToTask(
     priority: isTaskPriority(row.priority) ? row.priority : fallback.priority,
     workspaceId,
     dueDate,
+    ...(plannedStart === undefined ? {} : { plannedStart }),
+    ...(estimatedDurationMinutes === undefined ? {} : { estimatedDurationMinutes }),
+    ...(planDay === undefined ? {} : { planDay }),
     createdAt,
   };
 }

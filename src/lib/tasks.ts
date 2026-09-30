@@ -1,6 +1,7 @@
 import { createLocalEntityRepository } from "@/core/repositories/local-json-repository";
 import type { Task } from "@/types/index";
 import { STORAGE_KEYS } from "@/lib/storage";
+import { isLocalDate, isPositiveDurationMinutes, isUtcInstant } from "@/core/schedule/domain";
 
 export const TASK_STATUSES: readonly Task["status"][] = [
   "todo",
@@ -62,6 +63,10 @@ export function isTask(value: unknown): value is Task {
     typeof task.workspaceId === "string" &&
     typeof task.createdAt === "string" &&
     (task.dueDate === undefined || typeof task.dueDate === "string") &&
+    (task.plannedStart == null || isUtcInstant(task.plannedStart)) &&
+    (task.estimatedDurationMinutes == null ||
+      isPositiveDurationMinutes(task.estimatedDurationMinutes)) &&
+    (task.planDay == null || isLocalDate(task.planDay)) &&
     TASK_STATUSES.includes(task.status as Task["status"]) &&
     TASK_PRIORITIES.includes(task.priority as Task["priority"])
   );

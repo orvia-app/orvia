@@ -7,8 +7,10 @@ Row Level Security model before beta.
 
 The repository has static evidence that Tasks, Notes, Captures, and Activities
 enforce authenticated ownership in API code and define owner-only RLS policies
-in migrations. Runtime verification has now been completed against the current
-application flow with two authenticated users.
+in migrations. Runtime verification was completed against that application
+flow with two authenticated users. The new `orvia_events` migration has static
+checks and a local disposable PGlite two-owner probe; it has not been applied
+or verified against live Supabase.
 
 ## Verification Scope
 
@@ -51,6 +53,8 @@ Owner-only policies exist in migrations for:
 - Notes: `supabase/migrations/202606010002_notes_cloud_foundation.sql`
 - Activities: `supabase/migrations/202606010004_create_activities.sql`
 - Captures: `supabase/migrations/202606010005_create_captures.sql`
+- Events (migration only; disposable probe, no live verification):
+  `supabase/migrations/202609300001_calendar_plan_persistence.sql`
 
 RLS is defense-in-depth for the current API path because server API routes use
 service-role access. It is still required for future direct authenticated

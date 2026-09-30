@@ -10,6 +10,9 @@ export type SupabaseTaskRow = {
   priority: "low" | "medium" | "high" | "critical";
   workspace_id: string | null;
   due_date: string | null;
+  planned_start: string | null;
+  estimated_duration_minutes: number | null;
+  plan_day: string | null;
   created_at: string;
   deleted_at: string | null;
   [key: string]: unknown;

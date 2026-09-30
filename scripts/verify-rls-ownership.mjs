@@ -95,6 +95,35 @@ verifyRlsPolicySet({
   deletePolicy: "create policy captures_delete_own on public.captures",
 });
 
+const calendarMigrationPath =
+  "supabase/migrations/202609300001_calendar_plan_persistence.sql";
+
+verifyRlsPolicySet({
+  migrationPath: calendarMigrationPath,
+  table: "orvia_events",
+  selectPolicy: "create policy orvia_events_select_own on public.orvia_events",
+  insertPolicy: "create policy orvia_events_insert_own on public.orvia_events",
+  updatePolicy: "create policy orvia_events_update_own on public.orvia_events",
+  deletePolicy: "create policy orvia_events_delete_own on public.orvia_events",
+});
+
+const calendarMigration = read(calendarMigrationPath);
+assertMatches(calendarMigration,
+  /create policy orvia_events_update_own[\s\S]*?using \(user_id = auth\.uid\(\)\)\s+with check \(user_id = auth\.uid\(\)\)/,
+  "Events update ownership",
+);
+assertIncludes(calendarMigration,
+  "revoke all on table public.orvia_events from public, anon, authenticated;",
+  "Events grants",
+);
+assertIncludes(calendarMigration,
+  "grant select, insert, update, delete on table public.orvia_events to authenticated;",
+  "Events grants",
+);
+if (/grant\s+[^;]*\bon\s+(?:table\s+)?public\.orvia_events\s+to\s+(?:public|anon)\b/i.test(calendarMigration)) {
+  fail("Events grants expose public or anon access.");
+}
+
 const feedbackMigration = read(
   "supabase/migrations/202606010008_create_feedback.sql",
 );
