@@ -1,397 +1,77 @@
 # Orvia Security
 
-## Current Security Posture
-
-Orvia is currently a local-first MVP. Data is stored in browser storage through typed repository helpers. There is no backend, authentication, cloud sync, production AI API integration, payment system, or external integration layer yet.
-
-This document defines security direction and engineering constraints. It is not a claim of production security readiness.
-
-## Local-First Principles
-
-- Keep MVP data local unless the user explicitly enables future sync.
-- Validate parsed browser storage before use.
-- Keep storage schemas understandable and migration-friendly.
-- Avoid unnecessary third-party services.
-- Avoid hidden analytics or unapproved external data transfer.
-- Keep future export/delete requirements in mind for every user data type.
-
-## Threat Model Basics
-
-Current MVP risks:
-- accidental secret commits
-- unsafe browser storage assumptions
-- dependency or build-chain compromise
-- XSS exposing local browser data
-- future AI prompts sending too much personal context
-- future payment or auth code trusting client state
-
-Future backend risks:
-- broken object-level authorization
-- weak session handling
-- service-role key exposure
-- missing Supabase RLS policies
-- unsafe webhook handling
-- overbroad logs containing personal data
-- AI memory retaining data after source deletion
-
-Security reviews should focus on data ownership, authorization boundaries, secrets handling, logs, and deletion/export behavior before launch.
-
-## GitHub And Vercel Production Safety
-
-Current repository hygiene:
-- keep the main branch deployable
-- run `npm run build` and `git diff --check` before pushing meaningful changes
-- do not leave merge conflict markers, broken builds, or placeholder secrets in committed files
-- GitHub org/repo is `orvia-app/orvia`
-- Vercel project name is `orvia`
-- primary domain is `https://useorvia.com`
-- `https://www.useorvia.com` redirects to `https://useorvia.com`
-- Cloudflare is used for registrar/DNS
-- Cloudflare account has app-based 2FA enabled
-- the repository is public because Vercel Hobby does not support private organization repositories
-
-Future team workflow:
-- require pull requests before merging to main
-- protect the main branch
-- require build, typecheck, lint/security checks where applicable, and review before merge
-- use Vercel preview deployments for PR validation
-- keep production deployments tied to reviewed main-branch changes
-- restrict production environment variable access to trusted maintainers only
-- move to paid/pro private repository and production-grade infrastructure before auth, users, payments, server-side AI, or sensitive integrations go live
-
-## Data Classification
-
-Current and future data should be classified before sync or AI processing:
-- Public: marketing copy, public app metadata, non-sensitive docs.
-- Internal: source code, roadmap, architecture notes, operational metadata.
-- User personal: tasks, notes, inbox captures, cars, finance entries, memory candidates, timeline activity.
-- Sensitive: authentication/session data, integration tokens, billing references, high-risk notes, AI prompts/responses containing personal context.
-- Secrets: API keys, service-role keys, webhook secrets, private credentials.
+Orvia is pre-private-beta. This document describes the current security model, its evidence and limits, and engineering requirements for future work. It does not establish production or beta security readiness. The [Product Specification](product/PRODUCT_SPEC.md) governs product decisions; this document governs security engineering within that scope. [Security verification](SECURITY_VERIFICATION.md) records the checks performed, not a product roadmap.
 
-Secrets must never enter the frontend. Sensitive and user personal data need explicit export/delete handling and minimal retention.
-
-## Local Export And Reset
-
-The MVP includes local-only data export and reset controls in Settings. Export produces a JSON snapshot from existing local repositories. Reset clears only known app-owned browser storage keys and does not clear unrelated browser storage.
-
-This is not cloud account deletion. Future backend sync will need authenticated export/delete workflows that remove server-side data, synced replicas, AI-derived memory, integration data where applicable, and billing/account references according to retention policy.
-
-## Data Retention And Deletion Strategy
-
-Current local-only behavior:
-- user data lives in browser storage through repository helpers
-- export is a local JSON download only
-- reset clears known app-owned browser storage keys only
-- reset does not clear unrelated browser storage, remote accounts, backups, or synced replicas because those do not exist yet
-
-Future cloud behavior:
-- every user-owned record should be included in authenticated export/delete account flows
-- backups, sync queues, derived memories, embeddings, and integration data must respect deletion requests according to documented retention windows
-- deletion requests should be auditable in the backend phase without exposing unnecessary personal content
-- soft-delete, restore, and permanent-delete semantics must be explicit before production sync
-- billing and legal retention requirements must be separated from product data deletion
-
-## No Frontend Secrets
+## A. Current verified security model
 
-Frontend code must never contain:
-- OpenAI or AI provider keys
-- backend service-role keys
-- Stripe secret keys
-- integration tokens
-- database credentials
-- private webhooks
-
-The repository is public. Never commit secrets, `.env` files with real values, API keys, tokens, service-role credentials, webhook secrets, private certificates, customer data, or production-only configuration.
+### Data and trust boundaries
 
-Public configuration must be clearly safe for browser exposure. Secrets belong in server-side runtime configuration only.
+Supabase Auth, PostgreSQL-backed APIs, and browser-local repositories coexist. Signed-in tasks, notes, Inbox captures, and activities use account APIs when those requests succeed; local and user-scoped fallback data remain possible. Signed-out data and Labs data are browser-local. The exact behavior of mixed surfaces and manual local import is in [Data Boundary](DATA_BOUNDARY.md). The current source and [AGENTS.md](../AGENTS.md) support this architecture; they do not prove a deployment is configured identically.
 
-See `docs/ENVIRONMENT.md` for environment variable strategy. `NEXT_PUBLIC_*` variables are bundled into browser JavaScript and must be treated as public.
+Data classes for review are public content, internal operational material, user-authored or activity data, sensitive authentication and integration data, and server-only secrets. Classification determines access, minimization, retention, export, and deletion requirements. Tasks, notes, captures, activities, feedback, and pseudonymous analytics identifiers are personal data even when they omit obvious names.
 
-Current env access is centralized in `src/env/server.ts` and `src/env/client.ts`. Do not read `process.env` elsewhere. `src/env/client.ts` must only expose `NEXT_PUBLIC_*` values.
+### Authentication and account isolation
 
-## No Direct AI Provider Calls From Client
+Current cloud data APIs validate bearer credentials server-side through Supabase `getUser()` in `src/server/api/auth.ts`. They derive the user ID from the validated account rather than accepting client-provided `user_id`. The service-role client in `src/lib/supabase.ts` is server-side and can bypass RLS, so each API route must filter reads and scope writes by the authenticated owner. UI navigation and the client auth gate are not authorization boundaries.
 
-Future AI features must not call AI providers directly from client components. AI calls should go through server-side gateways that can enforce:
-- authentication
-- authorization
-- rate limits
-- input validation
-- data minimization
-- logging policy
-- source reference tracking
-- deletion/regeneration behavior for AI-derived memory
+Active migrations define owner-only RLS for tasks, notes, captures, and activities. [Security Verification](SECURITY_VERIFICATION.md) records two-user runtime cross-user checks as passed for those four tables and the Tasks, Notes, Captures, Search, Today, Command Palette, local-isolation, and local-reset flows. The recorded direct authenticated Supabase checks exercise RLS; application API checks exercise route ownership. This evidence is scoped to those tests and their target at the time, not proof of every route, deployment, or future policy. Feedback has a separate authenticated submission and admin authorization boundary documented in [Feedback Admin](FEEDBACK_ADMIN.md); the four-table runtime result must not be extended to it.
 
-## Browser Storage Risks
+Authenticated fallback cache keys are scoped by Supabase user ID (`personal-os.user.<userId>.*`) for tasks, notes, and quick captures. The runtime verification records a shared-browser cache isolation bug and a successful retest after this change. Local cache isolation does not make device-only records cloud-synced.
 
-Current browser storage is suitable for MVP local-first behavior, but it is not a secure vault.
+Admin feedback and analytics routes validate the account and compare its email with the server-only `ADMIN_EMAILS` allowlist before privileged access. Hiding an admin link is only UI behavior. See [Feedback Admin](FEEDBACK_ADMIN.md) and [Analytics](ANALYTICS.md).
 
-Risks:
-- accessible to JavaScript running on the origin
-- device/browser dependent
-- can be cleared by the user or browser
-- no built-in multi-device sync
-- not appropriate for secrets or sensitive tokens
+### Sessions, browser storage, and secrets
 
-Do not store integration tokens, API keys, payment secrets, or high-risk credentials in `localStorage`.
+The browser Supabase client currently uses SDK session persistence. Browser storage is accessible to same-origin JavaScript, can be cleared, and is not a secure vault. Keep storage access in the centralized adapter and repositories; do not put provider credentials, payment secrets, or separate token copies into application storage. The current auth recovery path clears only this project's exact auth keys for known stale, missing, or corrupted sessions. It preserves unrelated and workspace data; network and unexpected errors must not be treated as ordinary sign-out. The pinned SDK patch is limited to expected recovery logging. See [auth-session recovery](testing/auth-session-recovery.md) for implementation and manual checks still needed.
 
-Browser storage access should stay isolated behind the storage adapter and domain repositories. Pages and components must not read or write browser storage directly. This keeps validation, corrupt JSON handling, export/reset behavior, and future migration to IndexedDB or backend sync in one controlled boundary.
+`NEXT_PUBLIC_*` configuration is browser-visible. Service-role keys, provider keys, private credentials, and `ADMIN_EMAILS` belong only in server runtime configuration. Do not commit secrets, credentials, tokens, real user records, or populated private environment files. Environment access is centralized in `src/env/client.ts` and `src/env/server.ts`; see [Environment](ENVIRONMENT.md).
 
-## Future Server-Side AI Architecture
+### Monitoring, analytics, and user content
 
-Server-side AI should:
-- use typed request/response contracts
-- send only necessary user context
-- include source references where possible
-- distinguish generated memory from user-authored data
-- support deletion of AI-derived memory linked to source entities
-- require confirmation for destructive or external actions
-- avoid retaining prompts/responses beyond the defined logging policy
+Sentry integration is DSN-gated and configured for minimized error reporting, with replay, tracing, profiling, and source-map upload disabled. The allowed user identity is Supabase user ID; task/note/capture text, search queries, emails, tokens, headers, sessions, bodies, and raw errors must not enter monitoring. Repository configuration does not verify that live monitoring is enabled or that every deployment log path is clean. See [Environment](ENVIRONMENT.md).
 
-## AI Data Handling Policy
+First-party analytics uses bounded event contracts and separates bearer credentials from serialized event data. Event data must exclude task and note content, captures, feedback messages, search queries, email, URLs, tokens, arbitrary metadata, and raw errors. Pseudonymous identifiers still require privacy handling. Analytics ingestion, database grants, aggregation, limitations, and unverified deployment steps are detailed in [Analytics](ANALYTICS.md).
 
-Before real AI calls exist:
-- define which entity fields may be sent to providers
-- minimize context to the specific user-approved task
-- keep source references for generated memory and answers
-- avoid sending secrets, credentials, payment data, or unnecessary finance details
-- provide deletion/regeneration behavior for AI-derived memory
-- document retention assumptions for prompts, responses, embeddings, and logs
+Activity records should use short system-generated action text and allowlisted categorical or boolean metadata, not a second copy of user content. Feedback text is user-entered content: submission is authenticated, and the server-side admin workflow is separately authorized. Do not copy feedback into analytics, activities, monitoring, or logs. See [Feedback Admin](FEEDBACK_ADMIN.md).
 
-No AI provider call should be made directly from client components.
+### Local export and reset
 
-## AI Safety And Product Boundaries
+Settings export/reset operates on Orvia-owned browser data. The local reset targets the `personal-os.*` namespace, including authenticated cache keys, while preserving unrelated browser storage. Local export and reset do not export or delete cloud account records, backups, analytics, or provider data; they do not establish account deletion or legal compliance. [Data Boundary](DATA_BOUNDARY.md) describes the current behavior.
 
-AI features must be assistive, transparent, and user-controlled.
+## B. Current limitations and known risks
 
-Current behavior:
-- AI Chat is mock-only until a server-side AI route exists
-- Memory Preview is deterministic and local; it is not real AI memory
+- [Security Verification](SECURITY_VERIFICATION.md) retains **deployment/bundle confirmation that the service-role key remains server-only** as a pending beta security requirement. Source placement alone does not close that item.
+- The four-table runtime checks are historical evidence. Current production configuration, migration history, grants, policies, and isolation require target-specific verification before claims about a live environment. File presence is not proof that a migration ran.
+- Browser session persistence and local fallback expose data to same-origin script compromise and device loss. User-scoped caches reduce cross-account mixing on one browser but do not provide full offline sync, conflict resolution, or cross-device guarantees. Offline logout and denied browser storage can limit local cleanup or remote revocation.
+- Local export/reset does not satisfy the Product Specification's **Export my data** and **Delete account and data** beta requirements. Cloud lifecycle, retention, backup deletion, and account deletion remain to be specified and verified.
+- Authenticated API and RLS evidence does not cover every future entity or workspace membership rule. Client route visibility is not server-side session validation; `middleware.ts` currently passes through.
+- Sentry, analytics, auth, and admin documentation describe code and bounded checks, not a complete production privacy review. Hosting/proxy logs, deployed variables, incident process, and live behavior need operational validation.
+- Real AI, billing, and external integrations are outside the current verified security model. AI Chat is mock functionality; browser-local Labs data must not be presented as secure account storage.
 
-Future behavior:
-- AI suggestions are not authoritative decisions
-- medical, legal, financial, or similarly high-impact recommendations must not be treated as final decisions without user confirmation
-- destructive AI actions must require explicit confirmation
-- users should be able to distinguish AI suggestions from AI-executed actions
-- AI-generated content should keep source references where possible
-- privacy-sensitive AI features must explain what context is used and avoid hidden data transfer
+## C. Security requirements and future direction
 
-## Logging Policy
+### Authorization and data lifecycle
 
-Future logs should be useful for debugging and abuse prevention without becoming a shadow data store.
+Every new user-owned table and route needs server-validated identity, explicit owner or workspace authorization, appropriate RLS and grants, input validation, and cross-user tests. Service-role access must stay server-side, narrowly scoped, and filtered by the validated owner. Privileged admin/support access needs explicit authorization, scope, review, and auditability. Future workspace sharing needs real membership rules rather than client-provided IDs.
 
-Rules:
-- do not log secrets, auth tokens, webhook signatures, card data, or full AI prompts by default
-- redact personal content when practical
-- keep request IDs and operational metadata separate from user content
-- define retention periods before production
-- restrict access to production logs
-- treat logs as in-scope for incident response and data deletion policy where applicable
+Before beta, design and verify account-level export and deletion across cloud records and relevant derived data. Define archive, soft-delete, restore, permanent-delete, backup, and retention semantics. Do not describe local reset as account deletion. Keep billing/legal retention separate from product data deletion, and avoid claiming GDPR or other legal compliance from code alone.
 
-## Sentry Monitoring Data Minimization
+The Product Specification also requires privacy transparency, controls to disable behavioral learning and reset learned preferences, and a real processing boundary for sensitive workspaces excluded from AI recommendations. Beta authentication includes Google and email/password with safe identity linking, confirmation, password recovery, and session handling; the exact Google account-linking implementation remains an open decision. Treat these as product requirements until implementation and validation establish each behavior.
 
-Sentry is allowed only as privacy-safe error monitoring for private beta. It is
-disabled unless `NEXT_PUBLIC_SENTRY_DSN` is configured.
+### AI and external content
 
-The current Sentry foundation disables Session Replay, tracing/performance
-monitoring, profiling, and source-map upload. Sentry must not receive task
-titles, task descriptions, note titles, note content, capture content, search
-queries, searchable text, request bodies, response bodies, cookies,
-Authorization headers, access tokens, refresh tokens, Supabase sessions, raw API
-responses, raw errors, or user emails.
+Any real AI/provider call must run through a server-side boundary with authorization, scoped context, validation, rate limits where relevant, minimized logging, and documented retention/deletion for prompts, responses, embeddings, and derived memory. Keep generated information distinguishable from user-authored sources. Require confirmation for destructive or external actions and respect the Product Specification's user controls, including sensitive workspace processing boundaries when implemented.
 
-The only allowed user identity in Sentry is Supabase `user.id`. This keeps error
-grouping useful during private beta without exposing email or user-authored
-content.
-
-## Activity And Timeline Data Minimization
+Treat captured URLs, fetched pages, attachments, and integration responses as untrusted input. Defend against unsafe redirects, phishing, malicious instructions, prompt injection, and automatic external actions. Do not execute instructions found in external content.
 
-Timeline activity records should describe product actions without duplicating
-full user-authored content.
-
-Do not copy task descriptions, note content, capture text, search queries, raw
-errors, tokens, sessions, or authorization headers into activity titles,
-descriptions, or metadata. Activity rows should use short system-generated
-titles and descriptions such as "Task created", "Created a task", or "Captured
-an inbox item".
-
-`POST /api/activities` must enforce this boundary server-side. The API derives
-safe titles, descriptions, and entity types from the allowed activity type and
-keeps only allowlisted primitive metadata. Client-provided activity titles,
-descriptions, unknown metadata keys, nested objects, arrays, and unsafe values
-must not be persisted.
-
-Allowed activity metadata should stay categorical or boolean where possible,
-such as priority, status, `has_due_date`, source, outcome, note type, or storage
-mode. Activity remains user personal data, but it should not become a second
-content store that complicates retention, export, deletion, or privacy review.
-
-Timeline UI should render known system activity text from the activity `type`
-and safe metadata through i18n. Stored titles and descriptions are fallback text
-for unknown future activity types only, not the source of truth for known system
-events.
-
-## Feedback Data Minimization
-
-In-product beta feedback is authenticated and user-owned. Feedback messages are
-user-entered content and must not be copied into analytics, Sentry events,
-activity/timeline records, console logs, or operational metadata.
-
-`POST /api/feedback` derives `user_id` from the validated Supabase bearer token,
-validates message length and type, strips metadata down to a small allowlist,
-and returns only a safe acknowledgement without echoing the message.
-
-## Future Auth And Session Architecture
-
-Future auth should support:
-- per-user data ownership
-- workspace-level access where applicable
-- secure session handling
-- server-side authorization checks
-- scoped access for integrations
-- safe account deletion/export
-- separation between user data and operational metadata
-
-Client-side route visibility is not a security boundary. Backend authorization must enforce access.
-
-Initial backend auth should use email/password with verified email before public launch. OAuth can be added later after account linking and session rules are reviewed. Anonymous/local-only mode should remain supported, but cloud sync requires an authenticated account and explicit migration of local data.
-
-Sessions should avoid storing sensitive tokens in localStorage. Prefer provider-supported secure session patterns and server-side checks for privileged operations.
-
-If browser Supabase auth storage contains an invalid or missing refresh token,
-or Supabase reports `AuthSessionMissingError`, the app must treat the session as
-signed out. Recovery should clear only Supabase auth/session storage for the
-configured project and must not clear Orvia workspace data, local caches,
-backups, or user-created browser data. Browser auth storage should be checked
-for obviously corrupt session shapes before constructing the Supabase browser
-client so provider initialization cannot refresh a known-bad token outside the
-app's guarded session recovery path.
-
-## Future Access Control Plan
-
-When backend storage exists:
-- every user-owned record should include `user_id` or an equivalent ownership reference
-- workspace-scoped records should include workspace ownership and membership context
-- workspace-level permissions should be enforced server-side
-- Supabase RLS or equivalent authorization policies should protect every user-owned table
-- sensitive actions should produce an audit trail with actor, target, timestamp, and outcome
-- admin/debug tooling must not bypass user isolation casually
-- privileged support access should be explicit, logged, scoped, and time-limited
-
-## Future Supabase/RLS Direction
-
-If Supabase/PostgreSQL is used, row-level security or equivalent authorization must be part of the initial backend design.
-
-Expected principles:
-- every user-owned row has owner/workspace scope
-- policies enforce read/write permissions server-side
-- service-role credentials are never exposed to the browser
-- privileged jobs are isolated from normal user request paths
-- migrations preserve data ownership and deletion behavior
-
-Current backend recommendation is Supabase for MVP. Before implementation:
-- create schema migrations from `docs/DATABASE_SCHEMA.md`
-- enable RLS on every user-owned table
-- test per-user isolation policies before exposing browser clients
-- keep service-role keys server-only
-- keep admin/support access explicit, scoped, logged, and time-limited
-- install and wire Supabase only after env separation and RLS review are complete
-
-The first schema/RLS migration draft exists at `supabase/migrations/202605270001_initial_schema.sql`. It is not applied yet and does not connect the app to Supabase.
-
-RLS policy direction:
-- users can select, insert, update, and soft-delete only rows where `user_id = auth.uid()`
-- workspace-scoped rows must also belong to a workspace owned by or shared with the current user
-- future collaboration should use explicit workspace membership rows, not ad hoc shared IDs
-- admin access should use audited server-side paths, not direct broad client privileges
-
-Current migration policy details:
-- every user-owned table has RLS enabled
-- every user-owned table uses `user_id = auth.uid()` ownership policies
-- workspace-scoped insert/update policies require the referenced workspace to belong to the current user
-- `user_module_preferences` is user-owned and controls module visibility/order without implying module data deletion
-- `integrations` is authenticated-read only from the client; client write policies are intentionally absent
-- `user_integrations` stores connection state only, not provider secrets or tokens
-- team sharing and workspace membership policies are intentionally not implemented yet
-
-Integration security:
-- Telegram bot tokens, OAuth client secrets, refresh tokens, and provider credentials must stay server-side.
-- Do not store provider secrets in `user_integrations`, `preferences`, `metadata`, or browser storage.
-- Future integration management should use server-side routes/jobs and audited admin/service-role access.
-
-## Future Stripe Rules
-
-Payment processing should use Stripe or an equivalent PCI-compliant provider through server-side integration.
-
-Rules:
-- the app must not store card data
-- the frontend must not receive Stripe secret keys
-- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` may be public, but secret and webhook keys must remain server-only
-- store only required customer, subscription, price, and billing status references
-- webhook handlers must verify signatures server-side
-- billing state must not be trusted from client input alone
-- payment logs must avoid card data and unnecessary personal data
-
-## GDPR And Privacy Readiness
-
-The product may target US/EU users, so architecture should support:
-- user data export
-- user data deletion
-- clear data categories
-- retention controls
-- consent-aware integrations
-- deletion of AI-derived memory linked to source entities
-- minimal collection by default
-
-AI memory must remain inspectable, source-linked, and deletable.
-
-## Future Encryption Direction
-
-Encryption should be considered for synced user data, sensitive notes, AI memory, and integration credentials.
-
-Potential future layers:
-- TLS in transit
-- database encryption at rest
-- encrypted secrets management
-- per-user encryption keys for sensitive payloads
-- optional local encryption for high-sensitivity data
-
-Encryption design should be chosen after backend/auth/sync architecture is defined.
-
-## Dependency Audit
-
-Before production use:
-- audit dependencies and transitive risk
-- remove unused packages
-- keep dependency additions justified
-- monitor security advisories
-- pin or manage versions consistently
-- avoid remote scripts and unreviewed client-side SDKs
-
-## Incident Response Basics
-
-Before launch, define:
-- severity levels
-- internal owner for triage
-- user notification criteria
-- credential rotation procedure
-- rollback procedure
-- evidence/log preservation guidance
-- post-incident review process
-
-## Future Backend Security Principles
-
-When a backend is introduced:
-- validate all inputs server-side
-- enforce per-user and workspace authorization
-- keep audit logs for sensitive operations
-- isolate privileged jobs from client permissions
-- avoid broad service-role usage in request paths
-- rotate credentials safely
-- monitor abuse and failed auth events
-
-Repository and storage adapter contracts are the migration boundary for backend security. Future backend adapters must enforce authentication, authorization, schema validation, rate limits where applicable, and deletion/export guarantees server-side rather than trusting client state.
-- treat AI tool execution as a privileged action
-
-Backend implementation should follow the phase plan in `docs/BACKEND_PLAN.md`. Do not add production AI, payments, or integrations until auth, ownership, RLS, deletion, and logging policies are implemented and reviewed.
-
-The current Supabase files are preparation only. They must not be treated as evidence that auth, sync, RLS, or cloud persistence is implemented.
+### Integrations, payments, and secrets
+
+Future OAuth/Telegram/provider credentials and refresh tokens belong in server-side secret storage and narrowly authorized server jobs, not browser storage or ordinary metadata. Validate provider callbacks and webhook signatures before trusting them. Payment processing must use a suitable provider; do not store card data or trust client-reported billing state. Public publishable keys are distinct from private keys. Introduce these capabilities only after an explicit product decision and security review.
+
+### Operations and hygiene
+
+Keep logs useful for diagnosis without recording tokens, auth headers, feedback text, full AI prompts, payment data, or unnecessary personal content. Define access and retention for operational logs and include them in incident handling where applicable. Review dependencies and supply-chain changes, justify new SDKs, monitor advisories, and avoid unreviewed remote scripts.
+
+Assess encryption in transit, at rest, and for stored provider credentials against the actual data and deployment design. Do not infer effective encryption or key management from a proposed architecture.
+
+Before production use, define incident severity, triage ownership, credential rotation, rollback, user notification criteria, evidence preservation, and post-incident review. Verify deployed bundle secrecy, environment access, database state, and relevant authenticated flows against the intended target. Security and privacy are part of the Product Specification's definition of done for every relevant feature; automated or historical checks alone do not establish release readiness.
