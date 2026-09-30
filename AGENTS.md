@@ -121,15 +121,45 @@ For code changes run relevant tests, `npm run typecheck`, `npm run build`, `npm 
 
 Do not claim checks ran merely because a script exists. Distinguish source review, disposable database tests, authenticated E2E, visual review and production verification. Do not silently turn a failed build into a pass by switching tools or removing checks.
 
-## Current priorities and documentation trust
 
-Private-beta work should prioritize core capture/organization/retrieval reliability, account isolation, honest storage/auth feedback, localization and accessible responsive behavior. This is a scope constraint, not a newly invented ordered roadmap. Future strategy beyond that remains a product decision.
+## Product source of truth and documentation hierarchy
 
-The old list asking for repositories, Cmd+K and future auth is obsolete: those implementations already exist. Inspect current limitations before planning more architecture.
+`docs/product/PRODUCT_SPEC.md` is the canonical Product Specification and the primary source of truth for Orvia's product direction, scope, behavior, UX principles, beta requirements and product decisions.
 
-Read `docs/DATA_BOUNDARY.md`, `docs/ANALYTICS.md`, `docs/FEEDBACK_ADMIN.md`, `docs/ENVIRONMENT.md` and `docs/testing/auth-session-recovery.md` alongside source. `docs/PRODUCT.md`, `docs/PROJECT_OVERVIEW.md`, `docs/ARCHITECTURE.md`, `docs/SECURITY.md` and `docs/SUPABASE_MIGRATIONS.md` contain historical local-only/future-backend statements; do not treat them as current implementation inventories. Resolve relevant conflicts explicitly rather than trusting a document title.
+`docs/product/PRODUCT_SPEC_UA.md` is the Ukrainian companion version. If the two versions conflict, treat `docs/product/PRODUCT_SPEC.md` as canonical and surface the discrepancy instead of silently choosing or merging interpretations.
 
-See `docs/REPOSITORY_TRUTH_AUDIT.md` for the evidence, prior-change attribution and unresolved risks from this audit. Keep commits small and meaningful when separately authorized; never commit broken builds or mix unrelated work.
+Before proposing or implementing any product, feature, UX, navigation, onboarding, prioritization, notification, AI behavior, calendar, capture, Inbox, Tasks, Notes, Projects, Workspaces, Search, privacy-control or beta-scope change, read the relevant sections of `docs/product/PRODUCT_SPEC.md`.
+
+Documentation hierarchy for product decisions:
+
+1. `docs/product/PRODUCT_SPEC.md`
+2. Approved UX/design specifications
+3. Feature requirements and acceptance criteria
+4. Technical architecture and ADRs
+5. Implementation documentation
+6. Historical/archive documentation
+
+Older roadmaps, audits, overview documents, implementation notes and existing code must not override the Product Specification. Existing code is evidence of what is currently implemented, not evidence of what the product should become.
+
+If current implementation or older documentation conflicts with the Product Specification:
+
+- do not silently preserve the old behavior;
+- do not silently rewrite the Product Specification to match the code;
+- identify the conflict explicitly;
+- treat the Product Specification as the intended product behavior unless a newer explicit product decision changes it;
+- keep implementation facts and target product behavior clearly separated.
+
+Product changes follow this sequence:
+
+**Decision → Product Specification update → affected UX/feature specification or acceptance criteria → implementation.**
+
+Do not invent answers for decisions explicitly marked open in the Product Specification. Keep them open until an explicit product decision is made.
+
+The current repository contains historical documents that may describe earlier Orvia architecture, navigation, priorities or beta scope. In particular, `docs/PRODUCT.md`, `docs/PROJECT_OVERVIEW.md`, `docs/ARCHITECTURE.md`, `docs/SECURITY.md`, `docs/SUPABASE_MIGRATIONS.md` and other older planning documents may contain stale product assumptions. Use them as implementation/history evidence where relevant, not as authority over the Product Specification.
+
+Technical and operational documentation such as `docs/DATA_BOUNDARY.md`, `docs/ANALYTICS.md`, `docs/FEEDBACK_ADMIN.md`, `docs/ENVIRONMENT.md` and `docs/testing/auth-session-recovery.md` remains relevant for its technical domain unless it conflicts with a newer approved requirement.
+
+See `docs/REPOSITORY_TRUTH_AUDIT.md` for historical repository evidence and previously identified implementation risks. It is not the product roadmap or product source of truth.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
