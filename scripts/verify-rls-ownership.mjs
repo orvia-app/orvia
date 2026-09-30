@@ -180,6 +180,25 @@ verifyApiRoute("src/app/api/tasks/[id]/route.ts", [
   '.update({ deleted_at: new Date().toISOString() })',
 ]);
 
+for (const path of [
+  "src/app/api/events/[id]/route.ts",
+  "src/app/api/tasks/[id]/schedule/route.ts",
+]) {
+  verifyApiRoute(path, ["authenticateApiRequest(request)", '.eq("id", id)', '.eq("user_id", auth.userId)']);
+}
+verifyApiRoute("src/app/api/events/route.ts", [
+  "authenticateApiRequest(request)", "user_id: auth.userId",
+]);
+verifyApiRoute("src/app/api/events/query/route.ts", [
+  "authenticateApiRequest(request)", "fetchOwnedEvents(auth.userId, range.value)",
+]);
+verifyApiRoute("src/app/api/schedule/route.ts", [
+  "authenticateApiRequest(request)", "readOwnedSchedule(auth.userId",
+]);
+verifyApiRoute("src/server/api/schedule-source.ts", [
+  '.eq("user_id", ownerId)',
+]);
+
 verifyApiRoute("src/app/api/notes/route.ts", [
   "authenticateApiRequest(request)",
   '.eq("user_id", auth.userId)',

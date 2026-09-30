@@ -204,6 +204,16 @@ const coreApiRoutes = [
       },
     ],
   },
+  ...[
+    "src/app/api/events/route.ts",
+    "src/app/api/events/query/route.ts",
+    "src/app/api/events/[id]/route.ts",
+    "src/app/api/tasks/[id]/schedule/route.ts",
+    "src/app/api/schedule/route.ts",
+  ].map((path) => ({
+    path,
+    checks: [{ label: "validates API auth", pattern: /authenticateApiRequest\(request\)/ }],
+  })),
 ];
 
 function readProjectFile(path) {

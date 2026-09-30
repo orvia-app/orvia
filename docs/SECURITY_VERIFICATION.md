@@ -13,9 +13,12 @@ checks and a local disposable PGlite two-owner probe; it has not been applied
 or verified against live Supabase.
 
 The Batch 3 Schedule Projection rejects source and record owner mismatches in
-local unit tests. It has no authenticated API or database source adapter yet.
-Those tests do not verify live Event RLS, service-role query filtering, or
-projection completeness against a deployed database.
+local unit tests. Batch 4 adds a local authenticated API and owner-filtered
+service-role source adapter, with mocked API tests and static checks. These do
+not verify live Event RLS, deployed service-role filtering, or projection
+completeness against a deployed database. Privacy eligibility has no trusted
+source, so factual projection sources are marked unverified and recommendation
+processing remains disabled.
 
 ## Verification Scope
 
@@ -60,6 +63,13 @@ Owner-only policies exist in migrations for:
 - Captures: `supabase/migrations/202606010005_create_captures.sql`
 - Events (migration only; disposable probe, no live verification):
   `supabase/migrations/202609300001_calendar_plan_persistence.sql`
+
+Local Batch 4 Event routes are `POST /api/events`, `POST /api/events/query`,
+`GET/PATCH/POST/DELETE /api/events/[id]` (the item `POST` archives; `DELETE`
+sets the deleted lifecycle marker), `PATCH /api/tasks/[id]/schedule`, and
+`POST /api/schedule`. The query routes use request bodies to avoid exact times
+in browser URLs. Their local tests use a mocked service-role client; no live
+two-user Event or schedule API check has been performed.
 
 RLS is defense-in-depth for the current API path because server API routes use
 service-role access. It is still required for future direct authenticated
