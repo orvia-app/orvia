@@ -1,89 +1,28 @@
-# Contributing To Orvia
+# Contributing to Orvia
 
-## Development Rules
+## Before making changes
 
-- Read `AGENTS.md` before making changes.
-- Keep changes focused and reviewable.
-- Preserve current behavior unless the task explicitly changes it.
-- Prefer existing architecture patterns over new one-off systems.
-- No new dependencies without a strong reason.
-- No backend, AI, payment, or integration calls unless explicitly requested.
+- Read [AGENTS.md](../AGENTS.md) and the relevant [engineering rules](ENGINEERING_RULES.md).
+- For product, UX, feature, navigation, onboarding, AI behavior, prioritization, notification, calendar, capture, privacy-control, or beta-scope changes, read the relevant sections of the [Product Specification](product/PRODUCT_SPEC.md) first. It is the canonical product source of truth and takes precedence over conflicting historical roadmaps and product documents. Code is evidence of current implementation, not product authority.
+- Keep decisions marked open in the Product Specification open until an explicit product decision is made. Follow **Decision → Product Specification update → affected UX/feature specification or acceptance criteria → implementation**.
+- Keep changes focused; avoid unrelated refactors and broad audits that the touched scope does not justify. Reuse existing repositories, UI primitives, authentication, and API boundaries. Do not add dependencies without a strong reason.
 
-## Branch Naming
+## Engineering and security
 
-- Use short descriptive branch names.
-- Codex-created branches should use `codex/` when creating a branch.
-- Examples:
-  - `codex/mobile-shell-fix`
-  - `feature/search-filters`
-  - `fix/task-filter-flicker`
+- Preserve account isolation: validate credentials and authorization server-side, derive ownership from the authenticated user, and keep service-role credentials and other secrets server-side. UI visibility is not authorization. See [Security](SECURITY.md) and [data boundaries](DATA_BOUNDARY.md).
+- Consider security and privacy impact for relevant features, especially new data collection, AI processing, integrations, logging, export, and deletion. Real AI/provider calls and new external integrations need explicit scope and server-side boundaries.
+- Use centralized storage helpers; do not add direct domain `localStorage` access in pages or components. Browser storage is not a secure vault, and local reset/export is not cloud account deletion.
+- Keep English and Ukrainian copy, responsive desktop/mobile behavior, accessibility, and light/dark themes usable where applicable. Use explicit button types, accessible labels, keyboard/focus behavior, and confirmation for destructive actions.
+- Update affected documentation when architecture, product decisions, data boundaries, setup, security, or QA expectations change.
 
-## Commit Style
+## Review and validation
 
-Use clear imperative commits:
-- `Add Telegram integration plan`
-- `Refactor storage adapter`
-- `Fix command center keyboard state`
+For code changes, run relevant tests, `npm run typecheck`, `npm run build`, `npm run security:guard`, and `git diff --check`; investigate task-related failures. Documentation-only changes default to the build requirement in [engineering rules](ENGINEERING_RULES.md) unless explicitly waived.
 
-Avoid vague commits:
-- `fix`
-- `update`
-- `misc`
-- `final`
+Report these separately, claiming only what was checked: implementation complete; automated validation complete; manual functional validation complete; visual validation complete; security validation complete; production validation complete. An automated pass does not establish visual quality or release readiness.
 
-## Pull Request Checklist
+UI changes require representative rendered review of relevant desktop/mobile and light/dark states, including layout, typography, navigation, and accessibility behavior. Product-owner visual approval is required before a production UI release. Record skipped checks and remaining risks.
 
-- Scope is clear.
-- Product behavior is described.
-- Architecture impact is described if relevant.
-- Screenshots or notes included for UI changes.
-- Security/privacy impact considered.
-- Docs updated when architecture, product direction, setup, or QA changes.
-- No unrelated refactors.
+## Branches and handoff
 
-## Validation Requirements
-
-Before merge or handoff:
-
-```bash
-npm run typecheck
-npm run build
-git diff --check
-```
-
-Also verify:
-- no direct `localStorage` in pages/components
-- no frontend secrets
-- no extensionless TypeScript files
-- no stale duplicate modules after renames
-- no hydration warnings introduced
-
-## UI/UX Rules
-
-- Reuse shared UI primitives.
-- Keep `AppShell` thin.
-- Maintain dark/light/system support.
-- Check mobile width behavior.
-- Use explicit button `type`.
-- Use accessible labels for icon buttons.
-- Use confirmation for destructive actions.
-- Avoid debug-looking UI, fake AI claims, and heavy nested cards.
-
-## Security Rules
-
-- No API keys or secrets in frontend code.
-- No provider calls from UI unless explicitly approved and safe.
-- Future AI, Telegram, Stripe, and integration work must use server-side routes.
-- Treat browser storage as local convenience, not secure storage.
-- Keep export/delete implications in mind for new data types.
-
-## Docs Expectations
-
-Update docs when changing:
-- product scope
-- architecture
-- storage/repositories
-- backend/auth/sync direction
-- security or environment assumptions
-- QA expectations
-- onboarding or contributor workflow
+Use short descriptive branch names; Codex-created branches use `codex/` by default. Keep commits and review descriptions specific. A handoff should state scope, product behavior, security/privacy impact, evidence, limitations, and screenshots or visual notes for UI work. Do not include secrets, tokens, or real user records.
