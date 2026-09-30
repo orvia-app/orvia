@@ -217,17 +217,24 @@ export function timedEventInterval(event: TimedEvent): TimedInterval {
 
 type ScheduleItemBase = Readonly<{
   key: `orvia-event:${string}` | `task:${string}`;
+  sourceId: string;
   ownerId: string;
   title: string;
   workspaceId?: string | null;
   busy: boolean;
   /** Factual display and recommendation processing have separate privacy gates. */
   intelligenceEligible: boolean;
+  sourceState: ScheduleSourceState;
+  observedAt?: UtcInstant;
   interval: TimedInterval;
 }>;
 
 export type ScheduleItem =
-  | (ScheduleItemBase & Readonly<{ source: "orvia-event"; kind: "timed" }>)
+  | (ScheduleItemBase & Readonly<{
+      source: "orvia-event";
+      kind: "timed";
+      timezone: IanaTimeZone;
+    }>)
   | (ScheduleItemBase & Readonly<{
       source: "orvia-event";
       kind: "all-day";
@@ -241,16 +248,35 @@ export type ScheduleItem =
       planDay?: LocalDate | null;
     }>);
 
-// Later projection code must resolve all-day local bounds in the Event's zone
-// before constructing an all-day ScheduleItem. DST wall-time conversion is not
-// attempted here, and a date-only value is never treated as UTC midnight.
-export type ScheduleProjection = Readonly<{
+export type ScheduleSourceState = "complete" | "partial" | "stale" | "unavailable" | "unverified";
+
+/** Explicitly day-assigned work without an occupied interval; never a Calendar item. */
+export type UnplacedScheduleTask = Readonly<{
+  key: `task:${string}`;
+  sourceId: string;
+  ownerId: string;
+  title: string;
+  workspaceId?: string | null;
+  planDay: LocalDate;
+  intelligenceEligible: boolean;
+  sourceState: ScheduleSourceState;
+  observedAt?: UtcInstant;
+}>;
+
+export type ScheduleProjectionResult = Readonly<{
+  range: TimedInterval;
+  planningTimezone: IanaTimeZone;
+  completeness: "complete" | "incomplete";
   items: readonly ScheduleItem[];
+  unplacedTasks: readonly UnplacedScheduleTask[];
   sources: Readonly<{
-    events: "complete" | "partial" | "stale" | "unavailable";
-    tasks: "complete" | "partial" | "stale" | "unavailable";
+    events: Readonly<{ state: ScheduleSourceState; observedAt?: UtcInstant }>;
+    tasks: Readonly<{ state: ScheduleSourceState; observedAt?: UtcInstant }>;
   }>;
 }>;
+
+/** Kept as an alias for the Batch 1 contract name. */
+export type ScheduleProjection = ScheduleProjectionResult;
 
 export type BlockingConflict = Readonly<{
   keys: readonly [ScheduleItem["key"], ScheduleItem["key"]];
