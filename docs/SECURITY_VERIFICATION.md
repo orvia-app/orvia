@@ -12,6 +12,11 @@ flow with two authenticated users. The new `orvia_events` migration has static
 checks and a local disposable PGlite two-owner probe; it has not been applied
 or verified against live Supabase.
 
+The Batch 3 Schedule Projection rejects source and record owner mismatches in
+local unit tests. It has no authenticated API or database source adapter yet.
+Those tests do not verify live Event RLS, service-role query filtering, or
+projection completeness against a deployed database.
+
 ## Verification Scope
 
 - Tasks: `public.tasks`
