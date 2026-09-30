@@ -27,7 +27,28 @@ export type SupabaseTaskInsert = {
   workspace_id?: string | null;
   due_date?: string | null;
   deleted_at?: string | null;
+  planned_start?: string | null;
+  estimated_duration_minutes?: number | null;
+  plan_day?: string | null;
 };
+
+export type SupabaseEventRow = {
+  id: string;
+  user_id: string;
+  title: string;
+  timezone: string;
+  busy: boolean;
+  all_day: boolean;
+  start_at: string | null;
+  end_at: string | null;
+  start_date: string | null;
+  end_date_exclusive: string | null;
+  lifecycle_status: "active" | "archived" | "deleted";
+  created_at: string;
+  updated_at: string;
+};
+
+export type SupabaseEventInsert = Omit<SupabaseEventRow, "created_at" | "updated_at">;
 
 export type SupabaseNoteRow = {
   id: string;
@@ -173,6 +194,12 @@ export type SupabaseDatabase = {
         Row: SupabaseTaskRow;
         Insert: SupabaseTaskInsert;
         Update: Partial<SupabaseTaskInsert>;
+        Relationships: [];
+      };
+      orvia_events: {
+        Row: SupabaseEventRow;
+        Insert: SupabaseEventInsert;
+        Update: Partial<SupabaseEventInsert>;
         Relationships: [];
       };
       notes: {
