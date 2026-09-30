@@ -557,7 +557,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-canvas text-foreground">
+    <div className="flex h-dvh overflow-hidden bg-zinc-100 text-zinc-950 dark:bg-zinc-950 dark:text-white">
       <CommandCenter />
       <QuickCapture
         accessToken={session?.access_token}
@@ -572,7 +572,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         source="app_shell"
       />
 
-      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-line bg-sidebar lg:flex">
+      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-zinc-200/80 bg-zinc-50/95 dark:border-zinc-800/80 dark:bg-zinc-950 lg:flex">
         <div className="flex shrink-0 items-center gap-3 px-5 pt-5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-violet-200/70 bg-violet-50 text-violet-800 shadow-violet-950/[0.03] dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-200 dark:shadow-none">
             <BrandMark className="h-5 w-5" />
