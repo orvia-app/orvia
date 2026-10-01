@@ -13,7 +13,7 @@
 | Today | NEEDS PRODUCT DESIGN | `/app/today` exists | Future relationship to Home and Plan is unresolved; do not preserve a competing day model by default |
 | Inbox | PARTIALLY DEFINED | Account/local capture queue exists | Attention queue by reason, inline resolution, calm empty state; detailed states/interactions needed |
 | Tasks | PARTIALLY DEFINED | Task library and API exist | Tasks & Notes library target; deadline/planned time/duration and recurrence UX need feature specs |
-| Calendar | PARTIALLY DEFINED | Day/Week/Month read-only UI and authenticated schedule API exist locally | See [Calendar specification](CALENDAR.md); visual acceptance and several interactions remain open |
+| Calendar | SPECIFIED; OPEN decisions remain | Day/Week/Month read-only UI and authenticated schedule API exist locally | See [Calendar specification](CALENDAR.md); visual acceptance and the decisions collected in §23 remain open |
 | Plan | NEEDS PRODUCT DESIGN | No dedicated Plan UI; Today is not accepted as equivalent | Shared schedule, priorities, capacity, Still to place, manual planning, proposals need full screen/feature spec |
 | Notes | PARTIALLY DEFINED | Notes library/editor exists | Lightweight notes in shared library; related work and text-to-task flows need specs |
 | AI Chat | NEEDS PRODUCT DESIGN / OUT OF CORE | Scripted preview route; no real AI | No separate core destination in target IA; future Search/Ask Orvia boundary remains open |
