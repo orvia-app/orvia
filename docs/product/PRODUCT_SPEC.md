@@ -1,14 +1,20 @@
-# ORVIA — PRODUCT SPECIFICATION v1.1
+# ORVIA — PRODUCT SPECIFICATION v1.3
 
-**Status:** Product Source of Truth  
-**Date:** 30 September 2026  
-**Stage:** Pre-private-beta / Product Architecture v2  
+**Status:** Product Source of Truth<br>
+**Date:** 1 October 2026<br>
+**Stage:** Pre-private-beta / Product Architecture v2<br>
 **Owner:** Maksym Andriienko
 
 > This document is the product source of truth for Orvia. When older product/roadmap documentation conflicts with this specification, this specification takes precedence unless a newer approved version explicitly supersedes it.
 
 ## 1. Product Vision
 Orvia is a personal system for managing attention, tasks, and time that turns unstructured information into clear next actions.
+
+**Mission:** help people move from what is in their head to the right next action with less organizational work and more control over their time.
+
+**Core user problem:** useful intentions arrive as incomplete thoughts across tasks, notes, commitments, and contexts. People must remember, classify, prioritize, schedule, and repeatedly re-evaluate them across disconnected tools.
+
+**Product promise:** Orvia helps capture, understand, prioritize, and act while keeping consequential decisions visible and under the user's control. **Orvia suggests. You decide.**
 
 Users should not have to constantly remember everything themselves, manually sort information, assign priority to every task, continually rebuild their day, check multiple places to understand what to do, or spend excessive time maintaining a productivity system.
 
@@ -78,7 +84,7 @@ Show unscheduled work so it is not lost. Orvia may suggest where it fits.
 Calendar answers **“What does my time look like?”** It is the factual time and schedule view, showing Orvia events, personal events, and connected external-calendar events in its own **Day / Week / Month** calendar. Calendar provides time context to Plan.
 
 ### External calendars — v1
-Google Calendar / Outlook are initially **read-only**. Orvia reads them as context and does not modify them.
+The approved private beta is provider-free: Calendar and Plan must work without an external calendar connection. Google Calendar read-only context is a gated post-beta follow-up; Outlook is later. When an external provider is introduced, Orvia reads permitted events as context and does not modify the source calendar. Exact provider, permission, refresh, and integration architecture remains **OPEN** until separately approved.
 
 ### Orvia events
 Users can create personal events directly in Orvia.
@@ -230,7 +236,7 @@ Beta authentication:
 Also support email confirmation, forgot/reset password, logout/session handling. Same-email password/Google identity linking must be handled safely without accidental duplicate data identities or loss.
 
 ## 48. Onboarding
-Short flow: **Welcome → Basic preferences → Connect calendar (optional) → Notifications → Autonomy → First Capture**. Calendar has clear Skip. Orvia remains usable without external calendar.
+Target flow when an approved provider connection exists: **Welcome → Basic preferences → Connect calendar (optional) → Notifications → Autonomy → First Capture**. The provider-free private beta omits the connection step. Orvia remains usable without an external calendar.
 
 ## 49. First Success / Activation
 `signup_completed` is not activation. Activation means the user experiences the core value: **Capture → Understand → accept/correct → Prioritize → Act**.
@@ -254,7 +260,7 @@ Authentication, Google Sign-In, EN/UA, Home, Plan, Universal Capture, Inbox, Tas
 Beta does not need perfect intelligence, but must demonstrate **Capture → Understand → Prioritize → Act**.
 
 ## 54. Calendar Beta Decision
-Calendar is part of the product architecture. Exact first-beta implementation scope requires technical effort assessment: Orvia Calendar, Day/Week/Month, external read-only connection, conflict detection, Plan integration. Do not remove Calendar from the vision solely because implementation is non-trivial.
+The private-beta Calendar scope is provider-free: a separate primary Orvia Calendar, Day/Week/Month, user-owned Orvia Events, planned Task intervals, the shared Calendar/Plan schedule projection, Plan integration, and basic conflict/capacity awareness subject to the prerequisites and open decisions in the [Calendar + Plan beta specification](CALENDAR_PLAN_BETA_SPEC.md). Google read-only context is a gated post-beta follow-up; Outlook is later. External calendar access is not a private-beta blocker. This scope decision does not claim that Calendar, Plan, conflict/capacity behavior, or release validation is complete.
 
 ## 55. External/Mobile Capture Beta Decision
 Aim for at least one more convenient capture channel beyond standard web flow. Candidates: voice in web/PWA, Telegram, PWA/mobile shortcut, or another lightweight channel. **Decision remains open.**
@@ -270,6 +276,8 @@ Avoid AI hype, cyberpunk, gaming aesthetics, neon, excessive violet, generic Tai
 Reference premium-software principles similar to Linear/Raycast/Arc without cloning their UI.
 
 UI hierarchy: **What matters → Why → What can I do**.
+
+The approved system-level design contract is [Master Design System](../design/MASTER_DESIGN_SYSTEM.md), with supporting token, component, motion, responsive, accessibility, content, screen, and quality specifications. It defines “premium” through observable hierarchy, restraint, consistency, feedback, and rendered quality rather than subjective styling. Existing code values remain implementation facts unless that documentation explicitly adopts them as decisions.
 
 ## 58. Motion
 Motion is restrained, functional, roughly 120–250 ms for ordinary transitions, and compatible with reduced-motion preferences.
@@ -303,12 +311,13 @@ A new user without assistance should complete: **Create account → First Captur
 Because Orvia may contain personal tasks, work information, calendar data, behavioral data, notes, and external links, security/privacy are part of Definition of Done for every relevant feature. New intelligence capabilities must not weaken ownership, isolation, privacy, or security guarantees.
 
 ## 67. Source-of-Truth Hierarchy
-1. **Orvia Product Specification v1.x**
-2. Approved UX/design specifications
-3. Feature-specific requirements / acceptance criteria
-4. Technical architecture / ADRs
-5. Implementation documentation
-6. Historical/archive documentation
+1. **Orvia Product Specification v1.x** — canonical product vision, requirements, scope, priorities, and product decisions.
+2. **Approved UX Architecture** — translates approved product decisions into cross-product experience architecture. Draft material has no independent authority over the Product Specification.
+3. **Feature and technical specifications** — define feature behavior, domain contracts, technical boundaries, and feature acceptance criteria within the first two layers.
+4. **Design Foundation** — defines cross-product visual, component, interaction, motion, responsive, accessibility, and content/i18n rules within product, UX, and feature boundaries.
+5. **Screen specifications** — define one screen's composition, states, interactions, and screen-level acceptance criteria within every higher layer.
+6. **Implementation and implementation evidence** — must follow the approved specifications and accurately label current behavior.
+7. **Historical/archive documentation** — context only; it cannot override a current layer above it.
 
 Old roadmaps cannot override this Product Specification. README does not independently define product strategy. Code describes what is implemented; it does not by itself define what the product should become.
 
@@ -320,6 +329,8 @@ When a meaningful product decision changes:
 Versioning:
 - `v1.0` — approved current product architecture
 - `v1.1` — minor product decisions
+- `v1.2` — product, UX, design, and quality foundation
+- `v1.3` — source-of-truth and private-beta scope reconciliation
 - `v2.0` — fundamental product-model change
 
 Maintain a Decision Log.
@@ -332,12 +343,23 @@ Do not invent these without explicit product decisions:
 - exact recurring-task editor UX;
 - exact notification timing/escalation rules;
 - Google OAuth account-linking implementation;
-- Calendar provider/integration architecture;
+- future Calendar provider/permission/refresh/integration architecture;
 - exact AI/model/data architecture;
 - monetization/pricing;
-- final visual system and logo.
+- final brand identity/logo and any token values explicitly marked open in the design foundation.
 
-## 70. Decision Log — v1.1
+## 70. Decision Log
+**v1.3 — 2026-10-01**
+- Reconciled the authority chain as Product Specification → approved UX Architecture → feature/technical specifications → Design Foundation → screen specifications → implementation/evidence → historical documentation.
+- Incorporated the already approved provider-free private-beta Calendar boundary from the Calendar + Plan specification: Google read-only context is post-beta and gated; Outlook is later. Broader provider architecture remains open.
+- Clarified that a provider connection appears in onboarding only when an approved provider capability exists.
+
+**v1.2 — 2026-10-01**
+- Established the Orvia product, UX, visual, component, responsive, accessibility, content, screen-specification, visual-QA, and Definition of Done documentation system.
+- Confirmed **“Orvia suggests. You decide.”** as the interaction boundary for consequential intelligence and planning behavior.
+- Defined the visual direction through observable rules: the working surface leads; supporting chrome recedes; structure is quiet; violet is restrained; states are honest; mobile is intentionally recomposed; light/dark and EN/UA are first-class review dimensions.
+- Kept exact undecided token values and final brand identity/logo open. Current implementation values are evidence, not automatic future requirements.
+
 **v1.1 — 2026-09-30**
 - Calendar is a separate primary destination alongside Plan; its navigation placement is decided.
 - Calendar answers **“What does my time look like?”**; Plan answers **“What am I going to do / how should I use my available time?”** Plan retains its daily timeline, meetings/events, planned tasks, free/available time, priorities, Still to place, manual rearrangement, and Orvia planning suggestions.
@@ -385,7 +407,7 @@ Do not invent these without explicit product decisions:
 - This specification supersedes conflicting older product/roadmap documentation.
 
 ## 71. Next Product Phase
-Next: **feature specifications and acceptance criteria** for the approved UX Architecture v1.0, covering desktop + mobile structures of Home, Plan, Calendar, Capture, Inbox, Tasks & Notes, Projects, Search, and Settings.
+Next: product-owner review of the remaining draft UX Architecture, then **feature specifications and acceptance criteria** for approved decisions covering desktop + mobile structures of Home, Plan, Calendar, Capture, Inbox, Tasks & Notes, Projects, Search, and Settings. Only UX decisions already recorded in this Product Specification or an explicitly approved higher-scope decision are authoritative before that review.
 
 Only after UX architecture is approved should repository documentation be reconciled using **KEEP / UPDATE / REPLACE / ARCHIVE / DELETE**.
 

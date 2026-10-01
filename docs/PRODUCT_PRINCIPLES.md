@@ -1,5 +1,7 @@
 # Orvia Product Principles
 
+> **HISTORICAL DOCUMENT.** Several principles below predate the canonical Product Specification and current account-backed architecture. Use [Product Specification v1.3](product/PRODUCT_SPEC.md) and [UX Principles](ux/UX_PRINCIPLES.md). Where wording conflicts, do not preserve or merge it silently.
+
 ## Product Shape
 
 Orvia should feel like a calm AI operating system for personal context: fast to capture into, easy to search, clear about what it knows, and careful about user control. It should feel closer to Linear, Raycast, Arc, and modern local-first productivity tools than to an admin panel or generic dashboard template.

@@ -3,17 +3,18 @@
 **Status:** Draft for product-owner review
 
 **Date:** 30 September 2026
+**Last reconciled:** 1 October 2026
 
-**Language:** English (canonical draft)
+**Language:** English working draft; the Product Specification is canonical
 **Scope:** Intended desktop and mobile web experience; this document does not verify current implementation or approve a release.
 
 ## 1. Purpose and authority
 
-This document translates the approved UX architecture decisions into a coherent experience for Orvia. It defines user jobs, navigation, major flows, recovery behavior, and boundaries for later design and engineering work. It is not a visual design, route map, data model, provider choice, or implementation claim.
+This document translates approved product/UX decisions and proposes unresolved experience architecture for review. It defines user jobs, navigation, major flows, recovery behavior, and boundaries for later design and engineering work. It is not a visual design, route map, data model, provider choice, or implementation claim.
 
-[Product Specification v1.0](PRODUCT_SPEC.md) remains the canonical product source of truth. This draft applies the newer, explicitly approved UX decisions supplied for this phase. Where those decisions alter or clarify Product Spec wording, §22 records the discrepancy and the needed Product Spec reconciliation. Approval of this document alone does not silently edit the Product Spec. Feature specifications and acceptance criteria should follow the approved architecture before implementation.
+[Product Specification v1.3](PRODUCT_SPEC.md) remains the canonical product source of truth. This document is still a draft: only decisions already recorded in the Product Specification or an explicitly approved feature scope are DECIDED. Other device placement, grouping, and interaction descriptions are TARGET proposals for product-owner review. Product Spec v1.1 records Calendar placement and the Calendar/Plan lead questions; v1.2 adds the design/quality foundation; v1.3 records the provider-free Calendar beta boundary and the reconciled authority chain. Approval of this document alone does not silently edit the Product Specification.
 
-**Reading convention:** “Target” describes intended UX. “Beta” identifies a Product Spec beta requirement or an explicit beta behavior in the approved UX decisions. “Later” means the Product Spec explicitly defers it or availability depends on a later client/integration. “Open” marks a choice this document does not settle. None of these labels means the feature already exists.
+**Reading convention:** “Target” describes a proposed intended UX and is not automatically approved. “Beta” identifies a Product Spec beta requirement or an explicitly approved beta scope. “Later” means the Product Spec or an approved feature specification defers it. “Open” marks a choice this document does not settle. None of these labels means the feature currently exists.
 
 ## 2. UX principles
 
@@ -37,7 +38,7 @@ This document translates the approved UX architecture decisions into a coherent 
 | Inbox | What needs clarification, approval, or another decision? | Primary |
 | Tasks & Notes | Find and manage the user's work and information | Primary library area |
 | Search + Ask Orvia | Retrieve information and move into relevant decisions | Primary area |
-| Settings | Control account, preferences, intelligence, privacy, and access | Core product area; secondary navigation |
+| Settings | Control account, preferences, intelligence, privacy, and access | Primary destination; may occupy a quieter utility position |
 | Capture | Get an unstructured thought into Orvia quickly | Global action, not a destination |
 | Projects | See lightweight goal/context groups | Secondary; also in the library |
 | Workspaces | Set or filter context | Compact context control, not a large destination |
@@ -45,17 +46,17 @@ This document translates the approved UX architecture decisions into a coherent 
 | Feedback | Report bugs, confusion, and suggestions | Secondary; part of beta |
 | Help | Find product guidance | Secondary |
 
-Plan and Calendar may share schedule and availability context, but they answer different questions. Calendar is the factual time view; Plan supports decisions about the use of that time. This is the approved target IA, not a statement about current routes. Experimental Finance, Cars, AI Chat, Automation, and Labs do not become core navigation because code exists for them.
+Plan and Calendar may share schedule and availability context, but they answer different questions. Calendar is the factual time view; Plan supports decisions about the use of that time. The product areas and Calendar/Plan responsibilities are DECIDED in the Product Specification. The exact desktop/mobile grouping described below remains TARGET while this document is under review. Experimental Finance, Cars, AI Chat, Automation, and Labs do not become core navigation because code exists for them.
 
 ## 4. Desktop navigation
 
-The compact primary sequence emphasizes **Home → Plan → Calendar**, followed by a prominent global **+ Capture** action and **Inbox**. A **Library** group exposes Tasks & Notes, Projects, and Search without becoming a long module list. A compact workspace/account control makes the active context visible and allows switching or choosing All workspaces. History, Feedback, and Help sit in secondary navigation; Settings is available through account/secondary navigation.
+The TARGET compact sequence emphasizes **Home → Plan → Calendar**, followed by a prominent global **+ Capture** action and **Inbox**. A **Library** group exposes Tasks & Notes, Projects, and Search without becoming a long module list. A compact workspace/account control makes the active context visible and allows switching or choosing All workspaces. History, Feedback, and Help sit in secondary navigation. Settings remains a Product Spec primary destination even if presented in a quieter utility/account position; it must not become undiscoverable secondary content.
 
 Capture is reachable from nearly anywhere. A keyboard shortcut is a target interaction; the exact key, conflict handling, and discoverability need design and technical assessment. Keyboard navigation and a visible focus state are required throughout. A contextual Search entry may also appear in relevant views.
 
 ## 5. Mobile navigation
 
-The primary bottom navigation is **Home | Plan | + Capture | Calendar | Inbox**. Capture is the central global action. Tasks & Notes, Projects, Search, workspace switching, History, Feedback, Help, and Settings remain reachable through understandable secondary navigation; Search may additionally appear in headers or contextual actions. The exact secondary navigation container is an interaction-design decision.
+The TARGET primary bottom navigation is **Home | Plan | + Capture | Calendar | Inbox**. Capture is the central global action. Tasks & Notes, Projects, Search, workspace switching, History, Feedback, and Help remain reachable through understandable secondary navigation; Search may additionally appear in headers or contextual actions. Settings remains a primary product destination reached through a clear utility/account entry on mobile. The exact secondary and utility navigation containers remain OPEN pending approval.
 
 Mobile presents focused single-column flows, detail screens, and sheets or drawers where useful. It must preserve context and fast Capture without compressing a desktop sidebar or timeline into unreadable columns. For example, a desktop Plan can show timeline and Still to place together; mobile can prioritize the timeline and open Still to place separately. Workspace labels must remain visible or readily inspectable without a sidebar.
 
@@ -94,7 +95,7 @@ When planning changes are significant in beta, Orvia presents a proposed result 
 
 Calendar is a separate primary destination for factual time context, future schedule, and conflicts. The target experience includes Day, Week, and Month views; Orvia-created personal events; connected external-calendar events; and visible conflicts. Users can create personal events in Orvia.
 
-Initial external Google/Outlook calendar access is **read-only** under the Product Spec: Orvia uses permitted events as context and does not modify the source calendars. Calendar can show a conflict and offer a path to resolve it without pretending Orvia can change a read-only external event. Plan uses calendar context for decisions. Provider architecture, permission details, refresh behavior, and the first-beta Calendar feature slice remain open pending technical effort assessment (§21).
+The private-beta Calendar/Plan experience is provider-free under Product Spec v1.3 and the Calendar + Plan beta specification. Google read-only context is a gated post-beta follow-up; Outlook is later. When a provider is approved, Orvia uses permitted events as context and does not modify the source calendar. Calendar can show a conflict and offer a path to resolve it without pretending Orvia can change an external event. Exact provider architecture, permission details, refresh behavior, and failure semantics remain OPEN.
 
 ## 10. Time preferences and Protected Time
 
@@ -209,23 +210,27 @@ All major states and controls require screen-reader labels, sufficient contrast,
 | Core loop, Home, Plan, Universal Capture, Inbox, Tasks, Notes, recurring tasks, reminders, Search, lightweight Projects, Workspaces, onboarding, EN/UA, responsive web, light/dark, feedback | Product Spec core beta. Intelligence need not be perfect, but beta must demonstrate Capture → Understand → Prioritize → Act. |
 | Default Assist; significant beta replanning | Explicit beta behavior: proposed for user review, not silently applied. |
 | Auth and privacy | Beta includes Google Sign-In, email/password, account recovery/session handling, privacy/security controls, privacy-safe analytics, Export my data, and Delete account and data. |
-| Calendar | Primary destination in target IA. Exact first-beta Orvia Calendar, Day/Week/Month, read-only external connection, conflict detection, and Plan integration require technical effort assessment under Product Spec §54. |
+| Calendar | Primary destination. The [Calendar + Plan beta specification](CALENDAR_PLAN_BETA_SPEC.md) defines the provider-free first-beta slice; external Google context is gated until after beta and Outlook is later. Local implementation progress does not establish release acceptance. |
 | External/mobile capture | Aim for one convenient channel beyond the standard web flow before beta; channel selection remains open. Voice is target architecture, not a promise for the first beta. |
 | Notifications | Conceptual levels, quiet hours, user controls, productivity email opt-in; desktop/browser where technically viable. Mobile/Telegram channels depend on clients/integrations. |
 | Adaptive intelligence, Protected Time, natural-language retrieval, Focus Mode | Target experience and approved UX behavior. Exact first-beta slices, dependencies, and testable thresholds need feature specifications and feasibility assessment; do not imply the full target exists in beta. |
 | Attachments, custom recurrence, bidirectional calendar sync, native mobile apps, full Telegram if another channel is chosen, team/enterprise PM, full autonomous agents | Explicitly later or outside initial beta under the Product Spec. |
 
-The beta plan must not quietly drop a Product Spec beta requirement because a target experience is difficult. Equally, this UX architecture does not declare unresolved Calendar, channel, or intelligence implementations complete.
+The beta plan must not quietly drop a Product Spec beta requirement because a target experience is difficult. Equally, this UX architecture does not declare Calendar, Plan, channel, or intelligence implementation/release validation complete.
 
 ## 22. Product Spec reconciliation and unresolved decisions
 
-### Direct Product Spec reconciliation requiring an update after approval
+### Reconciliation completed in Product Spec v1.1
 
-**Calendar placement:** Product Spec §4 lists Calendar as secondary and §69 leaves exact placement open. The approved UX decision makes Calendar a separate **primary** area on desktop and mobile. This closes the placement decision at UX level; the canonical Product Spec still needs a versioned update.
+**Calendar placement and lead questions:** Calendar is a separate **primary** area on desktop and mobile. Calendar answers **“What does my time look like?”**; Plan answers **“What am I going to do / how should I use my available time?”** Product Spec v1.1 records both decisions.
+
+### Reconciliation completed in Product Spec v1.3
+
+**Private-beta provider boundary:** Calendar and Plan beta are provider-free. Google read-only context is a gated post-beta follow-up; Outlook is later. Exact future provider, permission, refresh, revocation, and integration architecture remains OPEN.
 
 ### Clarifications consistent with the Product Spec
 
-- **Plan and Calendar lead questions:** Calendar answers the factual time question, **“What does my time look like?”** Plan answers the decision/planning question, **“What am I going to do / how should I use my available time?”** This approved UX clarification should be reflected in the next Product Spec update. It retains the Product Spec's Plan timeline behavior: meetings/events, planned tasks, available/free time, priorities, and Still to place.
+- Plan retains the Product Spec's timeline behavior: meetings/events, planned tasks, available/free time, priorities, and Still to place.
 - The Product Spec's approximately 3–5 daily priorities are **Focus**, not a cap on all planned tasks. User edits are explicit; Orvia does not silently reshuffle the main priorities.
 - The desktop/mobile navigation placement of Tasks & Notes, Search, and Settings changes their presentation, not their availability as product areas.
 - High-confidence Capture creates with Edit/Undo under §§10 and 32. Product Spec §11's Approve all / Review remains relevant where autonomy, confidence, or a consequential action calls for it; it is not a redundant Save gate for a clear capture.
@@ -233,7 +238,7 @@ The beta plan must not quietly drop a Product Spec beta requirement because a ta
 
 ### Product Spec decisions that remain open
 
-The approved UX decisions close **only Calendar placement** from Product Spec §69. The following remain open: which external/mobile capture channel enters beta; exact Priority Engine scoring; confidence thresholds; recurring-task editor UX; notification timing/escalation; Google OAuth account linking; Calendar provider/integration architecture; AI/model/data architecture; monetization/pricing; and final visual system/logo. This document also leaves the first-beta Calendar slice open under §54. None should be inferred from examples in this document.
+The following remain open: which external/mobile capture channel enters beta; exact Priority Engine scoring; confidence thresholds; recurring-task editor UX; notification timing/escalation; Google OAuth account linking; future Calendar provider/integration architecture; AI/model/data architecture; monetization/pricing; final brand identity/logo; and design-token choices explicitly marked open in the design foundation. None should be inferred from examples in this document.
 
 ### Implementation and interaction design questions for later assessment
 
@@ -241,7 +246,7 @@ The approved UX decisions close **only Calendar placement** from Product Spec §
 - What data and UX model distinguish deadline, planned time, duration, time preference, flexible commitment, and Protected Time without excessive task-form clutter?
 - How are conflicts, capacity, travel/buffer time if applicable, and replanning proposals computed and explained reliably? What constitutes a “significant” change?
 - How are multi-object Capture, partial confidence, Undo, duplicate handling, input preservation, and safe URL handling implemented and tested?
-- What is the first-beta Calendar scope, permission model, refresh/error behavior, and read-only provider architecture?
+- What provider, permission, refresh/error, and revocation model should govern the gated post-beta Google read-only capability?
 - What is the first-beta Search/Ask Orvia scope, retrieval quality bar, and confirmation model for suggested actions?
 - Which keyboard shortcut, mobile secondary-navigation pattern, and recurring-task editor serve accessibility and discoverability best?
 - Which notification channels and quiet-hour exceptions are feasible at beta, and how are denied/revoked permissions handled?
@@ -269,7 +274,7 @@ These are architecture-level criteria. Each implemented flow still needs explici
 
 **Capture → Understand → Task/Note/Event → Plan/Home → Start → Complete → Next.** A new user enters an unstructured thought, sees the interpretation and any correction path, finds the resulting object in the relevant context, and receives an appropriate next action. Start moves a task to In progress. Completion feedback is calm and the next recommendation is relevant, or Home honestly says the user is clear. This journey is the activation experience; signup alone is not activation.
 
-For a new account, the preceding onboarding remains short: **Welcome → Basic preferences → Connect calendar (optional, with Skip) → Notifications → Autonomy → First Capture**. The product remains usable without a connected external calendar.
+For a new account, the provider-free private-beta flow remains short: **Welcome → Basic preferences → Notifications → Autonomy → First Capture**. When an approved provider connection exists, the TARGET flow may add **Connect calendar (optional, with Skip)** after Basic preferences. The product remains usable without a connected external calendar.
 
 ### B. Ambiguous capture
 
@@ -293,4 +298,4 @@ For a new account, the preceding onboarding remains short: **Welcome → Basic p
 
 ## 25. Approval and next specification work
 
-This is an English UX architecture draft for review. Approval should trigger the documented change sequence: record the explicit Calendar and Plan wording decisions in the Product Spec/decision log, then write affected feature specifications and testable acceptance criteria, followed by implementation planning. A Ukrainian companion should follow English approval; it is outside this draft batch.
+This remains an English UX architecture draft for broader product-owner review. Calendar placement and Calendar/Plan wording are recorded in Product Spec v1.1; Product Spec v1.3 records the provider-free beta slice from the Calendar + Plan specification. Device-specific grouping and other TARGET proposals in this draft require approval before they become UX authority. Future changes follow Product Specification → approved UX Architecture → feature/technical specification → Design Foundation → screen specification → implementation. A Ukrainian companion remains future documentation work.

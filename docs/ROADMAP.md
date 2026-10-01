@@ -1,5 +1,7 @@
 # Orvia Roadmap
 
+> **HISTORICAL PLANNING DOCUMENT.** It contains pre-v1.3 assumptions and implementation history. It does not define current product priority or scope. Use [Product Specification](product/PRODUCT_SPEC.md), approved decisions in [UX Architecture](product/UX_ARCHITECTURE.md), and the [Master Design System](design/MASTER_DESIGN_SYSTEM.md); reconcile this roadmap only through an explicit planning decision.
+
 ## Planning References
 
 - `docs/PROJECT_OVERVIEW.md`: current MVP, product loops, and future direction.

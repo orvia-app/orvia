@@ -1,11 +1,11 @@
-# ORVIA — СПЕЦИФІКАЦІЯ ПРОДУКТУ v1.0
+# ORVIA — СПЕЦИФІКАЦІЯ ПРОДУКТУ v1.0 (українська супровідна версія)
 
-**Статус:** Єдине джерело правди про продукт (Product Source of Truth)  
-**Дата:** 30 вересня 2026  
-**Етап:** Перед приватною бетою / Product Architecture v2  
+**Статус:** ПОТРЕБУЄ СИНХРОНІЗАЦІЇ з англійською v1.3; не є канонічною<br>
+**Дата:** 30 вересня 2026<br>
+**Етап:** Перед приватною бетою / Product Architecture v2<br>
 **Власник продукту:** Maksym Andriienko
 
-> Цей документ є єдиним джерелом правди про продукт Orvia. Якщо старі продуктові документи або roadmap суперечать цій специфікації, пріоритет має ця специфікація, доки новіша затверджена версія явно її не замінить.
+> Канонічним джерелом правди є [англійська Product Specification v1.3](PRODUCT_SPEC.md). Нижче внесено лише обмежені виправлення щодо Calendar/Plan, provider-free private beta та ієрархії документації. Повну мовну й змістову синхронізацію рішень v1.1–v1.3 ще не виконано. У разі розбіжності не об'єднуйте трактування: використовуйте англійський документ і зафіксуйте потребу перекладу.
 
 ---
 
@@ -89,20 +89,20 @@ Orvia не створює зайву роботу лише для відчутт
 ### Основна навігація
 - Home
 - Plan
+- Calendar
 - Inbox
 - Tasks & Notes
 - Search
 - Settings
 
 ### Другорядні можливості
-- Calendar
 - Projects
 - Workspaces
 - History / Timeline
 - Feedback
 - Help
 
-Calendar може бути доступний через Plan та/або secondary navigation. Точне місце визначається під час UX design.
+Calendar — окрема primary destination поряд із Plan. Calendar відповідає на фактичне питання про час, а Plan допомагає вирішити, як цей час використати.
 
 ### Не є core navigation
 Finance, Cars, AI Chat, Automation і Labs не стають частиною нового core лише через те, що відповідний код уже існує.
@@ -129,10 +129,10 @@ Home відповідає на питання: **Що важливо зараз?
 
 Приклад:
 
-> **What should I do now?**  
-> Prepare presentation  
-> ~45 min · High  
-> Due tomorrow. You have 70 minutes before your next meeting.  
+> **What should I do now?**<br>
+> Prepare presentation<br>
+> ~45 min · High<br>
+> Due tomorrow. You have 70 minutes before your next meeting.<br>
 > **Start** · Other options
 
 Другорядна інформація не повинна конкурувати з головним рішенням.
@@ -155,7 +155,7 @@ Orvia формує приблизно **3–5 головних пріорите�
 
 ## 7. Plan
 
-Plan відповідає: **Як виглядає мій день?**
+Plan відповідає: **Що я збираюся робити / як використати доступний час?**
 
 Основний формат — timeline, який об’єднує:
 - meetings;
@@ -175,6 +175,8 @@ Orvia може запропонувати, куди їх поставити.
 
 ## 8. Calendar
 
+Calendar відповідає: **Як виглядає мій час?**
+
 Orvia має власний Calendar із режимами:
 - Day
 - Week
@@ -186,7 +188,7 @@ Orvia має власний Calendar із режимами:
 - події підключених зовнішніх календарів.
 
 ### Зовнішні календарі — v1
-Google Calendar / Outlook спочатку працюють **тільки для читання**. Orvia використовує їх як контекст і не змінює зовнішній календар.
+Private beta працює без зовнішнього календаря. Google Calendar read-only context — окремий gated етап після beta; Outlook — пізніше. Якщо зовнішній provider буде схвалено, Orvia використовує дозволені події як контекст і не змінює source calendar. Точна provider/permission/refresh/integration architecture залишається **OPEN**.
 
 ### Власні події Orvia
 Користувач може створювати в Orvia власні події: Gym, Dentist, Dinner тощо.
@@ -413,7 +415,7 @@ Orvia Intelligence може аналізувати:
 
 Наприклад:
 
-> **Prepare presentation · ~45 min**  
+> **Prepare presentation · ~45 min**
 > Recommended because it's due tomorrow and you have meetings after 14:00.
 
 Без AI-есе.
@@ -646,7 +648,7 @@ Optional і disable-able.
 
 Наприклад:
 
-> 4 completed · 2 still open  
+> 4 completed · 2 still open
 > Plan tomorrow?
 
 ---
@@ -758,11 +760,11 @@ Beta authentication:
 
 Не робимо довгий tutorial.
 
-Цільовий flow:
+Цільовий flow після появи схваленого provider connection:
 
 **Welcome → Basic preferences → Connect calendar (optional) → Notifications → Autonomy → First Capture**
 
-Для Calendar є чіткий **Skip**.
+Provider-free private beta пропускає крок Connect calendar.
 
 Orvia залишається повноцінно usable без external calendar.
 
@@ -806,7 +808,7 @@ Activation означає, що користувач відчув core value:
 
 Іноді можна запитати:
 
-> Was this recommendation useful?  
+> Was this recommendation useful?
 > 👍 / 👎
 
 Не після кожної дії.
@@ -865,16 +867,7 @@ Intelligence можна поступово посилювати.
 
 ## 54. Calendar Beta Decision
 
-Calendar є частиною product architecture.
-
-Точний scope першої beta build потребує technical effort assessment:
-- Orvia Calendar;
-- Day/Week/Month;
-- external read-only connection;
-- conflict detection;
-- Plan integration.
-
-Не видаляємо Calendar із product vision лише через складність реалізації.
+Private-beta Calendar scope є provider-free: окрема primary Calendar, Orvia Events, Day/Week/Month, planned Task intervals, спільна Calendar/Plan schedule projection, Plan integration і базове conflict/capacity awareness з prerequisites та OPEN рішеннями з [Calendar + Plan beta specification](CALENDAR_PLAN_BETA_SPEC.md). Google read-only context — gated після beta; Outlook — пізніше. External calendar не є beta blocker. Це рішення не означає, що Calendar, Plan або release validation уже завершені.
 
 ---
 
@@ -1061,11 +1054,12 @@ Orvia не будується як:
 Якщо продуктові документи суперечать один одному:
 
 1. **Orvia Product Specification v1.x**
-2. Approved UX/design specifications
-3. Feature-specific requirements / acceptance criteria
-4. Technical architecture / ADRs
-5. Implementation documentation
-6. Historical/archive documentation
+2. Approved UX Architecture decisions
+3. Feature and technical specifications
+4. Design Foundation
+5. Screen specifications
+6. Implementation and implementation evidence
+7. Historical/archive documentation
 
 Старий roadmap не може скасувати цю Product Specification.
 
@@ -1086,6 +1080,8 @@ README самостійно не визначає product strategy.
 Версії:
 - `v1.0` — поточна затверджена product architecture
 - `v1.1` — невеликі продуктові зміни
+- `v1.2` — product/UX/design/quality foundation
+- `v1.3` — source-of-truth і private-beta scope reconciliation
 - `v2.0` — фундаментальна зміна product model
 
 Ведемо короткий Decision Log.
@@ -1095,14 +1091,13 @@ README самостійно не визначає product strategy.
 ## 69. Поточні відкриті рішення
 
 Навмисно не визначені й не повинні вигадуватися implementation agents:
-- точне місце Calendar у navigation;
 - який external/mobile capture channel входить у beta;
 - точні правила Priority Engine scoring;
 - intelligence confidence thresholds;
 - точний UX recurring-task editor;
 - точні notification timing/escalation rules;
 - реалізація Google OAuth account linking;
-- Calendar provider/integration architecture;
+- майбутня Calendar provider/permission/refresh/integration architecture;
 - точна AI/model/data architecture;
 - monetization/pricing;
 - фінальна visual system і logo.
@@ -1111,9 +1106,18 @@ README самостійно не визначає product strategy.
 
 ---
 
-## 70. Decision Log — v1.0
+## 70. Decision Log
 
-**2026-09-30**
+**v1.3 — 2026-10-01**
+- Узгоджено ієрархію Product Specification → approved UX Architecture decisions → feature/technical specifications → Design Foundation → screen specifications → implementation/evidence → historical documentation.
+- Зафіксовано вже схвалений provider-free private-beta Calendar boundary: Google read-only context після beta; Outlook пізніше; ширша provider architecture залишається OPEN.
+
+**v1.1 — 2026-09-30**
+- Calendar — окрема primary destination поряд із Plan.
+- Calendar відповідає «Як виглядає мій час?», а Plan — «Що я збираюся робити / як використати доступний час?».
+
+**v1.0 — 2026-09-30**
+
 - Core продукту: **Capture → Understand → Prioritize → Act**.
 - Home вранці інформаційний, протягом дня decision-oriented.
 - Daily Top 3–5 стабільний, доки користувач не схвалить replanning.

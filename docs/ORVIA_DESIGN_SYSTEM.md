@@ -1,4 +1,6 @@
-# Orvia product design system
+# Orvia implemented design-system snapshot
+
+> **CURRENT IMPLEMENTATION RECORD.** The target design authority is [Master Design System](design/MASTER_DESIGN_SYSTEM.md). This file records the local redesign present on 29 September 2026; it does not override later foundation, screen, or quality specifications.
 
 Direction: a calm working environment, not a dashboard template. Violet identifies action and selection; neutral surfaces hold content. Existing capabilities, storage boundaries and authorization remain intact.
 
