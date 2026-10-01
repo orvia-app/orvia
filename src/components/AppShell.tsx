@@ -51,6 +51,7 @@ type NavItem = {
 const focusNavItems: NavItem[] = [
   { labelKey: "common.dashboard", href: "/app", icon: House },
   { labelKey: "common.today", href: "/app/today", icon: CalendarDays },
+  { labelKey: "common.calendar", href: "/app/calendar", icon: CalendarDays },
 ];
 
 const workflowNavItems: NavItem[] = [
@@ -832,16 +833,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <main className="app-scrollbar min-w-0 flex-1 overflow-y-auto overflow-x-hidden pb-5 lg:pb-0">
           {children}
         </main>
-        <div className="shrink-0 border-t border-line bg-sidebar px-4 pt-2 pb-[calc(.5rem+env(safe-area-inset-bottom))] lg:hidden">
-        <button
-          type="button"
-          onClick={openQuickCapture}
-          className="orvia-button orvia-button-primary min-h-11 w-full"
-          aria-label={t("nav.openQuickCapture")}
-        >
-          <Plus className="h-5 w-5" aria-hidden />
-          {t("nav.quickCapture")}
-        </button>
+        <div className="shrink-0 border-t border-line bg-sidebar px-2 pt-1 pb-[calc(.25rem+env(safe-area-inset-bottom))] lg:hidden">
+          <nav className="grid grid-cols-5 gap-1" aria-label={t("nav.mobileMain")}>
+            {[
+              focusNavItems[0], focusNavItems[1],
+            ].map(({ href, labelKey, icon: Icon }) => <Link key={href} href={href} aria-current={isNavActive(pathname, href) ? "page" : undefined} className="orvia-mobile-tab"><Icon className="h-5 w-5" aria-hidden /><span>{t(labelKey)}</span></Link>)}
+            <button type="button" onClick={openQuickCapture} className="orvia-mobile-tab orvia-mobile-capture" aria-label={t("nav.openQuickCapture")}><Plus className="h-5 w-5" aria-hidden /><span>{t("nav.quickCapture")}</span></button>
+            {[focusNavItems[2], workflowNavItems[0]].map(({ href, labelKey, icon: Icon }) => <Link key={href} href={href} aria-current={isNavActive(pathname, href) ? "page" : undefined} className="orvia-mobile-tab"><Icon className="h-5 w-5" aria-hidden /><span>{t(labelKey)}</span></Link>)}
+          </nav>
         </div>
       </div>
     </div>
