@@ -1,5 +1,7 @@
 # Orvia Product
 
+> **HISTORICAL PRODUCT DOCUMENT.** It does not override [Product Specification v1.3](product/PRODUCT_SPEC.md), approved UX decisions, feature/technical specifications, or the Design Foundation. Preserve it only as product-history evidence.
+
 ## Vision
 
 Orvia, formerly developed under the Personal OS working name, is a future commercial, AI-native life and productivity operating system. It helps users capture, organize, retrieve, and act on personal, work, financial, vehicle, learning, and operational information from one trusted workspace.

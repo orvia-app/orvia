@@ -1,5 +1,7 @@
 # Orvia Project Overview
 
+> **HISTORICAL IMPLEMENTATION OVERVIEW.** Statements such as frontend-only/local-first and the older product-area list are stale. Current authority is [Product Specification](product/PRODUCT_SPEC.md), with implementation evidence in `AGENTS.md` and `REPOSITORY_TRUTH_AUDIT.md`.
+
 ## Related Context
 
 - `docs/MASTER_CONTEXT.md`: compressed project memory for teammates, reviewers, and future AI sessions.

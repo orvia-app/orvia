@@ -1,5 +1,7 @@
 # Orvia QA Checklist
 
+> **LEGACY IMPLEMENTATION CHECKLIST.** Retain for route-level smoke history. Current acceptance authority is [UI Acceptance Criteria](quality/UI_ACCEPTANCE_CRITERIA.md), [Visual QA](quality/VISUAL_QA.md), and [Definition of Done](quality/DEFINITION_OF_DONE.md).
+
 Use this checklist before merging meaningful changes or shipping a preview.
 
 ## Smoke Test
