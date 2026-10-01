@@ -126,6 +126,10 @@ body {
   .orvia-nav { display: flex; align-items: center; gap: .625rem; min-height: 2.5rem; padding: .5rem .75rem; border-radius: .375rem; font-size: .875rem; color: var(--muted); transition: color 140ms, background-color 140ms; }
   .orvia-nav:hover { background: var(--hover); color: var(--foreground); }
   .orvia-nav[aria-current="page"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .orvia-mobile-tab { display: flex; min-width: 0; min-height: 3.2rem; flex-direction: column; align-items: center; justify-content: center; gap: .15rem; border-radius: .4rem; color: var(--muted); font-size: .62rem; font-weight: 500; }
+  .orvia-mobile-tab span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .orvia-mobile-tab[aria-current="page"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .orvia-mobile-capture { color: var(--accent); }
   .orvia-badge { display: inline-flex; max-width: 100%; width: fit-content; align-items: center; border-radius: .25rem; padding: .125rem .5rem; font-size: .75rem; font-weight: 500; line-height: 1.5; overflow-wrap: anywhere; background: var(--subtle); color: var(--muted); }
   .orvia-badge-success { background: var(--success-soft); color: var(--success); }
   .orvia-badge-warning { background: var(--warning-soft); color: var(--warning); }
