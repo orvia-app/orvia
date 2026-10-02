@@ -837,9 +837,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <nav className="grid grid-cols-5 gap-1" aria-label={t("nav.mobileMain")}>
             {[
               focusNavItems[0], focusNavItems[1],
-            ].map(({ href, labelKey, icon: Icon }) => <Link key={href} href={href} aria-current={isNavActive(pathname, href) ? "page" : undefined} className="orvia-mobile-tab"><Icon className="h-5 w-5" aria-hidden /><span>{t(labelKey)}</span></Link>)}
-            <button type="button" onClick={openQuickCapture} className="orvia-mobile-tab orvia-mobile-capture" aria-label={t("nav.openQuickCapture")}><Plus className="h-5 w-5" aria-hidden /><span>{t("nav.quickCapture")}</span></button>
-            {[focusNavItems[2], workflowNavItems[0]].map(({ href, labelKey, icon: Icon }) => <Link key={href} href={href} aria-current={isNavActive(pathname, href) ? "page" : undefined} className="orvia-mobile-tab"><Icon className="h-5 w-5" aria-hidden /><span>{t(labelKey)}</span></Link>)}
+            ].map(({ href, labelKey, icon: Icon }, index) => <Link key={href} href={href} aria-label={t(labelKey)} aria-current={isNavActive(pathname, href) ? "page" : undefined} className="orvia-mobile-tab"><Icon className="h-5 w-5" aria-hidden /><span aria-hidden>{t(index === 0 ? "nav.mobileDashboard" : labelKey)}</span></Link>)}
+            <button type="button" onClick={openQuickCapture} className="orvia-mobile-tab orvia-mobile-capture" aria-label={t("nav.openQuickCapture")}><Plus className="h-5 w-5" aria-hidden /><span aria-hidden>{t("nav.mobileCapture")}</span></button>
+            {[focusNavItems[2], workflowNavItems[0]].map(({ href, labelKey, icon: Icon }) => <Link key={href} href={href} aria-label={t(labelKey)} aria-current={isNavActive(pathname, href) ? "page" : undefined} className="orvia-mobile-tab"><Icon className="h-5 w-5" aria-hidden /><span aria-hidden>{t(labelKey)}</span></Link>)}
           </nav>
         </div>
       </div>

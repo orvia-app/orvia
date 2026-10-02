@@ -17,20 +17,35 @@ function localParts(instant) {
     hourCycle: 'h23' }).format(new Date(instant));
 }
 
-test('seed payloads represent the requested Kyiv wall times and temporal variants', () => {
-  assert.equal(localParts(events[0].startAt), '01/10/2026, 09:30');
-  assert.equal(localParts(events[0].endAt), '01/10/2026, 10:15');
-  assert.equal(localParts(events[1].startAt), '01/10/2026, 13:00');
-  assert.equal(localParts(events[1].endAt), '01/10/2026, 14:00');
-  assert.equal(events[1].busy, false);
-  assert.deepEqual([events[2].kind, events[2].startDate, events[2].endDateExclusive],
-    ['all-day', '2026-10-02', '2026-10-03']);
-  assert.equal(localParts(events[3].startAt), '03/10/2026, 22:30');
-  assert.equal(localParts(events[3].endAt), '04/10/2026, 00:30');
-  assert.equal(localParts(tasks[0].plannedStart), '01/10/2026, 10:30');
-  assert.equal(localParts(tasks[1].plannedStart), '02/10/2026, 14:00');
-  assert.deepEqual(tasks.map((item) => [item.estimatedDurationMinutes, item.planDay]),
-    [[45, '2026-10-01'], [90, '2026-10-02']]);
+test('fixture represents the requested week, workspace identities and temporal variants', () => {
+  assert.equal(events.length, 24);
+  assert.equal(tasks.length, 2);
+  assert.deepEqual(new Set([...events, ...tasks].map((item) => item.workspaceId)),
+    new Set(['Work', 'Personal', 'Side Project']));
+
+  const focus = events.find((item) => item.fixtureId === 'focus-time');
+  assert.equal(localParts(focus.startAt), '29/09/2026, 09:30');
+  assert.equal(localParts(focus.endAt), '29/09/2026, 11:00');
+  assert.equal(focus.busy, false);
+
+  const allDay = events.find((item) => item.fixtureId === 'kyiv-tech-meetup');
+  assert.deepEqual([allDay.kind, allDay.startDate, allDay.endDateExclusive, allDay.workspaceId],
+    ['all-day', '2026-10-01', '2026-10-02', 'Personal']);
+
+  const crossMidnight = events.find((item) => item.fixtureId === 'release-monitoring');
+  assert.equal(localParts(crossMidnight.startAt), '02/10/2026, 22:30');
+  assert.equal(localParts(crossMidnight.endAt), '03/10/2026, 00:30');
+
+  const overlap = events.filter((item) => ['deep-work-friday', 'marketing-sync'].includes(item.fixtureId));
+  assert.equal(overlap.length, 2);
+  assert.equal(Date.parse(overlap[0].startAt) < Date.parse(overlap[1].endAt) &&
+    Date.parse(overlap[1].startAt) < Date.parse(overlap[0].endAt), true);
+
+  assert.deepEqual(tasks.map((item) => [item.title, localParts(item.plannedStart),
+    item.estimatedDurationMinutes, item.planDay, item.workspaceId]), [
+    ['Review analytics', '02/10/2026, 13:30', 45, '2026-10-02', 'Work'],
+    ['Finish landing copy', '02/10/2026, 15:30', 60, '2026-10-02', 'Side Project'],
+  ]);
 });
 
 test('CLI refuses remote origins and seed without explicit test-backend acknowledgment', () => {
@@ -80,14 +95,16 @@ test('seed records returned IDs; cleanup deletes only those IDs through owned AP
   };
   try {
     const seeded = await run(options(manifest, 'seed'), async () => token, transport);
-    assert.deepEqual(seeded, { events: 4, tasks: 2 });
+    assert.deepEqual(seeded, { events: 24, tasks: 2 });
     const saved = JSON.parse(await readFile(manifest, 'utf8'));
     assert.equal(saved.userId, userId);
     assert.equal(saved.state, 'complete');
-    assert.equal(saved.events.length, 4);
+    assert.equal(saved.events.length, 24);
     assert.equal(saved.tasks.length, 2);
     assert.equal(calls.filter((call) => call.method === 'PATCH').length, 2);
     assert.equal(calls.every((call) => call.authorization === `Bearer ${token}`), true);
+    assert.equal(calls.filter((call) => call.path === '/api/events' && call.method === 'POST')
+      .every((call) => !Object.hasOwn(call.body, 'workspaceId') && !Object.hasOwn(call.body, 'fixtureId')), true);
     const allIds = [...saved.events, ...saved.tasks].map((row) => row.id).sort();
     await run(options(manifest, 'cleanup'), async () => token, transport);
     assert.deepEqual(calls.filter((call) => call.method === 'DELETE')
