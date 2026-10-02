@@ -3,29 +3,12 @@
 import { readFile, writeFile, rename, unlink, open, lstat } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
+import { events, tasks } from './calendar-visual-qa-data.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const DEFAULT_MANIFEST = resolve(ROOT, '.calendar-visual-qa.seed');
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const ZONE = 'Europe/Kyiv';
-
-export const events = [
-  { kind: 'timed', title: 'Product sync', timezone: ZONE, busy: true,
-    startAt: '2026-10-01T06:30:00.000Z', endAt: '2026-10-01T07:15:00.000Z' },
-  { kind: 'timed', title: 'Focus / optional', timezone: ZONE, busy: false,
-    startAt: '2026-10-01T10:00:00.000Z', endAt: '2026-10-01T11:00:00.000Z' },
-  { kind: 'all-day', title: 'Design review', timezone: ZONE, busy: true,
-    startDate: '2026-10-02', endDateExclusive: '2026-10-03' },
-  { kind: 'timed', title: 'Deep work block', timezone: ZONE, busy: true,
-    startAt: '2026-10-03T19:30:00.000Z', endAt: '2026-10-03T21:30:00.000Z' },
-];
-
-export const tasks = [
-  { title: 'Finish onboarding flow', plannedStart: '2026-10-01T07:30:00.000Z',
-    estimatedDurationMinutes: 45, planDay: '2026-10-01' },
-  { title: 'Review release checklist', plannedStart: '2026-10-02T11:00:00.000Z',
-    estimatedDurationMinutes: 90, planDay: '2026-10-02' },
-];
+export { events, tasks };
 
 function usage() {
   return 'Usage: node scripts/dev/calendar-visual-qa.mjs seed|cleanup --origin http://localhost:3001 --user-id UUID --token-file /private/tmp/token-file [--manifest /path/to/file.seed] [--confirm-test-backend for seed]';
@@ -139,7 +122,16 @@ export async function run(options, fetchToken, transport = fetch) {
     try { await handle.writeFile(`${JSON.stringify(manifest, null, 2)}\n`); }
     finally { await handle.close(); }
     for (const event of events) {
-      const result = await request(options, token, transport, 'POST', '/api/events', event);
+      // Workspace identity belongs to the in-memory visual fixture. The production Event API
+      // intentionally rejects client-selected workspace fields.
+      const eventPayload = event.kind === 'timed' ? {
+        kind: event.kind, title: event.title, timezone: event.timezone, busy: event.busy,
+        startAt: event.startAt, endAt: event.endAt,
+      } : {
+        kind: event.kind, title: event.title, timezone: event.timezone, busy: event.busy,
+        startDate: event.startDate, endDateExclusive: event.endDateExclusive,
+      };
+      const result = await request(options, token, transport, 'POST', '/api/events', eventPayload);
       const id = assertOwnedRow(result.event, options, event.title);
       manifest.events.push({ id, title: event.title });
       await saveManifest(options.manifest, manifest);

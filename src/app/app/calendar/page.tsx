@@ -14,6 +14,22 @@ import { addDays, dateInZone, moveView, sourceNotice, viewDates, type CalendarVi
 import "./calendar.css";
 
 type LoadState = { status: "idle" } | { status: "error"; key: string } | { status: "loaded"; key: string; projection: ScheduleProjectionResult };
+type CalendarMotionIntent = "initial" | "view" | "previous" | "next" | "selection";
+type CalendarVisualQaFixture = typeof import("@/dev/calendar-visual-qa-fixture");
+
+function CalendarLoadingState({ label }: { label: string }) {
+  return (
+    <div className="calendar-loading-state" role="status">
+      <p>{label}</p>
+      <div className="calendar-loading-head" aria-hidden>
+        {Array.from({ length: 7 }, (_, index) => <span key={index} />)}
+      </div>
+      <div className="calendar-loading-grid" aria-hidden>
+        {Array.from({ length: 6 }, (_, index) => <span key={index} />)}
+      </div>
+    </div>
+  );
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -61,21 +77,46 @@ export default function CalendarPage() {
   const [now, setNow] = useState<Date | null>(null);
   const [load, setLoad] = useState<LoadState>({ status: "idle" });
   const [retry, setRetry] = useState(0);
+  const [motion, setMotion] = useState<{ intent: CalendarMotionIntent; revision: number }>({ intent: "initial", revision: 0 });
+  const [visualQaFixture, setVisualQaFixture] = useState<CalendarVisualQaFixture | null>(null);
 
   useEffect(() => {
+    const useVisualQaFixture = process.env.NODE_ENV === "development" &&
+      new URLSearchParams(window.location.search).get("calendarQa") === "rich";
+    let cancelled = false;
     const initialize = window.setTimeout(() => {
+      if (useVisualQaFixture) {
+        void import("@/dev/calendar-visual-qa-fixture").then((fixture) => {
+          if (cancelled) return;
+          setVisualQaFixture(fixture);
+          setNow(new Date(fixture.calendarVisualQaNow));
+          setZoneInput(fixture.calendarVisualQaZone);
+          setZone(fixture.calendarVisualQaZone);
+          setDate(fixture.calendarVisualQaDate);
+        });
+        return;
+      }
       setNow(new Date());
       setZoneInput(Intl.DateTimeFormat().resolvedOptions().timeZone || "");
     }, 0);
-    const timer = window.setInterval(() => setNow(new Date()), 60_000);
-    return () => { window.clearTimeout(initialize); window.clearInterval(timer); };
+    const timer = useVisualQaFixture ? null : window.setInterval(() => setNow(new Date()), 60_000);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(initialize);
+      if (timer !== null) window.clearInterval(timer);
+    };
   }, []);
 
   const dates = useMemo(() => date ? viewDates(date, view) : [], [date, view]);
-  const requestKey = zone && date ? `${zone}:${dates[0]}:${dates[dates.length - 1]}:${retry}:${session?.user.id ?? ""}` : "";
-  const activeLoad = load.status !== "idle" && load.key === requestKey ? load : { status: "loading" as const };
+  const sessionUserId = session?.user.id;
+  const requestKey = zone && date ? `${zone}:${dates[0]}:${dates[dates.length - 1]}:${retry}:${sessionUserId ?? ""}` : "";
+  const visualQaProjection = useMemo(() => visualQaFixture && sessionUserId ?
+    visualQaFixture.createCalendarVisualQaProjection(sessionUserId) : null, [sessionUserId, visualQaFixture]);
+  const activeLoad = visualQaProjection ?
+    { status: "loaded" as const, key: `visual-qa:${sessionUserId}`, projection: visualQaProjection } :
+    load.status !== "idle" && load.key === requestKey ? load : { status: "loading" as const };
   useEffect(() => {
-    if (!session?.access_token || !zone || !date || !dates.length) return;
+    if (visualQaFixture || !session?.access_token || !zone || !date || !dates.length) return;
     const controller = new AbortController();
     const first = dates[0];
     const lastExclusive = addDays(dates[dates.length - 1], 1);
@@ -98,7 +139,7 @@ export default function CalendarPage() {
       }
     })();
     return () => controller.abort();
-  }, [session?.access_token, session?.user.id, zone, date, dates, requestKey]);
+  }, [session?.access_token, session?.user.id, zone, date, dates, requestKey, visualQaFixture]);
 
   function applyZone() {
     const candidate = zoneInput.trim();
@@ -108,13 +149,32 @@ export default function CalendarPage() {
     setZoneEditorOpen(false);
   }
 
+  function transition(intent: CalendarMotionIntent, update: () => void) {
+    setMotion((current) => ({ intent, revision: current.revision + 1 }));
+    update();
+  }
+
+  function selectDate(nextDate: LocalDate) {
+    transition("selection", () => setDate(nextDate));
+  }
+
+  function openDay(nextDate: LocalDate) {
+    transition("view", () => {
+      setDate(nextDate);
+      setView("day");
+    });
+  }
+
   const source = activeLoad.status === "loaded" ? sourceNotice(activeLoad.projection) : null;
   const allEmpty = activeLoad.status === "loaded" && activeLoad.projection.items.length === 0;
   return (
     <AppShell>
       <Page className="calendar-page">
         <header className="calendar-page-heading">
-          <h1>{t("calendar.title")}</h1>
+          <div>
+            <h1>{t("calendar.title")}</h1>
+            <p>{t("calendar.description")}</p>
+          </div>
           {zone && (
             <button
               type="button"
@@ -125,7 +185,7 @@ export default function CalendarPage() {
               onClick={() => setZoneEditorOpen((open) => !open)}
             >
               <Globe2 className="h-3.5 w-3.5" aria-hidden />
-              <span>{zone}</span>
+              <span><span className="calendar-timezone-prefix">{t("calendar.showingZone")}</span>{zone}</span>
               <ChevronDown className="h-3.5 w-3.5" aria-hidden />
             </button>
           )}
@@ -134,17 +194,15 @@ export default function CalendarPage() {
         <section className="calendar-frame" aria-label={t("calendar.title")}>
           {zone && date && (
             <div className="calendar-toolbar">
-              <div className="calendar-toolbar-navigation">
-                <div className="calendar-arrow-group">
-                  <button type="button" aria-label={t("calendar.previous")} onClick={() => setDate(moveView(date, view, -1))}><ChevronLeft className="h-4 w-4" aria-hidden /></button>
-                  <button type="button" aria-label={t("calendar.next")} onClick={() => setDate(moveView(date, view, 1))}><ChevronRight className="h-4 w-4" aria-hidden /></button>
-                </div>
-                <button type="button" className="calendar-today-button" onClick={() => now && setDate(dateInZone(now, zone))}>{t("calendar.today")}</button>
-              </div>
               <h2 className="calendar-range-title" aria-live="polite">{formatRange(date, dates, view, locale)}</h2>
+              <div className="calendar-toolbar-navigation">
+                <button type="button" className="calendar-period-arrow" aria-label={t("calendar.previous")} onClick={() => transition("previous", () => setDate(moveView(date, view, -1)))}><ChevronLeft className="h-4 w-4" aria-hidden /></button>
+                <button type="button" className="calendar-today-button" onClick={() => now && transition("selection", () => setDate(dateInZone(now, zone)))}>{t("calendar.today")}</button>
+                <button type="button" className="calendar-period-arrow" aria-label={t("calendar.next")} onClick={() => transition("next", () => setDate(moveView(date, view, 1)))}><ChevronRight className="h-4 w-4" aria-hidden /></button>
+              </div>
               <div className="calendar-view-switch" role="group" aria-label={t("calendar.view")}>
                 {(["day", "week", "month"] as const).map((option) => (
-                  <button key={option} type="button" aria-pressed={view === option} onClick={() => setView(option)}>{t(`calendar.${option}`)}</button>
+                  <button key={option} type="button" aria-pressed={view === option} onClick={() => transition("view", () => setView(option))}>{t(`calendar.${option}`)}</button>
                 ))}
               </div>
             </div>
@@ -163,7 +221,7 @@ export default function CalendarPage() {
             </form>
           )}
 
-          {zone && activeLoad.status === "loading" && <div className="calendar-state-panel" role="status">{t("calendar.loading")}</div>}
+          {zone && activeLoad.status === "loading" && <CalendarLoadingState label={t("calendar.loading")} />}
           {zone && activeLoad.status === "error" && (
             <div className="calendar-state-panel calendar-state-error" role="alert">
               <p>{t("calendar.unavailable")}</p>
@@ -172,19 +230,28 @@ export default function CalendarPage() {
           )}
           {zone && activeLoad.status === "loaded" && date && now && (
             <>
-              {source && source !== "unavailable" && (
-                <details className="calendar-source-status" data-level={source}>
-                  <summary><Info className="h-3.5 w-3.5" aria-hidden />{source === "incomplete" ? t("calendar.sourcesPartial") : t("calendar.sourcesUnverified")}</summary>
-                  <p>{t("calendar.sourceDetail")}: {(["events", "tasks"] as const).map((key) => `${t(key === "events" ? "calendar.events" : "calendar.tasks")}: ${t(`calendar.state.${activeLoad.projection.sources[key].state}`)}`).join(" · ")}</p>
-                </details>
-              )}
               {source === "unavailable" ? (
-                <div className="calendar-state-panel calendar-state-error" role="alert">{t("calendar.unavailable")}</div>
+                <div className="calendar-state-panel calendar-state-error" role="alert">
+                  <p>{t("calendar.unavailable")}</p>
+                  <Button variant="secondary" onClick={() => setRetry((value) => value + 1)}><RotateCw className="h-4 w-4" aria-hidden />{t("calendar.retry")}</Button>
+                </div>
               ) : (
-                <>
-                  {allEmpty && <div className="calendar-empty-context" role="status">{t("calendar.emptyRange")}</div>}
-                  <CalendarSurface date={date} dates={dates} locale={locale} now={now} onSelectDate={setDate} onOpenDay={(day) => { setDate(day); setView("day"); }} projection={activeLoad.projection} view={view} zone={zone} />
-                </>
+                <div className="calendar-canvas" data-empty={allEmpty} data-view={view}>
+                  {(source || allEmpty) && (
+                    <div className="calendar-context-rail">
+                      {allEmpty && <p className="calendar-empty-context" role="status">{t("calendar.emptyRange")}</p>}
+                      {source && (
+                        <details className="calendar-source-status" data-level={source}>
+                          <summary><Info className="h-3.5 w-3.5" aria-hidden />{source === "incomplete" ? t("calendar.sourcesPartial") : t("calendar.sourcesUnverified")}</summary>
+                          <p>{t("calendar.sourceDetail")}: {(["events", "tasks"] as const).map((key) => `${t(key === "events" ? "calendar.events" : "calendar.tasks")}: ${t(`calendar.state.${activeLoad.projection.sources[key].state}`)}`).join(" · ")}</p>
+                        </details>
+                      )}
+                    </div>
+                  )}
+                  <div key={`${view}:${dates[0]}:${motion.revision}`} className="calendar-transition" data-motion={motion.intent}>
+                    <CalendarSurface date={date} dates={dates} locale={locale} now={now} onSelectDate={selectDate} onOpenDay={openDay} projection={activeLoad.projection} view={view} zone={zone} />
+                  </div>
+                </div>
               )}
             </>
           )}

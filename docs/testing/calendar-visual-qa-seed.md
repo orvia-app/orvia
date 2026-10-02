@@ -1,14 +1,58 @@
-# Disposable Calendar visual QA seed
+# Calendar visual QA fixture
 
-This local script is for the October 1–4, 2026 Calendar visual review. It does not run with the app, add a UI, create schema, or use service-role credentials. It calls the existing authenticated Event and Task APIs. **Do not run it against a production-backed local server.** Check the local server's Supabase configuration and confirm it points to a disposable test project before using the seed flag.
+The rich Calendar fixture is a development-only, in-memory schedule projection for visual review around Friday, October 2, 2026. It does not create database records, add schema, weaken authentication, or run in production builds. Production builds replace the development module with a fail-closed guard so the fixture data is not emitted. It uses the same `ScheduleProjectionResult`, Event, planned Task, overlap, timezone, and Calendar rendering contracts as the normal schedule API.
 
-## Before seeding
+## Activate the visual fixture
 
-1. Run the app locally and sign in as the test user whose Calendar Maksym will review. Note the exact local origin (for example, `http://localhost:3001`) and that user's Supabase UUID.
-2. Obtain that session's current Supabase **access token** from the local browser's developer tools. Keep it private; do not paste it into a command argument, chat, source file, or tracked file. Save it in a temporary file **outside the repository**, readable only by your OS user (`chmod 600`). The script reads it but never writes it to the manifest. The token's JWT subject must equal `--user-id`, and the API validates it with Supabase before any write.
-3. Confirm the local server is connected to the intended disposable test database. `--confirm-test-backend` records this deliberate check; a localhost URL alone does not prove the database is nonproduction.
+1. Run the app locally on port 3001 and sign in with a local test account.
+2. Open:
 
-From the repository root, run (replace placeholders with the local origin, test-user UUID, and private token-file path):
+```text
+http://localhost:3001/app/calendar?calendarQa=rich
+```
+
+The normal application auth gate remains active. In development, the query selects the in-memory fixture for the authenticated user's Calendar. It fixes the QA date to October 2, the planning timezone to `Europe/Kyiv`, and the current-time reference to 14:15 Kyiv so screenshots remain deterministic. Removing the query returns to normal authenticated API data.
+
+Fixture records are defined once in `scripts/dev/calendar-visual-qa-data.mjs`. `src/dev/calendar-visual-qa-fixture.ts` validates and projects them through the existing schedule domain.
+
+## Fixture records
+
+| Day | Type | Title | Europe/Kyiv time | Workspace | State |
+| --- | --- | --- | --- | --- | --- |
+| Mon Sep 28 | Event | Design sync | 09:00–10:00 | Work | Busy |
+| Mon Sep 28 | Event | Prepare release | 11:30–12:30 | Work | Busy |
+| Mon Sep 28 | Event | Build prototype | 14:00–15:30 | Work | Busy |
+| Mon Sep 28 | Event | Gym | 17:00–18:00 | Personal | Busy |
+| Tue Sep 29 | Event | Focus time | 09:30–11:00 | Work | Free |
+| Tue Sep 29 | Event | Lunch | 12:00–13:00 | Personal | Busy |
+| Tue Sep 29 | Event | Dinner with friends | 18:00–19:30 | Personal | Busy |
+| Wed Sep 30 | Event | Customer interview | 10:00–11:00 | Work | Busy |
+| Wed Sep 30 | Event | Design review | 11:30–13:00 | Work | Busy |
+| Wed Sep 30 | Event | Deep work | 14:00–17:00 | Side Project | Busy |
+| Thu Oct 1 | Event | Kyiv Tech Meetup | All day | Personal | Busy |
+| Thu Oct 1 | Event | Product planning | 09:00–10:30 | Work | Busy |
+| Thu Oct 1 | Event | Cross-team review | 11:00–12:00 | Work | Busy |
+| Fri Oct 2 | Event | Team planning | 09:00–10:00 | Work | Busy |
+| Fri Oct 2 | Event | Write docs | 11:00–12:00 | Work | Busy |
+| Fri Oct 2 | Event | Product sync | 12:30–13:30 | Work | Busy |
+| Fri Oct 2 | Task | Review analytics | 13:30–14:15 | Work | Planned, 45m |
+| Fri Oct 2 | Event | Deep work | 14:15–15:30 | Side Project | Busy, overlap fixture |
+| Fri Oct 2 | Event | Marketing sync | 14:30–15:30 | Work | Busy, overlap fixture |
+| Fri Oct 2 | Task | Finish landing copy | 15:30–16:30 | Side Project | Planned, 60m |
+| Fri Oct 2 | Event | Call with parents | 16:00–17:00 | Personal | Busy |
+| Fri Oct 2 | Event | Plan next week | 17:00–18:00 | Side Project | Busy |
+| Fri Oct 2–Sat Oct 3 | Event | Release monitoring | 22:30–00:30 | Work | Busy, one cross-midnight interval |
+| Sat Oct 3 | Event | Call with parents | 10:00–11:00 | Personal | Busy |
+| Sat Oct 3 | Event | Side Project review | 14:00–15:30 | Side Project | Busy |
+| Sun Oct 4 | Event | Family day | 11:00–15:00 | Personal | Busy |
+
+The second Friday Deep work block is intentional: together with Marketing sync it exercises Event-to-Event overlap placement while the Wednesday block exercises the requested long-duration treatment.
+
+## Optional authenticated API seed and cleanup
+
+`scripts/dev/calendar-visual-qa.mjs` remains available for disposable test-database checks. Do not run it against a production-backed server. The Event API intentionally does not accept client-selected workspace identity, so this API mode is not the authoritative workspace-identity visual fixture.
+
+Before using API mode, confirm the local server points to a disposable test database, save the signed-in test user's access token outside the repository in a mode-600 file, and use that token's exact user UUID:
 
 ```sh
 node scripts/dev/calendar-visual-qa.mjs seed \
@@ -18,20 +62,9 @@ node scripts/dev/calendar-visual-qa.mjs seed \
   --confirm-test-backend
 ```
 
-The script creates four Events and two Tasks through the normal APIs. Timed values are sent as UTC instants representing the requested Europe/Kyiv wall times; the all-day Event uses date-only bounds with an exclusive end date. The Task scheduling route sets `plannedStart`, `estimatedDurationMinutes`, and `planDay` after creation. The resulting IDs are saved in the local, Git-ignored `.calendar-visual-qa.seed` manifest. A second seed run stops while that manifest exists. If seeding fails partway through, keep the manifest and run cleanup; it contains IDs returned up to the failure.
+The script sends only fields accepted by the existing Event and Task APIs. It writes returned IDs to the Git-ignored `.calendar-visual-qa.seed` manifest and refuses another seed while that manifest exists.
 
-| Type | Title | Europe/Kyiv time | Busy / duration |
-| --- | --- | --- | --- |
-| Event | Product sync | Oct 1, 09:30–10:15 | Busy |
-| Event | Focus / optional | Oct 1, 13:00–14:00 | Free |
-| Task | Finish onboarding flow | Oct 1, 10:30 | 45 min, plan day Oct 1 |
-| Task | Review release checklist | Oct 2, 14:00 | 90 min, plan day Oct 2 |
-| Event | Design review | All day Oct 2 | Busy |
-| Event | Deep work block | Oct 3, 22:30–Oct 4, 00:30 | Busy |
-
-## Cleanup
-
-Use the **same origin and user ID**, with a current access token for that same user:
+Cleanup uses only those recorded IDs and the same authenticated owner boundary:
 
 ```sh
 node scripts/dev/calendar-visual-qa.mjs cleanup \
@@ -40,6 +73,4 @@ node scripts/dev/calendar-visual-qa.mjs cleanup \
   --token-file /private/tmp/orvia-calendar-qa-token
 ```
 
-Cleanup reads only IDs from the manifest, checks each available record's owner and title through the authenticated APIs, and calls the existing per-record DELETE routes. These are the product's soft-delete/lifecycle transitions: records leave the active Calendar, but this is **not** a physical database purge. Successful deletions are removed from the manifest one at a time, so cleanup can resume after an interruption; the manifest is deleted when all entries are handled. No table-wide delete is used. Remove the temporary token file when finished.
-
-If a create request reaches the server but its response is lost before the returned ID can be saved, that record cannot be identified deterministically by this manifest. Stop and inspect that test user's records manually; do not use a broad delete or guess from a matching title. Do not delete the manifest until cleanup finishes.
+Cleanup checks owner and title before each per-record lifecycle deletion. It never uses a table-wide delete. If a create response is lost before its returned ID reaches the manifest, stop and inspect that test user's records manually rather than guessing or broad-deleting.
