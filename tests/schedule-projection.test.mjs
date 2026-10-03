@@ -13,12 +13,12 @@ function load(path, dependencies = {}) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
     fileName: filename,
   });
-  const module = { exports: {} };
+  const loaded = { exports: {} };
   vm.runInNewContext(compiled.outputText, {
-    Date, Intl, RangeError, TypeError, exports: module.exports, module,
+    Date, Intl, RangeError, TypeError, exports: loaded.exports, module: loaded,
     require: (id) => dependencies[id] ?? {},
   });
-  return module.exports;
+  return loaded.exports;
 }
 const domain = load("src/core/schedule/domain.ts");
 const { localDateRange, projectSchedule, startOfLocalDate } =
@@ -34,13 +34,17 @@ const snapshot = (records = [], overrides = {}) => ({
   ownerId: "owner-a", records, coverage: range(), state: "complete",
   observedAt: "2026-09-30T08:00:00.000Z", ...overrides,
 });
-const task = (overrides = {}) => ({
+const task = (overrides = {}, wrapper = {}) => ({
   ownerId: "owner-a", intelligenceEligible: true,
   task: {
     id: "t1", title: "Work", status: "todo", workspaceId: "work",
     plannedStart: "2026-09-30T09:30:00.000Z", estimatedDurationMinutes: 60,
     planDay: "2026-09-29", ...overrides,
-  },
+  }, ...wrapper,
+});
+const block = (id, start, end, overrides = {}) => ({
+  id, ownerId: "owner-a", taskId: "t1", version: 1,
+  interval: range(start, end), ...overrides,
 });
 const event = (overrides = {}, wrapper = {}) => ({
   lifecycleStatus: "active", intelligenceEligible: false,
@@ -67,6 +71,70 @@ test("scheduled Task becomes a minimal busy item and preserves independent plan 
     planDay: "2026-09-29", sourceState: "complete", observedAt: "2026-09-30T08:00:00.000Z",
   });
   assert.equal("dueDate" in result.items[0], false);
+});
+
+test("multiple persisted blocks project as distinct items under one Task identity", () => {
+  const result = project([task({ plannedStart: "2026-09-30T09:00:00.000Z" }, {
+    hasPlanBlocks: true,
+    planBlocks: [
+      block("b1", "2026-09-30T09:00:00.000Z", "2026-09-30T10:00:00.000Z"),
+      block("b2", "2026-09-30T10:30:00.000Z", "2026-09-30T11:30:00.000Z"),
+    ],
+  })]);
+  assert.deepEqual(plain(result.items.map((item) => [item.key, item.sourceId, item.blockId])), [
+    ["task-block:b1", "t1", "b1"],
+    ["task-block:b2", "t1", "b2"],
+  ]);
+  assert.equal(result.items.some((item) => item.key === "task:t1"), false);
+});
+
+test("persisted blocks are authoritative over the legacy Task interval", () => {
+  const result = project([task({}, {
+    hasPlanBlocks: true,
+    planBlocks: [block("b1", "2026-09-30T10:00:00.000Z", "2026-09-30T11:00:00.000Z")],
+  })]);
+  assert.equal(result.items.length, 1);
+  assert.equal(result.items[0].key, "task-block:b1");
+  assert.deepEqual(plain(result.items[0].interval),
+    range("2026-09-30T10:00:00.000Z", "2026-09-30T11:00:00.000Z"));
+});
+
+test("one Task can project blocks on different local days", () => {
+  const selected = range("2026-09-30T00:00:00.000Z", "2026-10-02T00:00:00.000Z");
+  const result = project([task({}, {
+    hasPlanBlocks: true,
+    planBlocks: [
+      block("day-one", "2026-09-30T09:00:00.000Z", "2026-09-30T10:00:00.000Z"),
+      block("day-two", "2026-10-01T15:00:00.000Z", "2026-10-01T17:00:00.000Z"),
+    ],
+  })], [], { range: selected }, {
+    tasks: { coverage: selected }, events: { coverage: selected },
+  });
+  assert.deepEqual(plain(result.items.map((item) => item.key)),
+    ["task-block:day-one", "task-block:day-two"]);
+});
+
+test("explicit remaining demand can coexist with blocks without estimating a remainder", () => {
+  const result = project([task({ planDay: "2026-09-30" }, {
+    hasPlanBlocks: true,
+    hasUnplacedDemand: true,
+    planBlocks: [block("b1", "2026-09-30T09:00:00.000Z", "2026-09-30T10:00:00.000Z")],
+  })]);
+  assert.equal(result.items[0].key, "task-block:b1");
+  assert.equal(result.unplacedTasks[0].key, "task:t1");
+});
+
+test("duplicate block identity and block ownership mismatches fail closed", () => {
+  assert.throws(() => project([task({}, {
+    planBlocks: [
+      block("duplicate", "2026-09-30T09:00:00.000Z", "2026-09-30T10:00:00.000Z"),
+      block("duplicate", "2026-09-30T10:00:00.000Z", "2026-09-30T11:00:00.000Z"),
+    ],
+  })]), /Duplicate .*identity/);
+  assert.throws(() => project([task({}, {
+    planBlocks: [block("foreign", "2026-09-30T09:00:00.000Z",
+      "2026-09-30T10:00:00.000Z", { ownerId: "owner-b" })],
+  })]), /ownership mismatch/);
 });
 
 test("deadline, plan day, start alone, and invalid duration never occupy time", () => {

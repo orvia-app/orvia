@@ -124,6 +124,59 @@ if (/grant\s+[^;]*\bon\s+(?:table\s+)?public\.orvia_events\s+to\s+(?:public|anon
   fail("Events grants expose public or anon access.");
 }
 
+const temporalFoundationMigrationPath =
+  "supabase/migrations/202610020001_temporal_scheduling_foundation.sql";
+
+verifyRlsPolicySet({
+  migrationPath: temporalFoundationMigrationPath,
+  table: "planning_preferences",
+  selectPolicy: "create policy planning_preferences_select_own on public.planning_preferences",
+  insertPolicy: "create policy planning_preferences_insert_own on public.planning_preferences",
+  updatePolicy: "create policy planning_preferences_update_own on public.planning_preferences",
+  deletePolicy: "create policy planning_preferences_delete_own on public.planning_preferences",
+});
+
+const temporalFoundationMigration = read(temporalFoundationMigrationPath);
+for (const operation of ["select", "insert", "update", "delete"]) {
+  assertIncludes(
+    temporalFoundationMigration,
+    `create policy task_plan_blocks_${operation}_own on public.task_plan_blocks`,
+    "Task plan blocks RLS migration",
+  );
+}
+assertIncludes(temporalFoundationMigration,
+  "alter table public.task_plan_blocks enable row level security;",
+  "Task plan blocks RLS migration",
+);
+assertMatches(temporalFoundationMigration,
+  /foreign key \(user_id, task_id\)[\s\S]*?references public\.tasks \(user_id, id\)/,
+  "Task plan block owner/Task foreign key",
+);
+assertMatches(temporalFoundationMigration,
+  /task_plan_blocks_insert_own[\s\S]*?tasks\.user_id = auth\.uid\(\)/,
+  "Task plan block insert ownership",
+);
+assertMatches(temporalFoundationMigration,
+  /task_plan_blocks_update_own[\s\S]*?tasks\.user_id = auth\.uid\(\)/,
+  "Task plan block update ownership",
+);
+assertIncludes(temporalFoundationMigration,
+  "revoke all on table public.task_plan_blocks from public, anon, authenticated;",
+  "Task plan block grants",
+);
+
+const tasksServiceRoleGrantMigration = read(
+  "supabase/migrations/202610030001_tasks_service_role_runtime_permissions.sql",
+).trim();
+const expectedTasksServiceRoleGrant = [
+  "grant select, insert, update",
+  "on table public.tasks",
+  "to service_role;",
+].join("\n");
+if (tasksServiceRoleGrantMigration !== expectedTasksServiceRoleGrant) {
+  fail("Tasks service-role migration must grant only SELECT, INSERT, and UPDATE on public.tasks.");
+}
+
 const feedbackMigration = read(
   "supabase/migrations/202606010008_create_feedback.sql",
 );
@@ -197,6 +250,26 @@ verifyApiRoute("src/app/api/schedule/route.ts", [
 ]);
 verifyApiRoute("src/server/api/schedule-source.ts", [
   '.eq("user_id", ownerId)',
+]);
+verifyApiRoute("src/app/api/planning-preferences/route.ts", [
+  "authenticateApiRequest(request)",
+  '.eq("user_id", auth.userId)',
+  "user_id: auth.userId",
+]);
+verifyApiRoute("src/app/api/tasks/[id]/blocks/route.ts", [
+  "authenticateApiRequest(request)",
+  '.eq("user_id", auth.userId)',
+  "user_id: auth.userId",
+  "ownedActiveTask(taskId, auth.userId)",
+]);
+verifyApiRoute("src/app/api/tasks/[id]/blocks/[blockId]/route.ts", [
+  "authenticateApiRequest(request)",
+  '.eq("user_id", ownerId)',
+  "ownedBlock(identifiers.id, identifiers.blockId, auth.userId)",
+]);
+verifyApiRoute("src/app/api/task-plan-blocks/route.ts", [
+  "authenticateApiRequest(request)",
+  '.eq("user_id", auth.userId)',
 ]);
 
 verifyApiRoute("src/app/api/notes/route.ts", [

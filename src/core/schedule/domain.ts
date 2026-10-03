@@ -132,6 +132,37 @@ export function plannedTaskInterval(
   return timedInterval(task.plannedStart, end);
 }
 
+export type TaskPlanBlock = Readonly<{
+  id: string;
+  ownerId: string;
+  taskId: string;
+  interval: TimedInterval;
+  version: number;
+}>;
+
+export function validateTaskPlanBlock(value: unknown): TaskPlanBlock {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new TypeError("Task plan block must be an object");
+  }
+  const input = value as Record<string, unknown>;
+  const id = requiredText(input.id, "Task plan block id", 200);
+  const ownerId = requiredText(input.ownerId, "Task plan block owner", 200);
+  const taskId = requiredText(input.taskId, "Task plan block Task id", 200);
+  if (!input.interval || typeof input.interval !== "object" || Array.isArray(input.interval)) {
+    throw new TypeError("Task plan block interval is required");
+  }
+  const intervalInput = input.interval as Record<string, unknown>;
+  const interval = timedInterval(intervalInput.start, intervalInput.end);
+  if (Date.parse(interval.end) - Date.parse(interval.start) >
+      MAX_ESTIMATED_DURATION_MINUTES * 60_000) {
+    throw new RangeError("Task plan block exceeds duration bound");
+  }
+  if (typeof input.version !== "number" || !Number.isInteger(input.version) || input.version < 1) {
+    throw new RangeError("Invalid Task plan block version");
+  }
+  return { id, ownerId, taskId, interval, version: input.version };
+}
+
 export type EventBase = Readonly<{
   id: string;
   userId: string;
@@ -216,7 +247,7 @@ export function timedEventInterval(event: TimedEvent): TimedInterval {
 }
 
 type ScheduleItemBase = Readonly<{
-  key: `orvia-event:${string}` | `task:${string}`;
+  key: `orvia-event:${string}` | `task:${string}` | `task-block:${string}`;
   sourceId: string;
   ownerId: string;
   title: string;
@@ -245,6 +276,8 @@ export type ScheduleItem =
   | (ScheduleItemBase & Readonly<{
       source: "task";
       kind: "planned-task";
+      /** Present for normalized block items; absent only for legacy Task schedule compatibility. */
+      blockId?: string;
       planDay?: LocalDate | null;
     }>);
 

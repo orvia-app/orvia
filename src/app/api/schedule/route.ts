@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { authenticateApiRequest } from "@/server/api/auth";
+import { readAuthoritativePlanningTimezone } from "@/server/api/planning-preferences";
 import { parsePlanningQuery } from "@/server/api/schedule-input";
 import { readOwnedSchedule } from "@/server/api/schedule-source";
 
@@ -14,8 +15,11 @@ export async function POST(request: Request) {
   const parsed = parsePlanningQuery(body);
   if (!parsed.ok) return NextResponse.json({ ok: false, error: parsed.error }, { status: 400 });
   try {
-    const projection = await readOwnedSchedule(auth.userId, parsed.value.range,
-      parsed.value.planningTimezone);
+    const planningTimezone = await readAuthoritativePlanningTimezone(
+      auth.userId,
+      parsed.value.planningTimezone,
+    );
+    const projection = await readOwnedSchedule(auth.userId, parsed.value.range, planningTimezone);
     return NextResponse.json({ ok: true, projection,
       privacy: { intelligenceEligibility: "unverified", recommendationProcessingAllowed: false },
     }, { status: 200 });

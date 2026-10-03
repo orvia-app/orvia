@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, Globe2, Info, RotateCw } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { useAuthSession } from "@/components/auth/useAuthSession";
@@ -8,14 +8,19 @@ import { CalendarSurface } from "@/components/calendar/CalendarSurface";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { Button } from "@/components/ui/Button";
 import { Page } from "@/components/ui/Page";
-import { isIanaTimeZone, isLocalDate, isUtcInstant, type IanaTimeZone, type LocalDate, type ScheduleItem, type ScheduleProjectionResult } from "@/core/schedule/domain";
+import { isIanaTimeZone, type IanaTimeZone, type LocalDate, type ScheduleProjectionResult } from "@/core/schedule/domain";
 import { localDateRange } from "@/core/schedule/projection";
 import { addDays, dateInZone, moveView, sourceNotice, viewDates, type CalendarView } from "@/lib/calendar-view";
+import { parseCalendarProjection } from "@/lib/calendar-projection";
 import "./calendar.css";
 
 type LoadState = { status: "idle" } | { status: "error"; key: string } | { status: "loaded"; key: string; projection: ScheduleProjectionResult };
 type CalendarMotionIntent = "initial" | "view" | "previous" | "next" | "selection";
 type CalendarVisualQaFixture = typeof import("@/dev/calendar-visual-qa-fixture");
+type PlanningTimezoneState =
+  | { status: "idle" }
+  | { status: "ready"; ownerId: string; persistedZone: IanaTimeZone | null }
+  | { status: "error"; ownerId: string };
 
 function CalendarLoadingState({ label }: { label: string }) {
   return (
@@ -29,32 +34,6 @@ function CalendarLoadingState({ label }: { label: string }) {
       </div>
     </div>
   );
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isScheduleItem(value: unknown): value is ScheduleItem {
-  if (!isRecord(value) || !isRecord(value.interval)) return false;
-  if (typeof value.key !== "string" || typeof value.sourceId !== "string" ||
-      typeof value.title !== "string" || typeof value.ownerId !== "string" ||
-      typeof value.busy !== "boolean" || !isUtcInstant(value.interval.start) ||
-      !isUtcInstant(value.interval.end) || Date.parse(value.interval.end) <= Date.parse(value.interval.start)) return false;
-  if (value.source === "task") return value.kind === "planned-task" && value.key === `task:${value.sourceId}`;
-  if (value.source !== "orvia-event" || value.key !== `orvia-event:${value.sourceId}` || !isIanaTimeZone(value.timezone)) return false;
-  return value.kind === "timed" || (value.kind === "all-day" && isLocalDate(value.startDate) && isLocalDate(value.endDateExclusive));
-}
-
-function parseProjection(value: unknown, ownerId: string, zone: IanaTimeZone): ScheduleProjectionResult | null {
-  if (!isRecord(value) || !isRecord(value.sources) || !isRecord(value.sources.tasks) ||
-      !isRecord(value.sources.events) || !isRecord(value.range) || !Array.isArray(value.items) ||
-      value.planningTimezone !== zone || !isUtcInstant(value.range.start) || !isUtcInstant(value.range.end) ||
-      !["complete", "incomplete"].includes(String(value.completeness))) return null;
-  const states = [value.sources.tasks.state, value.sources.events.state];
-  if (states.some((state) => !["complete", "partial", "stale", "unavailable", "unverified"].includes(String(state))) ||
-      !value.items.every((item) => isScheduleItem(item) && item.ownerId === ownerId)) return null;
-  return value as ScheduleProjectionResult;
 }
 
 function formatRange(date: LocalDate, dates: LocalDate[], view: CalendarView, locale: "en" | "ua") {
@@ -77,8 +56,11 @@ export default function CalendarPage() {
   const [now, setNow] = useState<Date | null>(null);
   const [load, setLoad] = useState<LoadState>({ status: "idle" });
   const [retry, setRetry] = useState(0);
+  const [timezoneRetry, setTimezoneRetry] = useState(0);
   const [motion, setMotion] = useState<{ intent: CalendarMotionIntent; revision: number }>({ intent: "initial", revision: 0 });
   const [visualQaFixture, setVisualQaFixture] = useState<CalendarVisualQaFixture | null>(null);
+  const [planningTimezone, setPlanningTimezone] = useState<PlanningTimezoneState>({ status: "idle" });
+  const resolvedTimezoneOwner = useRef<string | null>(null);
 
   useEffect(() => {
     const useVisualQaFixture = process.env.NODE_ENV === "development" &&
@@ -107,8 +89,62 @@ export default function CalendarPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const visualQaRequested = process.env.NODE_ENV === "development" &&
+      new URLSearchParams(window.location.search).get("calendarQa") === "rich";
+    if (visualQaRequested) return;
+    if (!session?.access_token) return;
+
+    const ownerId = session.user.id;
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const response = await fetch("/api/planning-preferences", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        const body: unknown = await response.json();
+        if (!response.ok || typeof body !== "object" || body === null || Array.isArray(body) ||
+            !("ok" in body) || body.ok !== true || !("preferences" in body)) {
+          throw new Error("Planning timezone unavailable");
+        }
+        const preferences = body.preferences;
+        let persistedZone: IanaTimeZone | null = null;
+        if (preferences !== null) {
+          if (typeof preferences !== "object" || Array.isArray(preferences) ||
+              !("planningTimezone" in preferences) ||
+              !isIanaTimeZone(preferences.planningTimezone)) {
+            throw new Error("Planning timezone unavailable");
+          }
+          persistedZone = preferences.planningTimezone;
+        }
+        if (controller.signal.aborted) return;
+        const ownerChanged = resolvedTimezoneOwner.current !== ownerId;
+        resolvedTimezoneOwner.current = ownerId;
+        setPlanningTimezone({ status: "ready", ownerId, persistedZone });
+        if (persistedZone) {
+          const current = new Date();
+          setZoneInput(persistedZone);
+          setZone(persistedZone);
+          setDate((selected) => ownerChanged ? dateInZone(current, persistedZone) :
+            selected ?? dateInZone(current, persistedZone));
+        } else if (ownerChanged) {
+          setZoneInput(Intl.DateTimeFormat().resolvedOptions().timeZone || "");
+          setZone(null);
+          setDate(null);
+        }
+      } catch {
+        if (!controller.signal.aborted) setPlanningTimezone({ status: "error", ownerId });
+      }
+    })();
+    return () => controller.abort();
+  }, [session?.access_token, session?.user.id, timezoneRetry]);
+
   const dates = useMemo(() => date ? viewDates(date, view) : [], [date, view]);
   const sessionUserId = session?.user.id;
+  const timezoneReady = planningTimezone.status === "ready" &&
+    planningTimezone.ownerId === sessionUserId;
   const requestKey = zone && date ? `${zone}:${dates[0]}:${dates[dates.length - 1]}:${retry}:${sessionUserId ?? ""}` : "";
   const visualQaProjection = useMemo(() => visualQaFixture && sessionUserId ?
     visualQaFixture.createCalendarVisualQaProjection(sessionUserId) : null, [sessionUserId, visualQaFixture]);
@@ -116,7 +152,8 @@ export default function CalendarPage() {
     { status: "loaded" as const, key: `visual-qa:${sessionUserId}`, projection: visualQaProjection } :
     load.status !== "idle" && load.key === requestKey ? load : { status: "loading" as const };
   useEffect(() => {
-    if (visualQaFixture || !session?.access_token || !zone || !date || !dates.length) return;
+    if (visualQaFixture || !session?.access_token || !timezoneReady ||
+        !zone || !date || !dates.length) return;
     const controller = new AbortController();
     const first = dates[0];
     const lastExclusive = addDays(dates[dates.length - 1], 1);
@@ -131,19 +168,36 @@ export default function CalendarPage() {
           signal: controller.signal,
         });
         const body: unknown = await response.json();
-        const projection = isRecord(body) && body.ok === true ? parseProjection(body.projection, session.user.id, zone) : null;
-        if (!response.ok || !projection) throw new Error("Calendar schedule unavailable");
+        const rawProjection = typeof body === "object" && body !== null && !Array.isArray(body) &&
+          "ok" in body && body.ok === true && "projection" in body ? body.projection : null;
+        const responseZone = typeof rawProjection === "object" && rawProjection !== null &&
+          !Array.isArray(rawProjection) && "planningTimezone" in rawProjection &&
+          isIanaTimeZone(rawProjection.planningTimezone) ? rawProjection.planningTimezone : null;
+        const projection = responseZone ?
+          parseCalendarProjection(rawProjection, session.user.id, responseZone) : null;
+        if (!response.ok || !responseZone || !projection) {
+          throw new Error("Calendar schedule unavailable");
+        }
+        if (responseZone !== zone) {
+          setPlanningTimezone({ status: "ready", ownerId: session.user.id,
+            persistedZone: responseZone });
+          setZoneInput(responseZone);
+          setZone(responseZone);
+          return;
+        }
         if (!controller.signal.aborted) setLoad({ status: "loaded", key: requestKey, projection });
       } catch {
         if (!controller.signal.aborted) setLoad({ status: "error", key: requestKey });
       }
     })();
     return () => controller.abort();
-  }, [session?.access_token, session?.user.id, zone, date, dates, requestKey, visualQaFixture]);
+  }, [session?.access_token, session?.user.id, timezoneReady, zone, date, dates, requestKey, visualQaFixture]);
 
   function applyZone() {
-    const candidate = zoneInput.trim();
+    if (!timezoneReady) return;
+    const candidate = planningTimezone.persistedZone ?? zoneInput.trim();
     if (!isIanaTimeZone(candidate)) return;
+    setZoneInput(candidate);
     setZone(candidate);
     if (!date) setDate(dateInZone(now ?? new Date(), candidate));
     setZoneEditorOpen(false);
@@ -226,6 +280,12 @@ export default function CalendarPage() {
             <div className="calendar-state-panel calendar-state-error" role="alert">
               <p>{t("calendar.unavailable")}</p>
               <Button variant="secondary" onClick={() => setRetry((value) => value + 1)}><RotateCw className="h-4 w-4" aria-hidden />{t("calendar.retry")}</Button>
+            </div>
+          )}
+          {!visualQaFixture && planningTimezone.status === "error" && (
+            <div className="calendar-state-panel calendar-state-error" role="alert">
+              <p>{t("calendar.unavailable")}</p>
+              <Button variant="secondary" onClick={() => setTimezoneRetry((value) => value + 1)}><RotateCw className="h-4 w-4" aria-hidden />{t("calendar.retry")}</Button>
             </div>
           )}
           {zone && activeLoad.status === "loaded" && date && now && (

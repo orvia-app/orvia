@@ -32,6 +32,38 @@ export type SupabaseTaskInsert = {
   plan_day?: string | null;
 };
 
+export type SupabasePlanningPreferencesRow = {
+  user_id: string;
+  planning_timezone: string;
+  enabled_weekdays: number[];
+  local_start_time: string;
+  local_end_time: string;
+  version: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SupabasePlanningPreferencesInsert = Pick<
+  SupabasePlanningPreferencesRow,
+  "user_id" | "planning_timezone" | "enabled_weekdays" | "local_start_time" | "local_end_time"
+> & Partial<Pick<SupabasePlanningPreferencesRow, "version">>;
+
+export type SupabaseTaskPlanBlockRow = {
+  id: string;
+  user_id: string;
+  task_id: string;
+  start_at: string;
+  end_at: string;
+  version: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SupabaseTaskPlanBlockInsert = Pick<
+  SupabaseTaskPlanBlockRow,
+  "id" | "user_id" | "task_id" | "start_at" | "end_at"
+>;
+
 export type SupabaseEventRow = {
   id: string;
   user_id: string;
@@ -200,6 +232,18 @@ export type SupabaseDatabase = {
         Row: SupabaseEventRow;
         Insert: SupabaseEventInsert;
         Update: Partial<SupabaseEventInsert>;
+        Relationships: [];
+      };
+      planning_preferences: {
+        Row: SupabasePlanningPreferencesRow;
+        Insert: SupabasePlanningPreferencesInsert;
+        Update: Partial<SupabasePlanningPreferencesInsert>;
+        Relationships: [];
+      };
+      task_plan_blocks: {
+        Row: SupabaseTaskPlanBlockRow;
+        Insert: SupabaseTaskPlanBlockInsert;
+        Update: Partial<SupabaseTaskPlanBlockInsert> & { version?: number };
         Relationships: [];
       };
       notes: {

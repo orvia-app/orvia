@@ -7,6 +7,7 @@ import {
   requireUtcInstant,
   timedEventInterval,
   timedInterval,
+  validateTaskPlanBlock,
   validateOrviaEvent,
   type IanaTimeZone,
   type LocalDate,
@@ -14,6 +15,7 @@ import {
   type ScheduleItem,
   type ScheduleProjectionResult,
   type ScheduleSourceState,
+  type TaskPlanBlock,
   type TimedInterval,
   type UnplacedScheduleTask,
   type UtcInstant,
@@ -47,6 +49,12 @@ export type ScheduleTaskRecord = Readonly<{
     "estimatedDurationMinutes" | "planDay">;
   /** Derived by a trusted source from current privacy controls. */
   intelligenceEligible: boolean;
+  /** Persisted blocks are authoritative over the legacy Task interval. */
+  planBlocks?: readonly TaskPlanBlock[];
+  /** True when any persisted block exists, including outside the requested range. */
+  hasPlanBlocks?: boolean;
+  /** Source-asserted remaining demand; never inferred from estimate minus block totals. */
+  hasUnplacedDemand?: boolean;
 }>;
 
 export type ScheduleEventRecord = Readonly<{
@@ -154,6 +162,7 @@ export function projectSchedule(
   const items: ScheduleItem[] = [];
   const unplacedTasks: UnplacedScheduleTask[] = [];
   const keys = new Set<string>();
+  const blockIds = new Set<string>();
 
   for (const record of sources.tasks.records) {
     if (record.ownerId !== request.ownerId) throw new TypeError("Task source owner mismatch");
@@ -162,35 +171,63 @@ export function projectSchedule(
       throw new TypeError("Invalid Task lifecycle state");
     }
     if (task.status !== "todo" && task.status !== "in-progress") continue;
-    const interval = plannedTaskInterval(task);
-    const planDay = task.planDay == null ? null : requireLocalDate(task.planDay);
-    const intersectsRange = interval !== null && intervalsIntersect(interval, request.range);
-    const unplacedInRange = interval === null && planDay !== null &&
-      intervalsIntersect(localDateRange(planDay, nextLocalDate(planDay), request.planningTimezone),
-        request.range);
-    if (!intersectsRange && !unplacedInRange) continue;
     if (typeof task.id !== "string" || !task.id.trim() ||
         typeof task.title !== "string" || !task.title.trim()) {
       throw new TypeError("Invalid scheduled Task identity");
     }
-    const key = `task:${task.id}` as const;
-    if (keys.has(key)) throw new TypeError("Duplicate schedule source identity");
-    keys.add(key);
+    const planDay = task.planDay == null ? null : requireLocalDate(task.planDay);
+    const blocks = (record.planBlocks ?? []).map((block) => validateTaskPlanBlock(block));
+    for (const block of blocks) {
+      if (block.ownerId !== request.ownerId || block.taskId !== task.id) {
+        throw new TypeError("Task plan block ownership mismatch");
+      }
+      if (blockIds.has(block.id)) throw new TypeError("Duplicate Task plan block identity");
+      blockIds.add(block.id);
+    }
+    const hasPlanBlocks = record.hasPlanBlocks === true || blocks.length > 0;
+    const legacyInterval = hasPlanBlocks ? null : plannedTaskInterval(task);
+    const scheduledBlocks = blocks.filter((block) => intervalsIntersect(block.interval, request.range));
+    const legacyIntersectsRange = legacyInterval !== null &&
+      intervalsIntersect(legacyInterval, request.range);
+    const hasUnplacedDemand = record.hasUnplacedDemand === true || !hasPlanBlocks && legacyInterval === null;
+    const unplacedInRange = hasUnplacedDemand && planDay !== null &&
+      intervalsIntersect(localDateRange(planDay, nextLocalDate(planDay), request.planningTimezone),
+        request.range);
+    if (scheduledBlocks.length === 0 && !legacyIntersectsRange && !unplacedInRange) continue;
     const common = {
-      key, sourceId: task.id, ownerId: request.ownerId, title: task.title,
+      sourceId: task.id, ownerId: request.ownerId, title: task.title,
       ...(task.workspaceId ? { workspaceId: task.workspaceId } : {}),
       intelligenceEligible: requireEligibility(record.intelligenceEligible),
       sourceState: tasks.state,
       ...(tasks.observedAt ? { observedAt: tasks.observedAt } : {}),
     };
-    if (unplacedInRange && planDay !== null) {
-      unplacedTasks.push({ ...common, planDay });
-      continue;
+
+    for (const block of scheduledBlocks) {
+      const key = `task-block:${block.id}` as const;
+      if (keys.has(key)) throw new TypeError("Duplicate schedule source identity");
+      keys.add(key);
+      items.push({
+        ...common, key, source: "task", kind: "planned-task", busy: true,
+        blockId: block.id, interval: block.interval,
+      });
     }
-    if (interval === null) continue;
-    items.push({
-      ...common, source: "task", kind: "planned-task", busy: true, interval, planDay,
-    });
+
+    if (unplacedInRange && planDay !== null) {
+      const key = `task:${task.id}` as const;
+      if (keys.has(key)) throw new TypeError("Duplicate schedule source identity");
+      keys.add(key);
+      unplacedTasks.push({ ...common, key, planDay });
+    }
+
+    if (legacyIntersectsRange && legacyInterval !== null) {
+      const key = `task:${task.id}` as const;
+      if (keys.has(key)) throw new TypeError("Duplicate schedule source identity");
+      keys.add(key);
+      items.push({
+        ...common, key, source: "task", kind: "planned-task", busy: true,
+        interval: legacyInterval, planDay,
+      });
+    }
   }
 
   for (const record of sources.events.records) {
