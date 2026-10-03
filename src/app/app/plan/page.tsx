@@ -133,6 +133,7 @@ export default function PlanPage() {
   const [now, setNow] = useState<Date | null>(null);
   const [selectedDate, setSelectedDate] = useState<LocalDate | null>(null);
   const blockEditorRef = useRef<HTMLFormElement | null>(null);
+  const backgroundRefreshRef = useRef(false);
   const accessToken = session?.access_token;
   const ownerId = session?.user.id;
   const editingBlockId = blockDraft?.blockId ?? null;
@@ -143,7 +144,10 @@ export default function PlanPage() {
     void (async () => {
       await Promise.resolve();
       if (cancelled) return;
-      setStatus("loading");
+      if (!backgroundRefreshRef.current) {
+        setStatus("loading");
+      }
+      backgroundRefreshRef.current = false;
       setActionError(null);
       try {
         const browserZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -252,6 +256,7 @@ export default function PlanPage() {
     setConfirmation(null);
     setSelectedTaskId(null);
     setBlockDraft(null);
+    backgroundRefreshRef.current = true;
     setRevision((value) => value + 1);
   }
 
