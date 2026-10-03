@@ -1,7 +1,7 @@
-# ORVIA — PRODUCT SPECIFICATION v1.3
+# ORVIA — PRODUCT SPECIFICATION v1.4
 
 **Status:** Product Source of Truth<br>
-**Date:** 1 October 2026<br>
+**Date:** 2 October 2026<br>
 **Stage:** Pre-private-beta / Product Architecture v2<br>
 **Owner:** Maksym Andriienko
 
@@ -77,8 +77,15 @@ Orvia forms approximately **3–5 main priorities for the day**. They do not sil
 ## 7. Plan
 Plan answers **“What am I going to do / how should I use my available time?”** Its daily timeline combines meetings/events, planned tasks, free/available time, and priorities. Users can manually rearrange it, and Orvia may suggest placements and planning changes.
 
+Planning uses an account-owned IANA planning timezone and an editable weekly window. The default is Monday–Friday, 09:00–18:00. Device/browser timezone is an initial suggestion only; once saved, the account preference is authoritative. Events may retain their own timezone, and recurring Events preserve their local wall-clock time in that timezone.
+
+A Task may have zero, one, or many planned blocks while remaining one Task. Planned blocks are the source of truth for occupied Task intervals and may occur on different days. The Task estimate remains the total estimate; Orvia does not infer remaining work by subtracting block duration unless a later approved rule explicitly defines that behavior. Calendar and Plan consume the same Schedule Projection.
+
 ### Still to place
-Show unscheduled work so it is not lost. Orvia may suggest where it fits.
+Show unscheduled work so it is not lost. A Task without a valid planned block can remain Still to place. A Task may also carry explicitly asserted remaining unplaced demand, but Orvia must not derive that demand automatically from estimate-minus-block totals. `plan_day` may temporarily support legacy day assignment, but it is not the source of truth for the date of a planned interval; each block's instant in the planning timezone determines its scheduled day. Orvia may suggest where unplaced work fits.
+
+### Daily Review and next-day planning
+Daily Review is an optional beta direction. It presents factual completed, unfinished, moved, still-open, and relevant Event information, then may propose next-day placement. The user explicitly applies, edits, or skips a proposal. Orvia never silently marks unfinished work complete or moves it to tomorrow. This is target behavior and is not implemented by the temporal-foundation batch.
 
 ## 8. Calendar
 Calendar answers **“What does my time look like?”** It is the factual time and schedule view, showing Orvia events, personal events, and connected external-calendar events in its own **Day / Week / Month** calendar. Calendar provides time context to Plan.
@@ -113,6 +120,8 @@ Inbox is an **attention queue**, not capture history. Reasons can include Needs 
 ## 14. Tasks
 Task v1 supports title, description, deadline, planned time, estimated duration, priority, workspace, project, status, reminder, recurrence, checklist.
 
+Planned time is represented by normalized Task plan blocks. One Task can have multiple blocks without becoming multiple Tasks. The Task estimate is the total estimate and remains independently editable. Compatibility fields such as `planned_start` and `plan_day` may remain temporarily for existing records, but new scheduling behavior uses blocks.
+
 Statuses: **To do / In progress / Done / Cancelled**. `Overdue` is calculated.
 
 ## 15. Notes
@@ -121,7 +130,7 @@ Notes stay simple: rich text, workspace, project, related tasks, links, attachme
 Selected note content can be converted into a linked task.
 
 ## 16. Reminders
-A reminder is primarily a property of a task/event rather than a separate top-level object.
+Reminders are a separate domain that can target an Event, target a Task, or exist as a standalone Reminder. A standalone Reminder does not automatically become a Task or Event. Delivery channels are adapters around the Reminder domain so in-app, browser, email, Telegram, and mobile delivery can evolve independently. Beta implements only channels with truthful, supported delivery behavior. Reminder, notification delivery, and missed-reminder behavior are target work and are not implemented by the temporal-foundation batch.
 
 ## 17. Recurring Tasks
 Recurring tasks are a **beta requirement**. Support common recurrence and later custom recurrence. Exact editor UX is a design decision.
@@ -260,7 +269,7 @@ Authentication, Google Sign-In, EN/UA, Home, Plan, Universal Capture, Inbox, Tas
 Beta does not need perfect intelligence, but must demonstrate **Capture → Understand → Prioritize → Act**.
 
 ## 54. Calendar Beta Decision
-The private-beta Calendar scope is provider-free: a separate primary Orvia Calendar, Day/Week/Month, user-owned Orvia Events, planned Task intervals, the shared Calendar/Plan schedule projection, Plan integration, and basic conflict/capacity awareness subject to the prerequisites and open decisions in the [Calendar + Plan beta specification](CALENDAR_PLAN_BETA_SPEC.md). Google read-only context is a gated post-beta follow-up; Outlook is later. External calendar access is not a private-beta blocker. This scope decision does not claim that Calendar, Plan, conflict/capacity behavior, or release validation is complete.
+The private-beta Calendar scope is provider-free: a separate primary Orvia Calendar, Day/Week/Month, user-owned Orvia Events, normalized Task plan blocks, the shared Calendar/Plan Schedule Projection, Plan integration, and basic conflict/capacity awareness subject to the prerequisites and open decisions in the [Calendar + Plan beta specification](CALENDAR_PLAN_BETA_SPEC.md). One Task may project multiple block items while retaining one Task identity. The planned interval's local date comes from each block in the planning timezone, not `plan_day`. Google read-only context is a gated post-beta follow-up; Outlook is later. External calendar access is not a private-beta blocker. This scope decision does not claim that Plan, recurrence, reminders, Daily Review, conflict/capacity behavior, or release validation is complete.
 
 ## 55. External/Mobile Capture Beta Decision
 Aim for at least one more convenient capture channel beyond standard web flow. Candidates: voice in web/PWA, Telegram, PWA/mobile shortcut, or another lightweight channel. **Decision remains open.**
@@ -331,6 +340,7 @@ Versioning:
 - `v1.1` — minor product decisions
 - `v1.2` — product, UX, design, and quality foundation
 - `v1.3` — source-of-truth and private-beta scope reconciliation
+- `v1.4` — beta temporal, planning, reminder, and Daily Review decisions
 - `v2.0` — fundamental product-model change
 
 Maintain a Decision Log.
@@ -349,6 +359,13 @@ Do not invent these without explicit product decisions:
 - final brand identity/logo and any token values explicitly marked open in the design foundation.
 
 ## 70. Decision Log
+**v1.4 — 2026-10-02**
+- Approved account-owned planning timezone and editable Monday–Friday 09:00–18:00 default planning window.
+- Approved normalized `task_plan_blocks` as the source of truth for planned Task intervals, including multiple blocks and blocks on different days for one Task.
+- Clarified that `plan_day` is a compatibility/day-assignment field, not the authority for a scheduled block's local date.
+- Approved Reminder as a channel-independent domain supporting Event, Task, and standalone Reminders, while leaving actual delivery infrastructure to later batches.
+- Approved optional factual Daily Review and explicitly confirmed next-day proposals as target beta behavior; neither is implemented by the temporal-foundation batch.
+
 **v1.3 — 2026-10-01**
 - Reconciled the authority chain as Product Specification → approved UX Architecture → feature/technical specifications → Design Foundation → screen specifications → implementation/evidence → historical documentation.
 - Incorporated the already approved provider-free private-beta Calendar boundary from the Calendar + Plan specification: Google read-only context is post-beta and gated; Outlook is later. Broader provider architecture remains open.
@@ -377,7 +394,7 @@ Do not invent these without explicit product decisions:
 - Voice/external capture is target architecture.
 - Task statuses: To do / In progress / Done / Cancelled.
 - Recurring tasks beta-required.
-- Reminders primarily properties of tasks/events.
+- Reminders were initially framed primarily as task/event properties; v1.4 supersedes this with the Event/Task/standalone Reminder domain.
 - Notes lightweight and can create linked tasks.
 - Projects lightweight; AI-suggested project creation requires confirmation.
 - Default workspaces: Personal / Work / Business.

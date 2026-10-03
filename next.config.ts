@@ -9,6 +9,7 @@ const legacyAppRoutes = [
   "finance",
   "inbox",
   "notes",
+  "plan",
   "search",
   "settings",
   "tasks",

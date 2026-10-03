@@ -11,6 +11,10 @@ const migration = readFileSync(
   resolve(root, "supabase/migrations/202609300001_calendar_plan_persistence.sql"),
   "utf8",
 );
+const temporalFoundationMigration = readFileSync(
+  resolve(root, "supabase/migrations/202610020001_temporal_scheduling_foundation.sql"),
+  "utf8",
+);
 
 test("forward migration adds independent nullable Task scheduling fields", () => {
   assert.match(migration, /alter table public\.tasks\s+add column planned_start timestamptz,\s+add column estimated_duration_minutes integer,\s+add column plan_day date,/);
@@ -42,6 +46,34 @@ test("Events grant CRUD only to authenticated owners and service role", () => {
   assert.match(migration, /revoke all on table public\.orvia_events from public, anon, authenticated;/);
   assert.match(migration, /grant select, insert, update, delete on table public\.orvia_events to authenticated;/);
   assert.doesNotMatch(migration, /grant\s+[^;]*\bon\s+(?:table\s+)?public\.orvia_events\s+to\s+(?:public|anon)\b/i);
+});
+
+test("planning preferences persist approved defaults with owner RLS", () => {
+  assert.match(temporalFoundationMigration, /create table public\.planning_preferences/);
+  assert.match(temporalFoundationMigration,
+    /enabled_weekdays smallint\[\] not null default array\[1, 2, 3, 4, 5\]/);
+  assert.match(temporalFoundationMigration,
+    /local_start_time time without time zone not null default time '09:00'/);
+  assert.match(temporalFoundationMigration,
+    /local_end_time time without time zone not null default time '18:00'/);
+  assert.match(temporalFoundationMigration,
+    /planning_preferences_select_own[\s\S]*using \(user_id = auth\.uid\(\)\)/);
+});
+
+test("Task plan blocks enforce owner-matched Tasks, intervals, indexes and RLS", () => {
+  assert.match(temporalFoundationMigration, /create table public\.task_plan_blocks/);
+  assert.match(temporalFoundationMigration,
+    /foreign key \(user_id, task_id\)[\s\S]*references public\.tasks \(user_id, id\)/);
+  assert.match(temporalFoundationMigration,
+    /check \(end_at > start_at and end_at <= start_at \+ interval '7 days'\)/);
+  assert.match(temporalFoundationMigration,
+    /unique \(user_id, task_id, start_at, end_at\)/);
+  assert.match(temporalFoundationMigration, /task_plan_blocks_owner_task_idx/);
+  assert.match(temporalFoundationMigration, /task_plan_blocks_owner_time_idx/);
+  assert.match(temporalFoundationMigration,
+    /task_plan_blocks_insert_own[\s\S]*tasks\.user_id = auth\.uid\(\)/);
+  assert.match(temporalFoundationMigration,
+    /revoke all on table public\.task_plan_blocks from public, anon, authenticated/);
 });
 
 function loadTaskApi(fetch) {

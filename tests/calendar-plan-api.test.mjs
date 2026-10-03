@@ -35,7 +35,12 @@ function load(path, dependencies = {}) {
 }
 
 function database(seed = {}) {
-  const rows = { orvia_events: structuredClone(seed.orvia_events ?? []), tasks: structuredClone(seed.tasks ?? []) };
+  const rows = {
+    orvia_events: structuredClone(seed.orvia_events ?? []),
+    tasks: structuredClone(seed.tasks ?? []),
+    task_plan_blocks: structuredClone(seed.task_plan_blocks ?? []),
+    planning_preferences: structuredClone(seed.planning_preferences ?? []),
+  };
   let fail = null;
   let ignoreOwner = false;
   const calls = [];
@@ -79,6 +84,10 @@ function harness(seed) {
   const domain = load('src/core/schedule/domain.ts');
   const projection = load('src/core/schedule/projection.ts', { './domain': domain });
   const input = load('src/server/api/schedule-input.ts', { '@/core/schedule/domain': domain });
+  const preferences = load('src/server/api/planning-preferences.ts', {
+    '@/core/schedule/domain': domain,
+    '@/lib/supabase': { getSupabaseServerClient: () => db },
+  });
   const events = load('src/server/api/events.ts', {
     '@/core/schedule/domain': domain, './schedule-input': input,
   });
@@ -100,6 +109,7 @@ function harness(seed) {
     '@/server/api/auth': auth,
     '@/lib/supabase': { getSupabaseServerClient: () => db },
     '@/server/api/events': events,
+    '@/server/api/planning-preferences': preferences,
     '@/server/api/schedule-input': input,
     '@/server/api/schedule-source': source,
   };
@@ -127,6 +137,12 @@ const eventRow = (overrides = {}) => ({ id: eventId, user_id: ownerA, title: tim
 const taskRow = (overrides = {}) => ({ id: taskId, user_id: ownerA, title: 'Task', status: 'todo',
   priority: 'medium', workspace_id: null, due_date: '2026-10-02', planned_start: null,
   estimated_duration_minutes: null, plan_day: null, deleted_at: null, created_at: '2026-09-30T00:00:00.000Z', ...overrides });
+const blockRow = (overrides = {}) => ({
+  id: '33333333-3333-4333-8333-333333333333', user_id: ownerA, task_id: taskId,
+  start_at: '2026-09-30T10:00:00.000Z', end_at: '2026-09-30T11:00:00.000Z',
+  version: 1, created_at: '2026-09-30T00:00:00.000Z', updated_at: '2026-09-30T00:00:00.000Z',
+  ...overrides,
+});
 
 test('Event auth, validation, timed/all-day creation and owner assignment', async () => {
   const h = harness();
@@ -222,6 +238,51 @@ test('Schedule projection returns factual rows with honest incomplete privacy/so
   assert.equal(partial.body.projection.items.some((item) => item.source === 'orvia-event'), false);
 });
 
+test('saved planning timezone overrides the client timezone for Schedule Projection', async () => {
+  const h = harness({
+    planning_preferences: [{ user_id: ownerA, planning_timezone: 'America/Toronto' }],
+  });
+  const result = await json(await h.schedule.POST(req('POST', {
+    range: interval,
+    planningTimezone: 'Europe/Kyiv',
+  })));
+  assert.equal(result.status, 200);
+  assert.equal(result.body.projection.planningTimezone, 'America/Toronto');
+});
+
+test('client timezone remains the Schedule Projection fallback without saved preferences', async () => {
+  const h = harness();
+  const result = await json(await h.schedule.POST(req('POST', {
+    range: interval,
+    planningTimezone: 'Europe/Kyiv',
+  })));
+  assert.equal(result.status, 200);
+  assert.equal(result.body.projection.planningTimezone, 'Europe/Kyiv');
+});
+
+test('Schedule source projects multiple blocks once and suppresses the legacy interval', async () => {
+  const secondBlockId = '44444444-4444-4444-8444-444444444444';
+  const h = harness({
+    tasks: [taskRow({ planned_start: '2026-09-30T09:30:00.000Z', estimated_duration_minutes: 120 })],
+    task_plan_blocks: [
+      blockRow(),
+      blockRow({ id: secondBlockId, start_at: '2026-09-30T11:00:00.000Z',
+        end_at: '2026-09-30T12:00:00.000Z' }),
+    ],
+  });
+  const result = await json(await h.schedule.POST(req('POST', {
+    range: interval,
+    planningTimezone: 'Europe/Kyiv',
+  })));
+  assert.equal(result.status, 200);
+  assert.deepEqual(result.body.projection.items.map((item) => item.key), [
+    'task-block:33333333-3333-4333-8333-333333333333',
+    `task-block:${secondBlockId}`,
+  ]);
+  assert.equal(result.body.projection.items.every((item) => item.sourceId === taskId), true);
+  assert.equal(result.body.projection.items.some((item) => item.key === `task:${taskId}`), false);
+});
+
 test('all-day Event uses its own timezone for exact range intersection', async () => {
   const h = harness({ orvia_events: [eventRow({ all_day: true, timezone: 'Pacific/Auckland',
     start_at: null, end_at: null, start_date: '2026-09-30', end_date_exclusive: '2026-10-01' })] });
@@ -246,6 +307,7 @@ test('source adapter fails closed if database returns a different owner', async 
   const h = harness({
     orvia_events: [eventRow({ user_id: ownerB })],
     tasks: [taskRow({ user_id: ownerB, plan_day: '2026-09-30' })],
+    task_plan_blocks: [blockRow({ user_id: ownerB })],
   });
   h.db.setIgnoreOwner(true);
   const response = await json(await h.schedule.POST(req('POST', { range: interval, planningTimezone: 'Europe/Kyiv' })));

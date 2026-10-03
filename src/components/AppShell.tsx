@@ -9,6 +9,7 @@ import {
   UserRound,
   LogOut,
   CalendarDays,
+  CalendarClock,
   ChartNoAxesColumn,
   Car,
   CheckSquare,
@@ -50,7 +51,7 @@ type NavItem = {
 
 const focusNavItems: NavItem[] = [
   { labelKey: "common.dashboard", href: "/app", icon: House },
-  { labelKey: "common.today", href: "/app/today", icon: CalendarDays },
+  { labelKey: "common.plan", href: "/app/plan", icon: CalendarClock },
   { labelKey: "common.calendar", href: "/app/calendar", icon: CalendarDays },
 ];
 

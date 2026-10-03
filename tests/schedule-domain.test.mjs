@@ -13,14 +13,14 @@ const compiled = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   fileName: sourcePath,
 });
-const module = { exports: {} };
+const loaded = { exports: {} };
 vm.runInNewContext(compiled.outputText, {
   Date,
   Intl,
   RangeError,
   TypeError,
-  exports: module.exports,
-  module,
+  exports: loaded.exports,
+  module: loaded,
 });
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
@@ -36,8 +36,9 @@ const {
   timedEventInterval,
   timedInterval,
   validateOrviaEvent,
+  validateTaskPlanBlock,
   validateTaskScheduling,
-} = module.exports;
+} = loaded.exports;
 
 const at = (hour, minute = 0) => `2026-09-30T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00.000Z`;
 const interval = (startHour, endHour) => timedInterval(at(startHour), at(endHour));
@@ -45,8 +46,8 @@ const item = (key, span, busy = true) => ({
   key,
   ownerId: "owner",
   title: key,
-  source: key.startsWith("task:") ? "task" : "orvia-event",
-  kind: key.startsWith("task:") ? "planned-task" : "timed",
+  source: key.startsWith("task") ? "task" : "orvia-event",
+  kind: key.startsWith("task") ? "planned-task" : "timed",
   busy,
   intelligenceEligible: true,
   interval: span,
@@ -186,4 +187,18 @@ test("local dates, UTC instants, zones, titles and durations reject invalid valu
     kind: "all-day", startAt: undefined, endAt: undefined,
     startDate: "2026-02-29", endDateExclusive: "2026-03-01",
   })), /local date/);
+});
+
+test("Task plan blocks validate identity, ownership, interval and version", () => {
+  const value = validateTaskPlanBlock({
+    id: "block-1", ownerId: "owner-a", taskId: "task-a", version: 2,
+    interval: { start: at(9), end: at(10) },
+  });
+  assert.equal(value.id, "block-1");
+  assert.equal(value.taskId, "task-a");
+  assert.throws(() => validateTaskPlanBlock({ ...value, version: 0 }), /version/);
+  assert.throws(() => validateTaskPlanBlock({
+    ...value,
+    interval: { start: value.interval.end, end: value.interval.start },
+  }), /end must follow start/);
 });
