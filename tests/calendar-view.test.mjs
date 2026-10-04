@@ -55,6 +55,23 @@ test("half-open cross-midnight placement follows planning timezone and DST day l
   assert.equal(view.itemsOnDate([touching], "2026-10-25", zone).length, 0);
 });
 
+test("23:00 to 01:00 Event occupies the last and first local hours", () => {
+  const crossing = item("event:midnight", "2026-10-04T20:00:00.000Z", "2026-10-04T22:00:00.000Z", {
+    source: "orvia-event", kind: "timed", title: "Cross-midnight Event",
+  });
+  const first = view.placeTimedItems([crossing], "2026-10-04", zone);
+  const second = view.placeTimedItems([crossing], "2026-10-05", zone);
+  const firstDay = projection.localDateRange("2026-10-04", "2026-10-05", zone);
+  const secondDay = projection.localDateRange("2026-10-05", "2026-10-06", zone);
+  assert.equal(first.length, 1);
+  assert.equal(second.length, 1);
+  assert.equal(first[0].start, Date.parse(firstDay.end) - 3_600_000);
+  assert.equal(first[0].end, Date.parse(firstDay.end));
+  assert.equal(second[0].start, Date.parse(secondDay.start));
+  assert.equal(second[0].end, Date.parse(secondDay.start) + 3_600_000);
+  assert.equal(view.placeTimedItems([crossing], "2026-10-06", zone).length, 0);
+});
+
 test("overlap columns are stable and endpoint contact reuses a column", () => {
   const a = item("task:a", "2026-09-30T08:00:00.000Z", "2026-09-30T10:00:00.000Z");
   const b = item("task:b", "2026-09-30T09:00:00.000Z", "2026-09-30T11:00:00.000Z");

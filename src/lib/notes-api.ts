@@ -254,6 +254,13 @@ function mapApiNoteToNote(row: ApiNoteRow): Note | null {
   };
 }
 
+export function parseResolvedCaptureNote(value: unknown): Note {
+  if (!isRecord(value)) throw new Error("Invalid resolved Note response.");
+  const note = mapApiNoteToNote(value);
+  if (!note) throw new Error("Invalid resolved Note response.");
+  return note;
+}
+
 function parseNoteResponse(value: unknown): Note | null {
   if (!isRecord(value)) {
     return null;

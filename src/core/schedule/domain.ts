@@ -167,6 +167,7 @@ export type EventBase = Readonly<{
   id: string;
   userId: string;
   title: string;
+  description?: string | null;
   timezone: IanaTimeZone;
   busy: boolean;
   workspaceId?: string | null;
@@ -207,17 +208,23 @@ export function validateOrviaEvent(value: unknown): OrviaEvent {
     id: requiredText(input.id, "event id", 200),
     userId: requiredText(input.userId, "event owner", 200),
     title: requiredText(input.title, "event title", 200),
+    description: input.description,
     timezone: requireIanaTimeZone(input.timezone),
     busy: input.busy,
     workspaceId: input.workspaceId,
   };
   if (typeof base.busy !== "boolean") throw new TypeError("Invalid busy state");
+  if (base.description !== undefined && base.description !== null &&
+      (typeof base.description !== "string" || base.description.length > 10000)) {
+    throw new TypeError("Invalid Event description");
+  }
   const workspaceId = base.workspaceId == null ? undefined :
     requiredText(base.workspaceId, "workspace id", 200);
   const common = {
     id: base.id,
     userId: base.userId,
     title: base.title,
+    ...(base.description === undefined ? {} : { description: base.description }),
     timezone: base.timezone,
     busy: base.busy,
     ...(workspaceId === undefined ? {} : { workspaceId }),

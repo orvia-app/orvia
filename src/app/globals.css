@@ -162,6 +162,7 @@ body {
   .orvia-interactive:hover { background: var(--subtle); box-shadow: inset 3px 0 var(--accent); }
   .orvia-interactive:active { transform: translateY(1px); }
   .orvia-feedback { color: var(--success); padding: .5rem 0; font-size: .875rem; animation: orvia-enter 200ms ease-out; }
+  .orvia-success-toast { animation: orvia-enter var(--motion-normal) var(--motion-ease-enter); }
   .orvia-search-field { border-radius: .75rem; min-height: 3.5rem; background: var(--surface); box-shadow: 0 2px 8px #00000005; }
   .orvia-search-field:focus { outline-offset: 3px; box-shadow: 0 0 0 5px var(--accent-soft); }
   .fixed[data-presence="entered"] { animation: orvia-overlay-in 180ms ease-out; }

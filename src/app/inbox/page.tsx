@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { ActionPopover } from "@/components/ui/ActionPopover";
 import { Textarea } from "@/components/ui/Field";
 
@@ -8,12 +9,15 @@ import {
   Archive,
   ArrowRight,
   CheckSquare,
+  CalendarDays,
+  Copy,
   FileText,
   Inbox,
   Loader2,
 } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
+import { EventEditor } from "@/components/events/EventEditor";
 import { useAuthSession } from "@/components/auth/useAuthSession";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { Badge } from "@/components/ui/Badge";
@@ -21,7 +25,8 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Page, PageHeader, PageSection, PageSectionHeader } from "@/components/ui/Page";
-import { inboxTypeLabelKeys, inboxWorkspaceLabelKeys } from "@/lib/inbox-presentation";
+import { SuccessToast, useSuccessToast } from "@/components/ui/SuccessToast";
+import { captureIntentLabelKeys, inboxTypeLabelKeys, inboxWorkspaceLabelKeys } from "@/lib/inbox-presentation";
 import { getWorkspaceKey } from "@/lib/workspaces/workspaces";
 import {
   loadCapturesFromPrimarySourceWithBoundary,
@@ -36,6 +41,8 @@ import {
 } from "@/lib/inbox";
 import {
   archiveInboxItem,
+  canResolveCaptureToAccount,
+  completeInboxEventResolution,
   convertInboxItemToNote,
   convertInboxItemToTask,
   type InboxProcessingResult,
@@ -46,9 +53,11 @@ import {
   createQuickCaptureTask,
 } from "@/lib/quick-capture";
 import { ORVIA_CAPTURE_CREATED_EVENT } from "@/lib/capture-events";
+import { fetchPlanPreferences } from "@/lib/plan-api";
+import { dateInZone } from "@/lib/calendar-view";
 
 type ProcessingCaptureAction = {
-  action: "archive" | "note" | "task";
+  action: "archive" | "note" | "task" | "event";
   captureId: string;
 };
 
@@ -85,10 +94,12 @@ export default function InboxPage() {
   const [processingCaptureAction, setProcessingCaptureAction] =
     useState<ProcessingCaptureAction | null>(null);
   const [queueError, setQueueError] = useState<string | null>(null);
-  const [queueStatus, setQueueStatus] = useState<string | null>(null);
+  const { toast, showSuccessToast, dismissSuccessToast } = useSuccessToast();
+  const [eventResolution, setEventResolution] = useState<{ capture: QuickCapture; zone: string; date: string } | null>(null);
 
   const timeoutRef = useRef<number | null>(null);
   const processingRef = useRef(false);
+  const queuedProcessingRef = useRef(false);
 
   const queuedCaptures = useMemo(
     () =>
@@ -179,6 +190,7 @@ export default function InboxPage() {
 
       setItemCreated(true);
       setInput("");
+      showSuccessToast(t(result.actionKind === "task" ? "inbox.convertedTask" : "inbox.convertedNote"));
     } catch {
       // ignore storage failures for now
     }
@@ -188,19 +200,22 @@ export default function InboxPage() {
     capture: QuickCapture,
     action: "task" | "note" | "archive",
   ): Promise<void> {
-    if (processingCaptureAction) {
+    if (queuedProcessingRef.current) {
       return;
     }
 
+    const selectedCaptureSource = captureSourcesById[capture.id] ?? captureSource;
+    if (action !== "archive" && !canResolveCaptureToAccount(selectedCaptureSource, accessToken)) {
+      setQueueError(t("inbox.cloudResolutionRequiresAccount"));
+      return;
+    }
+
+    queuedProcessingRef.current = true;
     setProcessingCaptureAction({ action, captureId: capture.id });
     setQueueError(null);
-    setQueueStatus(null);
 
     try {
       let processingResult: InboxProcessingResult;
-      const selectedCaptureSource =
-        captureSourcesById[capture.id] ?? captureSource;
-
       if (action === "task") {
         processingResult = await convertInboxItemToTask(capture, {
           accessToken,
@@ -224,28 +239,45 @@ export default function InboxPage() {
       setCaptures(processingResult.remainingCaptures);
 
       if (processingResult.action === "task") {
-        setQueueStatus(
-          processingResult.source === "api"
-            ? t("inbox.convertedTask")
-            : selectedCaptureSource === "cloud"
-              ? t("inbox.convertedTaskFallback")
-              : t("inbox.convertedTaskDevice"),
-        );
+        showSuccessToast(t("inbox.convertedTask"));
       } else if (processingResult.action === "note") {
-        setQueueStatus(
-          processingResult.source === "api"
-            ? t("inbox.convertedNote")
-            : selectedCaptureSource === "cloud"
-              ? t("inbox.convertedNoteFallback")
-              : t("inbox.convertedNoteDevice"),
-        );
+        showSuccessToast(t("inbox.convertedNote"));
       } else {
-        setQueueStatus(t("inbox.archived"));
+        showSuccessToast(t("inbox.archived"));
       }
     } catch {
       setQueueError(t("inbox.processError"));
     } finally {
       setProcessingCaptureAction(null);
+      queuedProcessingRef.current = false;
+    }
+  }
+
+  async function beginEventResolution(capture: QuickCapture): Promise<void> {
+    if (queuedProcessingRef.current) return;
+    const selectedCaptureSource = captureSourcesById[capture.id] ?? captureSource;
+    if (!accessToken || !canResolveCaptureToAccount(selectedCaptureSource, accessToken)) {
+      setQueueError(t("inbox.cloudResolutionRequiresAccount"));
+      return;
+    }
+    queuedProcessingRef.current = true;
+    setProcessingCaptureAction({ action: "event", captureId: capture.id });
+    setQueueError(null);
+    try {
+      const browserZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const preferences = await fetchPlanPreferences(accessToken, browserZone);
+      setEventResolution({ capture, zone: preferences.planningTimezone, date: dateInZone(new Date(), preferences.planningTimezone) });
+    } catch { setQueueError(t("inbox.eventZoneError")); }
+    finally { queuedProcessingRef.current = false; setProcessingCaptureAction(null); }
+  }
+
+  async function copyDeviceCapture(capture: QuickCapture): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(capture.text);
+      setQueueError(null);
+      showSuccessToast(t("inbox.deviceTextCopied"));
+    } catch {
+      setQueueError(t("inbox.deviceCopyError"));
     }
   }
 
@@ -292,14 +324,9 @@ export default function InboxPage() {
     };
   }, [accessToken, authLoading, ownerId]);
 
-  useEffect(() => {
-    if (!queueStatus) return;
-    const timer = window.setTimeout(() => setQueueStatus(null), 6000);
-    return () => window.clearTimeout(timer);
-  }, [queueStatus]);
-
   return (
     <AppShell>
+      <SuccessToast toast={toast} onDismiss={dismissSuccessToast} />
       <Page>
         <PageHeader
           icon={Inbox}
@@ -333,15 +360,6 @@ export default function InboxPage() {
             </div>
           ) : null}
 
-          {queueStatus ? (
-            <div
-              role="status"
-              className="orvia-feedback mb-3"
-            >
-              {queueStatus}
-            </div>
-          ) : null}
-
           {queuedCaptures.length === 0 ? (
             <EmptyState
               icon={Inbox}
@@ -351,6 +369,9 @@ export default function InboxPage() {
           ) : (
             <div className="space-y-3">
               {queuedCaptures.map(({ capture, preview, source }) => {
+                const headline = capture.intent ?
+                  (capture.text.split(/\r?\n/).find((line) => line.trim()) ?? capture.text).trim().slice(0, 240) :
+                  preview.suggestedTitle;
                 const processingTask =
                   processingCaptureAction?.captureId === capture.id &&
                   processingCaptureAction.action === "task";
@@ -367,13 +388,15 @@ export default function InboxPage() {
                     <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                       <div className="min-w-0 flex-1">
                         <details className="group">
-                          <summary className="cursor-pointer text-base font-semibold text-foreground marker:text-muted">{preview.suggestedTitle}</summary>
-                          {capture.text !== preview.suggestedTitle && <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-muted">{capture.text}</p>}
-                          <p className="mt-2 text-xs text-muted">{t(inboxTypeLabelKeys[preview.detectedType])} · {captureSourceLabel(source, t)} · {capture.createdAt.slice(0, 10)} · {t(inboxWorkspaceLabelKeys[getWorkspaceKey(preview.suggestedWorkspace)])}</p>
+                          <summary className="cursor-pointer text-base font-semibold text-foreground marker:text-muted">{headline}</summary>
+                          {capture.text !== headline && <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-muted">{capture.text}</p>}
+                          <p className="mt-2 text-xs text-muted">{t(capture.intent ? captureIntentLabelKeys[capture.intent] : inboxTypeLabelKeys[preview.detectedType])} · {captureSourceLabel(source, t)} · {capture.createdAt.slice(0, 10)}</p>
+                          {source !== "cloud" && <p className="mt-2 text-xs leading-5 text-muted">{t(source === "local-only" ? "inbox.deviceResolutionHelp" : "inbox.fallbackResolutionHelp")} {!signedIn && <Link href="/login" className="font-semibold text-accent underline underline-offset-2">{t("common.signIn")}</Link>}</p>}
                         </details>
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 xl:shrink-0">
+                        {source !== "cloud" && <Button type="button" variant="secondary" className="gap-2" onClick={() => void copyDeviceCapture(capture)}><Copy className="h-4 w-4" aria-hidden />{t("inbox.copyDeviceText")}</Button>}
                         <Button
                           type="button"
                           variant="secondary"
@@ -412,7 +435,8 @@ export default function InboxPage() {
                           )}
                           {t("inbox.convertNote")}
                         </Button>
-                        <ActionPopover label={`${t("common.actions")}: ${preview.suggestedTitle}`}>
+                        <Button type="button" variant="secondary" className="gap-2" disabled={disabled} onClick={() => void beginEventResolution(capture)}><CalendarDays className="h-4 w-4" aria-hidden />{t("inbox.convertEvent")}</Button>
+                        <ActionPopover label={`${t("common.actions")}: ${headline}`}>
                           {(close) => <button type="button" className="orvia-menu-action" disabled={disabled} onClick={() => { close(); void handleProcessQueuedCapture(capture, "archive"); }}><Archive className="h-4 w-4" aria-hidden />{t("inbox.archive")}</button>}
                         </ActionPopover>
                       </div>
@@ -423,6 +447,7 @@ export default function InboxPage() {
             </div>
           )}
         </PageSection>
+        {eventResolution && accessToken && <EventEditor key={eventResolution.capture.id} accessToken={accessToken} captureId={eventResolution.capture.id} captureText={eventResolution.capture.text} initialTitle={(eventResolution.capture.text.split(/\r?\n/).find((line) => line.trim()) ?? "").trim().slice(0, 200)} date={eventResolution.date} zone={eventResolution.zone} onClose={() => setEventResolution(null)} onSaved={() => { completeInboxEventResolution(eventResolution.capture, { captureSource: "cloud", accessToken, ownerId }); setCaptures((current) => current.filter((item) => item.id !== eventResolution.capture.id)); setEventResolution(null); showSuccessToast(t("inbox.convertedEvent")); }} />}
 
         <details className="mt-7 border-t border-line py-4">
           <summary className="cursor-pointer text-sm font-medium text-muted marker:text-accent">{t("inbox.addTitle")}</summary>
@@ -524,18 +549,7 @@ export default function InboxPage() {
 
             </div>
 
-            <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              {itemCreated ? (
-                <div
-                  role="status"
-                  className="text-sm font-medium text-emerald-600 dark:text-emerald-400"
-                >
-                  {t("inbox.itemCreated")}
-                </div>
-              ) : (
-                <div />
-              )}
-
+            <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
               <Button
                 type="button"
                 variant="secondary"

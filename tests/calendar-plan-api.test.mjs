@@ -192,6 +192,36 @@ test('Event range intersection, lifecycle, update and cross-owner IDs', async ()
   assert.equal(h.db.calls.filter((call) => call.key === 'user_id').every((call) => [ownerA, ownerB].includes(call.value)), true);
 });
 
+test('Event temporal kind changes update one owned row and retain identity and lifecycle', async () => {
+  const h = harness({ orvia_events: [eventRow({ description: 'Bring documents' })] });
+  const toAllDay = { kind: 'all-day', title: 'Appointment', description: 'Bring documents',
+    timezone: 'Europe/Kyiv', busy: false, startDate: '2026-09-30', endDateExclusive: '2026-10-01' };
+  assert.equal((await json(await h.detail.PATCH(req('PATCH', toAllDay, 'B'), ctx(eventId)))).status, 404);
+  assert.equal((await json(await h.detail.PATCH(req('PATCH', { kind: 'all-day' }), ctx(eventId)))).status, 400);
+  assert.equal((await json(await h.detail.PATCH(req('PATCH', toAllDay), ctx(eventId)))).status, 200);
+  assert.equal(h.db.rows.orvia_events.length, 1);
+  assert.deepEqual(
+    [h.db.rows.orvia_events[0].id, h.db.rows.orvia_events[0].user_id,
+      h.db.rows.orvia_events[0].description, h.db.rows.orvia_events[0].lifecycle_status],
+    [eventId, ownerA, 'Bring documents', 'active'],
+  );
+  assert.equal(h.db.rows.orvia_events[0].all_day, true);
+  assert.equal(h.db.rows.orvia_events[0].start_at, null);
+  assert.equal(h.db.rows.orvia_events[0].start_date, '2026-09-30');
+
+  const toTimed = { kind: 'timed', title: 'Appointment', description: 'Bring documents',
+    timezone: 'Europe/Kyiv', busy: false,
+    startAt: '2026-09-30T06:00:00.000Z', endAt: '2026-09-30T07:00:00.000Z' };
+  assert.equal((await json(await h.detail.PATCH(req('PATCH', toTimed), ctx(eventId)))).status, 200);
+  assert.equal(h.db.rows.orvia_events.length, 1);
+  assert.equal(h.db.rows.orvia_events[0].id, eventId);
+  assert.equal(h.db.rows.orvia_events[0].user_id, ownerA);
+  assert.equal(h.db.rows.orvia_events[0].lifecycle_status, 'active');
+  assert.equal(h.db.rows.orvia_events[0].all_day, false);
+  assert.equal(h.db.rows.orvia_events[0].start_date, null);
+  assert.equal(h.db.rows.orvia_events[0].start_at, toTimed.startAt);
+});
+
 test('Task scheduling fields change independently, clear and preserve deadline/owner', async () => {
   const h = harness({ tasks: [taskRow(), taskRow({ id: crypto.randomUUID(), user_id: ownerB }), taskRow({ id: crypto.randomUUID(), user_id: null })] });
   for (const patch of [

@@ -102,6 +102,10 @@ Orvia proactively detects calendar conflicts early enough for the user to resche
 ## 9. Universal Capture
 Capture is available from almost anywhere. Default: **What's on your mind?** with **Auto** mode and optional explicit Task / Note / Event. Orvia may split one capture into multiple objects.
 
+**Current private-beta slice (local implementation, 4 October 2026):** The four visible choices save a reviewable Inbox capture; Auto does not classify or claim AI confidence. Task and Note resolution preserves their existing record contracts; account-backed Inbox conversion is atomic with capture resolution. Event resolution requires scheduling details and an account-backed capture. Multi-object interpretation, high-confidence automatic execution, and external capture remain target behavior, not part of this slice. Local code and tests do not establish deployment or beta readiness.
+
+**Device capture decision:** Device-only captures remain local. Task, Note, and Event resolution into an account requires an account-backed capture. Signing in does not upload existing device captures; users keep their text and may make a new account capture while connected. Automatic offline-to-cloud synchronization is outside this beta slice.
+
 ## 10. Capture Confidence
 - **High confidence:** Understand → execute → show result → Edit/Undo.
 - **Low confidence:** do not guess; send to Inbox for clarification.
@@ -234,6 +238,8 @@ PDF/images/files are **later**, not an initial beta requirement. Architecture sh
 
 ## 46. Data Lifecycle
 Support Archive and Delete. Archive preserves information for Search/Ask Orvia/history while removing it from active work.
+
+**Private-beta Event lifecycle decision:** An Event is Active, Archived, or Deleted. Deleted is a soft-delete state excluded from normal product views; it is not permanent erasure. This batch offers no user-facing restore. Permanent physical deletion and retention are a separate data-lifecycle/legal decision before public launch. This decision does not complete account export or account deletion, which remain separate beta requirements.
 
 Before beta: **Export my data** and **Delete account and data**.
 

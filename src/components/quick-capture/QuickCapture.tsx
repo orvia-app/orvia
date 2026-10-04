@@ -4,19 +4,18 @@ import { Input, Textarea } from "@/components/ui/Field";
 
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import Link from "next/link";
-import { CheckSquare, FileText, X } from "lucide-react";
+import { CalendarDays, CheckSquare, FileText, Inbox, X } from "lucide-react";
 
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { Button } from "@/components/ui/Button";
 import { useDialogFocus } from "@/components/ui/useDialogFocus";
+import { SuccessToast, useSuccessToast } from "@/components/ui/SuccessToast";
 import {
   createCaptureFromPrimarySource,
-  type PrimaryCaptureSource,
 } from "@/lib/captures-api";
 import { notifyCaptureCreated } from "@/lib/capture-events";
-
-type QuickCaptureIntent = "task" | "note";
+import { buildCaptureInput, type CaptureIntent } from "@/lib/capture-intent";
+import { captureIntentLabelKeys } from "@/lib/inbox-presentation";
 
 type QuickCaptureProps = {
   accessToken?: string;
@@ -26,13 +25,19 @@ type QuickCaptureProps = {
 };
 
 const captureTypes: {
-  value: QuickCaptureIntent;
+  value: CaptureIntent;
 }[] = [
+  {
+    value: "auto",
+  },
   {
     value: "task",
   },
   {
     value: "note",
+  },
+  {
+    value: "event",
   },
 ];
 
@@ -46,13 +51,13 @@ export function QuickCapture({
   const dialogRef = useDialogFocus(open);
   const { present: overlayPresent, closing: overlayClosing } = usePresence(open);
   const titleInputRef = useRef<HTMLInputElement>(null);
-  const [captureType, setCaptureType] = useState<QuickCaptureIntent>("task");
+  const [captureType, setCaptureType] = useState<CaptureIntent>("auto");
   const [title, setTitle] = useState("");
   const [details, setDetails] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const toastTimeoutRef = useRef<number | null>(null);
+  const submittingRef = useRef(false);
+  const { toast, showSuccessToast, dismissSuccessToast } = useSuccessToast();
 
   useEffect(() => {
     if (!open) {
@@ -82,114 +87,60 @@ export function QuickCapture({
       return;
     }
 
-    setCaptureType("task");
-    setTitle("");
-    setDetails("");
-    setError(null);
-    setSubmitting(false);
+    const frame = window.requestAnimationFrame(() => {
+      setCaptureType("auto");
+      setTitle("");
+      setDetails("");
+      setError(null);
+      setSubmitting(false);
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [overlayPresent]);
-
-  useEffect(
-    () => () => {
-      if (toastTimeoutRef.current) {
-        window.clearTimeout(toastTimeoutRef.current);
-      }
-    },
-    [],
-  );
-
-  function captureStatusMessage(source: PrimaryCaptureSource): string {
-    if (source === "cloud") {
-      return t("quickCapture.savedCloud");
-    }
-
-    if (source === "local-fallback") {
-      return t("quickCapture.savedDevice");
-    }
-
-    return t("quickCapture.savedDevice");
-  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
 
-    if (submitting) {
+    if (submittingRef.current) {
       return;
     }
 
-    const trimmedTitle = title.trim();
-    const trimmedDetails = details.trim();
-
-    if (!trimmedTitle) {
-      setError(t("quickCapture.requiredError"));
+    const input = buildCaptureInput(title, details, captureType);
+    if (!input.ok) {
+      setError(t(input.error === "required" ? "quickCapture.requiredError" : "quickCapture.tooLong"));
       return;
     }
 
+    submittingRef.current = true;
     setError(null);
     setSubmitting(true);
 
     try {
-      const content = trimmedDetails
-        ? `${trimmedTitle}\n\n${trimmedDetails}`
-        : trimmedTitle;
       const result = await createCaptureFromPrimarySource(
-        {
-          content,
-          source: "quick_capture",
-          status: "inbox",
-          metadata: {
-            intent: captureType,
-            title: trimmedTitle,
-          },
-        },
+        input.value,
         { accessToken, ownerId },
       );
 
-      setToastMessage(captureStatusMessage(result.source));
+      showSuccessToast(
+        t("quickCapture.savedCloud"),
+        result.source === "cloud" ? undefined : t("quickCapture.savedDevice"),
+      );
       setTitle("");
       setDetails("");
       setSubmitting(false);
+      submittingRef.current = false;
       notifyCaptureCreated();
       onOpenChange(false);
 
-      if (toastTimeoutRef.current) {
-        window.clearTimeout(toastTimeoutRef.current);
-      }
-
-      toastTimeoutRef.current = window.setTimeout(() => {
-        setToastMessage(null);
-        toastTimeoutRef.current = null;
-      }, 4000);
     } catch {
       setError(t("quickCapture.error"));
       setSubmitting(false);
+      submittingRef.current = false;
     }
   }
 
   return (
     <>
-      {toastMessage ? (
-        <div
-          role="status"
-          className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-[60] w-[calc(100%-2rem)] max-w-sm rounded-xl border border-emerald-200/75 bg-surface p-4 text-sm text-zinc-700 shadow-2xl shadow-zinc-950/15 dark:border-emerald-500/20 dark:text-zinc-200 dark:shadow-black/35"
-        >
-          <p className="font-semibold text-foreground">
-            {toastMessage}
-          </p>
-          <div className="mt-2 flex items-center justify-between gap-3">
-            <p className="text-xs leading-5 text-muted">
-              {t("quickCapture.toastHint")}
-            </p>
-            <Link
-              href="/app/inbox"
-              className="shrink-0 text-xs font-semibold text-violet-700 hover:text-foreground dark:text-violet-300 hover:text-foreground"
-              onClick={() => setToastMessage(null)}
-            >
-              {t("common.openInbox")}
-            </Link>
-          </div>
-        </div>
-      ) : null}
+      <SuccessToast toast={toast} onDismiss={dismissSuccessToast} />
 
       {overlayPresent ? (
         <div
@@ -243,10 +194,10 @@ export function QuickCapture({
               </button>
             </div>
 
-            <div className="mt-5 grid grid-cols-2 gap-2">
+            <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {captureTypes.map((type) => {
                 const active = captureType === type.value;
-                const Icon = type.value === "task" ? CheckSquare : FileText;
+                const Icon = type.value === "task" ? CheckSquare : type.value === "note" ? FileText : type.value === "event" ? CalendarDays : Inbox;
 
                 return (
                   <button
@@ -259,16 +210,10 @@ export function QuickCapture({
                         : "flex items-center gap-2 rounded-xl bg-subtle px-3 py-2.5 text-left text-sm font-medium text-muted ring-1 ring-line transition hover:bg-surface hover:text-zinc-950 dark:hover:bg-zinc-900 dark:hover:text-white"
                     }
                     aria-pressed={active}
-                    title={
-                      type.value === "task"
-                        ? t("quickCapture.taskDescription")
-                        : t("quickCapture.noteDescription")
-                    }
+                    title={t(`quickCapture.${type.value}Description`)}
                   >
                     <Icon className="h-4 w-4 shrink-0" aria-hidden />
-                    {type.value === "task"
-                      ? t("quickCapture.forTask")
-                      : t("quickCapture.forNote")}
+                    {t(captureIntentLabelKeys[type.value])}
                   </button>
                 );
               })}
@@ -291,9 +236,7 @@ export function QuickCapture({
                   onChange={(event) => setTitle(event.target.value)}
                   className="mt-1.5 w-full"
                   placeholder={
-                    captureType === "task"
-                      ? t("quickCapture.taskPlaceholder")
-                      : t("quickCapture.notePlaceholder")
+                    t("quickCapture.prompt")
                   }
                 />
               </div>
@@ -312,9 +255,7 @@ export function QuickCapture({
                   onChange={(event) => setDetails(event.target.value)}
                   className="mt-1.5 w-full"
                   placeholder={
-                    captureType === "task"
-                      ? t("quickCapture.taskDetailsPlaceholder")
-                      : t("quickCapture.noteDetailsPlaceholder")
+                    t("quickCapture.detailsPlaceholder")
                   }
                 />
               </div>
