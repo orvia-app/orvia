@@ -113,6 +113,8 @@ Replanning distinguishes **flexible** items (for example reading or research) fr
 
 ## 12. Universal Capture
 
+**Implementation note, 4 October 2026:** The local Capture dialog exposes Auto, Task, Note, and Event and routes each to Inbox for review. Auto is deliberately unresolved because the repository has no reliable interpretation backend. The high/mixed-confidence flow below remains target UX. The local Event editor is shared by Calendar and account-backed Inbox conversion. Device-only captures stay local; account-backed Task, Note, and Event resolution requires an account capture, and signing in does not silently upload local content.
+
 Universal Capture opens quickly from nearly anywhere with **“What's on your mind?”**, **Auto** by default, and optional **Task / Note / Event** types. The user need not choose an object type before typing. One input may create several objects, including a mix of events, tasks, and notes. The result shows a compact, understandable account of what Orvia created or needs clarified.
 
 - **High confidence:** Create immediately and show the interpreted objects with **Edit** and **Undo**. Do not require a redundant Save step. Respect the selected autonomy and Product Spec permission boundaries for consequential actions.

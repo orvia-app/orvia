@@ -1,25 +1,28 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, Globe2, Info, RotateCw } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Globe2, Info, Plus, RotateCw } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { useAuthSession } from "@/components/auth/useAuthSession";
 import { CalendarSurface } from "@/components/calendar/CalendarSurface";
+import { EventEditor, type EventEditorResult } from "@/components/events/EventEditor";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { Button } from "@/components/ui/Button";
 import { Page } from "@/components/ui/Page";
-import { isIanaTimeZone, type IanaTimeZone, type LocalDate, type ScheduleProjectionResult } from "@/core/schedule/domain";
+import { SuccessToast, useSuccessToast } from "@/components/ui/SuccessToast";
+import { isIanaTimeZone, type IanaTimeZone, type LocalDate } from "@/core/schedule/domain";
 import { localDateRange } from "@/core/schedule/projection";
 import { addDays, dateInZone, moveView, sourceNotice, viewDates, type CalendarView } from "@/lib/calendar-view";
 import { parseCalendarProjection } from "@/lib/calendar-projection";
+import { retainCalendarAfterRefreshFailure, withSavedEvent, withoutEvent, type CalendarLoadState } from "@/lib/calendar-event-mutation";
+import { calendarTimezoneNeedsConfirmation, fetchCalendarTimezonePreference, saveCalendarTimezonePreference, type CalendarTimezonePreference } from "@/lib/calendar-timezone-preference";
 import "./calendar.css";
 
-type LoadState = { status: "idle" } | { status: "error"; key: string } | { status: "loaded"; key: string; projection: ScheduleProjectionResult };
 type CalendarMotionIntent = "initial" | "view" | "previous" | "next" | "selection";
 type CalendarVisualQaFixture = typeof import("@/dev/calendar-visual-qa-fixture");
 type PlanningTimezoneState =
   | { status: "idle" }
-  | { status: "ready"; ownerId: string; persistedZone: IanaTimeZone | null }
+  | { status: "ready"; ownerId: string; saved: CalendarTimezonePreference | null }
   | { status: "error"; ownerId: string };
 
 function CalendarLoadingState({ label }: { label: string }) {
@@ -54,13 +57,24 @@ export default function CalendarPage() {
   const [date, setDate] = useState<LocalDate | null>(null);
   const [view, setView] = useState<CalendarView>("week");
   const [now, setNow] = useState<Date | null>(null);
-  const [load, setLoad] = useState<LoadState>({ status: "idle" });
+  const [load, setLoad] = useState<CalendarLoadState>({ status: "idle" });
   const [retry, setRetry] = useState(0);
   const [timezoneRetry, setTimezoneRetry] = useState(0);
   const [motion, setMotion] = useState<{ intent: CalendarMotionIntent; revision: number }>({ intent: "initial", revision: 0 });
   const [visualQaFixture, setVisualQaFixture] = useState<CalendarVisualQaFixture | null>(null);
   const [planningTimezone, setPlanningTimezone] = useState<PlanningTimezoneState>({ status: "idle" });
+  const [zoneSaving, setZoneSaving] = useState(false);
+  const [zoneSaveError, setZoneSaveError] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<string | "new" | null>(null);
+  const { toast, showSuccessToast, dismissSuccessToast } = useSuccessToast();
   const resolvedTimezoneOwner = useRef<string | null>(null);
+  const requestEpochRef = useRef(0);
+  const zoneSavingRef = useRef(false);
+  const currentOwnerRef = useRef(session?.user.id);
+
+  useEffect(() => {
+    currentOwnerRef.current = session?.user.id;
+  }, [session?.user.id]);
 
   useEffect(() => {
     const useVisualQaFixture = process.env.NODE_ENV === "development" &&
@@ -79,7 +93,7 @@ export default function CalendarPage() {
         return;
       }
       setNow(new Date());
-      setZoneInput(Intl.DateTimeFormat().resolvedOptions().timeZone || "");
+      setZoneInput((current) => current || Intl.DateTimeFormat().resolvedOptions().timeZone || "");
     }, 0);
     const timer = useVisualQaFixture ? null : window.setInterval(() => setNow(new Date()), 60_000);
     return () => {
@@ -99,37 +113,20 @@ export default function CalendarPage() {
     const controller = new AbortController();
     void (async () => {
       try {
-        const response = await fetch("/api/planning-preferences", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-          cache: "no-store",
-          signal: controller.signal,
-        });
-        const body: unknown = await response.json();
-        if (!response.ok || typeof body !== "object" || body === null || Array.isArray(body) ||
-            !("ok" in body) || body.ok !== true || !("preferences" in body)) {
-          throw new Error("Planning timezone unavailable");
-        }
-        const preferences = body.preferences;
-        let persistedZone: IanaTimeZone | null = null;
-        if (preferences !== null) {
-          if (typeof preferences !== "object" || Array.isArray(preferences) ||
-              !("planningTimezone" in preferences) ||
-              !isIanaTimeZone(preferences.planningTimezone)) {
-            throw new Error("Planning timezone unavailable");
-          }
-          persistedZone = preferences.planningTimezone;
-        }
+        const saved = await fetchCalendarTimezonePreference(session.access_token, controller.signal);
         if (controller.signal.aborted) return;
         const ownerChanged = resolvedTimezoneOwner.current !== ownerId;
         resolvedTimezoneOwner.current = ownerId;
-        setPlanningTimezone({ status: "ready", ownerId, persistedZone });
-        if (persistedZone) {
+        setPlanningTimezone({ status: "ready", ownerId, saved });
+        if (saved) {
+          const persistedZone = saved.planningTimezone;
           const current = new Date();
           setZoneInput(persistedZone);
           setZone(persistedZone);
+          setZoneEditorOpen(false);
           setDate((selected) => ownerChanged ? dateInZone(current, persistedZone) :
             selected ?? dateInZone(current, persistedZone));
-        } else if (ownerChanged) {
+        } else {
           setZoneInput(Intl.DateTimeFormat().resolvedOptions().timeZone || "");
           setZone(null);
           setDate(null);
@@ -145,7 +142,7 @@ export default function CalendarPage() {
   const sessionUserId = session?.user.id;
   const timezoneReady = planningTimezone.status === "ready" &&
     planningTimezone.ownerId === sessionUserId;
-  const requestKey = zone && date ? `${zone}:${dates[0]}:${dates[dates.length - 1]}:${retry}:${sessionUserId ?? ""}` : "";
+  const requestKey = zone && date ? `${zone}:${dates[0]}:${dates[dates.length - 1]}:${sessionUserId ?? ""}` : "";
   const visualQaProjection = useMemo(() => visualQaFixture && sessionUserId ?
     visualQaFixture.createCalendarVisualQaProjection(sessionUserId) : null, [sessionUserId, visualQaFixture]);
   const activeLoad = visualQaProjection ?
@@ -155,6 +152,7 @@ export default function CalendarPage() {
     if (visualQaFixture || !session?.access_token || !timezoneReady ||
         !zone || !date || !dates.length) return;
     const controller = new AbortController();
+    const requestEpoch = ++requestEpochRef.current;
     const first = dates[0];
     const lastExclusive = addDays(dates[dates.length - 1], 1);
     const range = localDateRange(first, lastExclusive, zone);
@@ -178,29 +176,46 @@ export default function CalendarPage() {
         if (!response.ok || !responseZone || !projection) {
           throw new Error("Calendar schedule unavailable");
         }
+        if (controller.signal.aborted || requestEpoch !== requestEpochRef.current) return;
         if (responseZone !== zone) {
-          setPlanningTimezone({ status: "ready", ownerId: session.user.id,
-            persistedZone: responseZone });
-          setZoneInput(responseZone);
-          setZone(responseZone);
+          setTimezoneRetry((value) => value + 1);
           return;
         }
-        if (!controller.signal.aborted) setLoad({ status: "loaded", key: requestKey, projection });
+        setLoad({ status: "loaded", key: requestKey, projection });
       } catch {
-        if (!controller.signal.aborted) setLoad({ status: "error", key: requestKey });
+        if (!controller.signal.aborted && requestEpoch === requestEpochRef.current) {
+          setLoad((current) => retainCalendarAfterRefreshFailure(current, requestKey));
+        }
       }
     })();
     return () => controller.abort();
-  }, [session?.access_token, session?.user.id, timezoneReady, zone, date, dates, requestKey, visualQaFixture]);
+  }, [session?.access_token, session?.user.id, timezoneReady, zone, date, dates, requestKey, retry, visualQaFixture]);
 
-  function applyZone() {
-    if (!timezoneReady) return;
-    const candidate = planningTimezone.persistedZone ?? zoneInput.trim();
+  async function applyZone() {
+    if (!timezoneReady || planningTimezone.status !== "ready" ||
+        !session?.access_token || zoneSavingRef.current) return;
+    const candidate = zoneInput.trim();
     if (!isIanaTimeZone(candidate)) return;
-    setZoneInput(candidate);
-    setZone(candidate);
-    if (!date) setDate(dateInZone(now ?? new Date(), candidate));
-    setZoneEditorOpen(false);
+    const ownerId = session.user.id;
+    zoneSavingRef.current = true;
+    setZoneSaving(true);
+    setZoneSaveError(false);
+    try {
+      const saved = await saveCalendarTimezonePreference(
+        session.access_token, candidate, planningTimezone.saved,
+      );
+      if (currentOwnerRef.current !== ownerId) return;
+      setPlanningTimezone({ status: "ready", ownerId, saved });
+      setZoneInput(saved.planningTimezone);
+      setZone(saved.planningTimezone);
+      if (!date) setDate(dateInZone(now ?? new Date(), saved.planningTimezone));
+      setZoneEditorOpen(false);
+    } catch {
+      if (currentOwnerRef.current === ownerId) setZoneSaveError(true);
+    } finally {
+      zoneSavingRef.current = false;
+      setZoneSaving(false);
+    }
   }
 
   function transition(intent: CalendarMotionIntent, update: () => void) {
@@ -219,17 +234,34 @@ export default function CalendarPage() {
     });
   }
 
+  function handleEventSaved(result: EventEditorResult) {
+    setEditingEvent(null);
+    requestEpochRef.current += 1;
+    if ("event" in result) {
+      setLoad((current) => current.status === "loaded" && current.key === requestKey && sessionUserId ?
+        { ...current, projection: withSavedEvent(current.projection, result.event, sessionUserId) } : current);
+      showSuccessToast(t(result.kind === "created" ? "event.status.created" : "event.status.updated"));
+    } else {
+      const eventId = result.eventId;
+      setLoad((current) => current.status === "loaded" && current.key === requestKey ?
+        { ...current, projection: withoutEvent(current.projection, eventId) } : current);
+      showSuccessToast(t(`event.status.${result.kind}`));
+    }
+    setRetry((value) => value + 1);
+  }
+
   const source = activeLoad.status === "loaded" ? sourceNotice(activeLoad.projection) : null;
   const allEmpty = activeLoad.status === "loaded" && activeLoad.projection.items.length === 0;
   return (
     <AppShell>
+      <SuccessToast toast={toast} onDismiss={dismissSuccessToast} />
       <Page className="calendar-page">
         <header className="calendar-page-heading">
           <div>
             <h1>{t("calendar.title")}</h1>
             <p>{t("calendar.description")}</p>
           </div>
-          {zone && (
+          <div className="flex flex-wrap items-center justify-end gap-2">{zone && date && session?.access_token && !visualQaFixture && <Button type="button" variant="secondary" onClick={() => setEditingEvent("new")}><Plus className="h-4 w-4" aria-hidden />{t("event.new")}</Button>}{zone && (
             <button
               type="button"
               className="calendar-timezone-trigger"
@@ -242,7 +274,7 @@ export default function CalendarPage() {
               <span><span className="calendar-timezone-prefix">{t("calendar.showingZone")}</span>{zone}</span>
               <ChevronDown className="h-3.5 w-3.5" aria-hidden />
             </button>
-          )}
+          )}</div>
         </header>
 
         <section className="calendar-frame" aria-label={t("calendar.title")}>
@@ -262,15 +294,18 @@ export default function CalendarPage() {
             </div>
           )}
 
-          {(!zone || zoneEditorOpen) && (
-            <form id="calendar-zone-editor" className="calendar-zone-editor" onSubmit={(event) => { event.preventDefault(); applyZone(); }}>
+          {((timezoneReady && planningTimezone.status === "ready" &&
+            calendarTimezoneNeedsConfirmation(planningTimezone.saved, zoneEditorOpen)) ||
+            (visualQaFixture !== null && zoneEditorOpen)) && (
+            <form id="calendar-zone-editor" className="calendar-zone-editor" onSubmit={(event) => { event.preventDefault(); void applyZone(); }}>
               <div className="calendar-zone-copy">
                 <label htmlFor="calendar-zone">{t("calendar.timezone")}</label>
                 {!zone && <p>{t("calendar.chooseZone")}</p>}
+                {zoneSaveError && <div role="alert" className="mt-1 text-sm text-[var(--danger)]">{t("calendar.timezoneSaveError")}</div>}
               </div>
               <div className="calendar-zone-entry">
-                <input id="calendar-zone" className="orvia-field" value={zoneInput} onChange={(event) => setZoneInput(event.target.value)} placeholder="Europe/Kyiv" autoComplete="off" aria-invalid={zoneInput.length > 0 && !isIanaTimeZone(zoneInput.trim())} />
-                <Button type="submit" variant="secondary" disabled={!isIanaTimeZone(zoneInput.trim())}>{zone ? t("calendar.applyZone") : t("calendar.confirmZone")}</Button>
+                <input id="calendar-zone" className="orvia-field" value={zoneInput} onChange={(event) => { setZoneInput(event.target.value); setZoneSaveError(false); }} placeholder="Europe/Kyiv" autoComplete="off" disabled={zoneSaving} aria-invalid={zoneInput.length > 0 && !isIanaTimeZone(zoneInput.trim())} />
+                <Button type="submit" variant="secondary" disabled={zoneSaving || !isIanaTimeZone(zoneInput.trim())}>{zoneSaving ? t("common.saving") : zone ? t("calendar.applyZone") : t("calendar.confirmZone")}</Button>
               </div>
             </form>
           )}
@@ -309,13 +344,14 @@ export default function CalendarPage() {
                     </div>
                   )}
                   <div key={`${view}:${dates[0]}:${motion.revision}`} className="calendar-transition" data-motion={motion.intent}>
-                    <CalendarSurface date={date} dates={dates} locale={locale} now={now} onSelectDate={selectDate} onOpenDay={openDay} projection={activeLoad.projection} view={view} zone={zone} />
+                    <CalendarSurface date={date} dates={dates} locale={locale} now={now} onSelectDate={selectDate} onOpenDay={openDay} onOpenEvent={setEditingEvent} projection={activeLoad.projection} view={view} zone={zone} />
                   </div>
                 </div>
               )}
             </>
           )}
         </section>
+        {editingEvent && zone && date && session?.access_token && <EventEditor key={editingEvent} accessToken={session.access_token} date={date} zone={zone} eventId={editingEvent === "new" ? undefined : editingEvent} onClose={() => setEditingEvent(null)} onSaved={handleEventSaved} />}
       </Page>
     </AppShell>
   );

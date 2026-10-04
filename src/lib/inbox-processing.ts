@@ -1,28 +1,20 @@
 import {
-  noteTypeFromInboxType,
-  parseInboxInput,
-  workspaceIdFromLabel,
-} from "@/lib/inbox";
-import {
   recordInboxProcessedActivity,
   recordNoteCreatedActivity,
   recordTaskCreatedActivity,
 } from "@/lib/activity-recording";
 import {
-  getCachedCapturesForOwner,
   removeCachedCaptureForOwner,
+  resolveCaptureItemViaApi,
   updateCaptureStatusViaApi,
   type PrimaryCaptureSource,
 } from "@/lib/captures-api";
 import {
-  getQuickCaptures,
   removeQuickCapture,
   type QuickCapture,
 } from "@/lib/quick-captures";
-import {
-  createQuickCaptureNote,
-  createQuickCaptureTask,
-} from "@/lib/quick-capture";
+import { parseResolvedCaptureTask, upsertCachedTaskForOwner } from "@/lib/tasks-api";
+import { parseResolvedCaptureNote, upsertCachedNoteForOwner } from "@/lib/notes-api";
 import type { Note } from "@/lib/notes";
 import type { Task } from "@/types";
 
@@ -56,6 +48,10 @@ export type InboxProcessingResult =
   | InboxNoteProcessingResult
   | InboxArchiveProcessingResult;
 
+export function canResolveCaptureToAccount(source: PrimaryCaptureSource, accessToken?: string): boolean {
+  return source === "cloud" && Boolean(accessToken?.trim());
+}
+
 async function removeProcessedCapture(
   capture: QuickCapture,
   status: "processed" | "archived",
@@ -75,97 +71,48 @@ async function removeProcessedCapture(
     return removeCachedCaptureForOwner(options.ownerId, capture.id);
   }
 
-  return removeQuickCapture(capture.id);
-}
-
-async function maybeRemoveConvertedCapture(
-  capture: QuickCapture,
-  conversionSource: "api" | "local",
-  options: InboxProcessingOptions,
-): Promise<QuickCapture[]> {
-  if (options.captureSource === "cloud" && conversionSource !== "api") {
-    return getCachedCapturesForOwner(options.ownerId);
+  if (options.captureSource === "local-fallback") {
+    return removeCachedCaptureForOwner(options.ownerId, capture.id);
   }
 
-  return removeProcessedCapture(capture, "processed", options);
+  return removeQuickCapture(capture.id);
 }
 
 export async function convertInboxItemToTask(
   capture: QuickCapture,
   options: InboxProcessingOptions = {},
 ): Promise<InboxTaskProcessingResult> {
-  const preview = parseInboxInput(capture.text);
-  const result = await createQuickCaptureTask({
-    title: preview.suggestedTitle,
-    description: preview.summary,
-    priority: preview.priority,
-    status: "todo",
-    workspaceId: workspaceIdFromLabel(preview.suggestedWorkspace),
-    accessToken: options.accessToken,
-    ownerId: options.ownerId,
-  });
-
-  if (result.type !== "task") {
-    throw new Error("Inbox task conversion returned an unexpected result.");
-  }
-
-  if (result.source === "api") {
-    await recordTaskCreatedActivity(result.task, {
-      accessToken: options.accessToken,
-    });
-    await recordInboxProcessedActivity("task", {
-      accessToken: options.accessToken,
-    });
-  }
-
-  return {
-    action: "task",
-    task: result.task,
-    source: result.source,
-    remainingCaptures: await maybeRemoveConvertedCapture(
-      capture,
-      result.source,
-      options,
-    ),
-  };
+  if (capture.text.length > 5000) throw new Error("Capture is too long for a Task description.");
+  if (!canResolveCaptureToAccount(options.captureSource ?? "local-only", options.accessToken)) throw new Error("Account-backed capture required.");
+  const task = parseResolvedCaptureTask(await resolveCaptureItemViaApi(capture.id, "task", options));
+  upsertCachedTaskForOwner(options.ownerId, task);
+  const remainingCaptures = removeCachedCaptureForOwner(options.ownerId, capture.id);
+  try {
+    await recordTaskCreatedActivity(task, { accessToken: options.accessToken });
+    await recordInboxProcessedActivity("task", { accessToken: options.accessToken });
+  } catch { /* Activity is best-effort after the atomic conversion. */ }
+  return { action: "task", task, source: "api", remainingCaptures };
 }
 
 export async function convertInboxItemToNote(
   capture: QuickCapture,
   options: InboxProcessingOptions = {},
 ): Promise<InboxNoteProcessingResult> {
-  const preview = parseInboxInput(capture.text);
-  const result = await createQuickCaptureNote({
-    accessToken: options.accessToken,
-    ownerId: options.ownerId,
-    title: preview.suggestedTitle,
-    content: preview.summary,
-    type: noteTypeFromInboxType(preview.type),
-  });
+  if (!canResolveCaptureToAccount(options.captureSource ?? "local-only", options.accessToken)) throw new Error("Account-backed capture required.");
+  const note = parseResolvedCaptureNote(await resolveCaptureItemViaApi(capture.id, "note", options));
+  upsertCachedNoteForOwner(options.ownerId, note);
+  const remainingCaptures = removeCachedCaptureForOwner(options.ownerId, capture.id);
+  try {
+    await recordNoteCreatedActivity(note, { accessToken: options.accessToken });
+    await recordInboxProcessedActivity("note", { accessToken: options.accessToken });
+  } catch { /* Activity is best-effort after the atomic conversion. */ }
+  return { action: "note", note, source: "api", remainingCaptures };
+}
 
-  if (result.type !== "note") {
-    throw new Error("Inbox note conversion returned an unexpected result.");
-  }
-
-  if (result.source === "api") {
-    await recordNoteCreatedActivity(result.note, {
-      accessToken: options.accessToken,
-    });
-    await recordInboxProcessedActivity("note", {
-      accessToken: options.accessToken,
-    });
-  }
-
-  return {
-    action: "note",
-    note: result.note,
-    source: result.source,
-    remainingCaptures: await maybeRemoveConvertedCapture(
-      capture,
-      result.source,
-      options,
-    ),
-  };
+/** Call only after the Event RPC has committed; removes the stale fallback copy. */
+export function completeInboxEventResolution(capture: QuickCapture, options: InboxProcessingOptions): QuickCapture[] {
+  if (!canResolveCaptureToAccount(options.captureSource ?? "local-only", options.accessToken) || !options.ownerId) throw new Error("Account-backed capture required.");
+  return removeCachedCaptureForOwner(options.ownerId, capture.id);
 }
 
 export async function archiveInboxItem(

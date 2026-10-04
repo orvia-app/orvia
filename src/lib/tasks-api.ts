@@ -288,6 +288,13 @@ function mapApiTaskToTask(
   };
 }
 
+export function parseResolvedCaptureTask(value: unknown): Task {
+  if (!isRecord(value)) throw new Error("Invalid resolved Task response.");
+  const task = mapApiTaskToTask(value, { status: "todo", priority: "medium", workspaceId: "1" });
+  if (!task) throw new Error("Invalid resolved Task response.");
+  return task;
+}
+
 function parseTaskResponse(
   value: unknown,
   fallback: TaskMappingFallback,

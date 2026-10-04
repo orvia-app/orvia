@@ -68,6 +68,7 @@ export type SupabaseEventRow = {
   id: string;
   user_id: string;
   title: string;
+  description: string | null;
   timezone: string;
   busy: boolean;
   all_day: boolean;
@@ -278,6 +279,38 @@ export type SupabaseDatabase = {
         Returns: boolean;
       };
       beta_analytics_report: { Args: { p_days: number }; Returns: unknown };
+      resolve_capture_to_orvia_event: {
+        Args: {
+          p_capture_id: string;
+          p_user_id: string;
+          p_title: string;
+          p_timezone: string;
+          p_busy: boolean;
+          p_all_day: boolean;
+          p_start_at: string | null;
+          p_end_at: string | null;
+          p_start_date: string | null;
+          p_end_date_exclusive: string | null;
+        };
+        Returns: SupabaseEventRow[];
+      };
+      resolve_capture_to_item: {
+        Args: { p_capture_id: string; p_user_id: string; p_target: "task" | "note" };
+        Returns: Record<string, unknown> | null;
+      };
+      resolve_claimed_capture_to_item: {
+        Args: { p_capture_id: string; p_user_id: string; p_target: "task" | "note" };
+        Returns: { status: "created" | "existing" | "conflict"; item?: Record<string, unknown> };
+      };
+      resolve_claimed_capture_to_event: {
+        Args: {
+          p_capture_id: string; p_user_id: string; p_title: string; p_description: string | null;
+          p_timezone: string; p_busy: boolean; p_all_day: boolean;
+          p_start_at: string | null; p_end_at: string | null;
+          p_start_date: string | null; p_end_date_exclusive: string | null;
+        };
+        Returns: { status: "created" | "existing" | "conflict"; item?: SupabaseEventRow };
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

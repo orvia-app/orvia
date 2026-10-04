@@ -5,6 +5,7 @@ export type QuickCapture = {
   id: string;
   text: string;
   createdAt: string;
+  intent?: "auto" | "task" | "note" | "event";
 };
 
 export function isQuickCapture(value: unknown): value is QuickCapture {
@@ -18,7 +19,8 @@ export function isQuickCapture(value: unknown): value is QuickCapture {
     typeof capture.id === "string" &&
     typeof capture.text === "string" &&
     capture.text.trim().length > 0 &&
-    typeof capture.createdAt === "string"
+    typeof capture.createdAt === "string" &&
+    (capture.intent === undefined || ["auto", "task", "note", "event"].includes(capture.intent))
   );
 }
 

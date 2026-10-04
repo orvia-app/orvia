@@ -227,10 +227,12 @@ function parseUpdateCaptureResponse(value: unknown): Capture | null {
 }
 
 export function mapCaptureToQuickCapture(capture: Capture): QuickCapture {
+  const intent = capture.metadata.intent;
   return {
     id: capture.id,
     text: capture.content,
     createdAt: capture.createdAt,
+    ...(intent === "auto" || intent === "task" || intent === "note" || intent === "event" ? { intent } : {}),
   };
 }
 
@@ -334,6 +336,7 @@ function createLocalFallbackCapture(
     id: crypto.randomUUID(),
     text: input.content,
     createdAt: new Date().toISOString(),
+    ...(input.metadata?.intent === "auto" || input.metadata?.intent === "task" || input.metadata?.intent === "note" || input.metadata?.intent === "event" ? { intent: input.metadata.intent } : {}),
   };
 
   createQuickCapture(capture);
@@ -349,6 +352,7 @@ function createOwnerScopedFallbackCapture(
     id: crypto.randomUUID(),
     text: input.content,
     createdAt: new Date().toISOString(),
+    ...(input.metadata?.intent === "auto" || input.metadata?.intent === "task" || input.metadata?.intent === "note" || input.metadata?.intent === "event" ? { intent: input.metadata.intent } : {}),
   };
 
   upsertCachedCaptureForOwner(ownerId, capture);
@@ -470,6 +474,25 @@ export async function updateCaptureStatusViaApi(
   }
 
   return capture;
+}
+
+export async function resolveCaptureItemViaApi(
+  captureId: string,
+  target: "task" | "note",
+  options: CapturesApiRequestOptions,
+): Promise<unknown> {
+  if (!options.accessToken?.trim()) throw new Error("Account capture resolution requires authentication.");
+  const response = await fetch(`/api/captures/${encodeURIComponent(captureId)}/resolve-item`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAuthorizationHeaders(options) },
+    body: JSON.stringify({ target }),
+  });
+  let body: unknown;
+  try { body = await response.json(); } catch { throw new Error("Capture resolution response was not valid JSON."); }
+  if (!response.ok || !isRecord(body) || body.ok !== true || !isRecord(body[target])) {
+    throw new Error("Capture resolution failed.");
+  }
+  return body[target];
 }
 
 export async function loadCapturesFromPrimarySource(

@@ -1,6 +1,14 @@
 import type { TranslationKey } from "@/lib/i18n";
 import type { InboxItemType } from "@/lib/inbox";
 import type { WorkspaceKey } from "@/lib/workspaces/types";
+import type { CaptureIntent } from "@/lib/capture-intent";
+
+export const captureIntentLabelKeys: Record<CaptureIntent, TranslationKey> = {
+  auto: "quickCapture.forAuto",
+  task: "quickCapture.forTask",
+  note: "quickCapture.forNote",
+  event: "quickCapture.forEvent",
+};
 
 export const inboxTypeLabelKeys: Record<InboxItemType, TranslationKey> = {
   Reminder: "inbox.type.reminder",

@@ -21,6 +21,7 @@ function load(path, dependencies = {}) {
   const loaded = { exports: {} };
   vm.runInNewContext(compiled.outputText, {
     Date, Intl, RangeError, TypeError, Error, Request, Response, crypto,
+    fetch: dependencies.__fetch ?? globalThis.fetch,
     exports: loaded.exports, module: loaded,
     require: (id) => {
       if (!(id in dependencies)) throw new Error(`Missing test dependency ${id}`);
@@ -109,7 +110,7 @@ function harness() {
     "@/server/api/planning-preferences": preferences,
   };
   return {
-    db,
+    db, domain,
     preferences,
     preferenceRoute: load("src/app/api/planning-preferences/route.ts", shared),
     blockIndex: load("src/app/api/task-plan-blocks/route.ts", shared),
@@ -148,6 +149,58 @@ test("planning preference defaults are explicit and timezone persists per owner"
   const other = await json(await h.preferenceRoute.GET(request("GET", undefined, "B")));
   assert.equal(own.body.preferences.planningTimezone, "America/Toronto");
   assert.equal(other.body.preferences, null);
+});
+
+test("Calendar timezone confirmation persists across remounts without duplicate writes or owner leakage", async () => {
+  const h = harness();
+  const requests = [];
+  const fetchRoute = (path, options = {}) => {
+    const method = options.method ?? "GET";
+    requests.push({ method, body: options.body ? JSON.parse(options.body) : null });
+    return h.preferenceRoute[method](new Request(`https://orvia.test${path}`, {
+      method, headers: options.headers, ...(options.body ? { body: options.body } : {}),
+    }));
+  };
+  const client = load("src/lib/calendar-timezone-preference.ts", {
+    "@/core/schedule/domain": h.domain,
+    __fetch: fetchRoute,
+  });
+
+  const firstVisit = await client.fetchCalendarTimezonePreference("A");
+  assert.equal(firstVisit, null);
+  assert.equal(client.calendarTimezoneNeedsConfirmation(firstVisit, false), true);
+  const confirmed = await client.saveCalendarTimezonePreference("A", "Europe/Kyiv", firstVisit);
+  assert.equal(confirmed.planningTimezone, "Europe/Kyiv");
+  assert.equal(h.db.rows.planning_preferences[0].user_id, ownerA);
+  assert.equal(requests.filter((call) => call.method === "PUT").length, 1);
+
+  const remounted = await client.fetchCalendarTimezonePreference("A");
+  assert.equal(remounted.planningTimezone, "Europe/Kyiv");
+  assert.equal(client.calendarTimezoneNeedsConfirmation(remounted, false), false);
+  assert.equal(client.calendarTimezoneNeedsConfirmation(remounted, true), true);
+  await client.saveCalendarTimezonePreference("A", "Europe/Kyiv", remounted);
+  assert.equal(requests.filter((call) => call.method === "PUT").length, 1);
+  assert.equal(await client.fetchCalendarTimezonePreference("B"), null);
+
+  await h.preferenceRoute.PUT(request("PUT", {
+    planningTimezone: "Europe/Kyiv", enabledWeekdays: [1, 3, 5],
+    localStartTime: "08:30", localEndTime: "17:30", expectedVersion: remounted.version,
+  }));
+  const custom = await client.fetchCalendarTimezonePreference("A");
+  const changed = await client.saveCalendarTimezonePreference("A", "America/Toronto", custom);
+  assert.equal(changed.planningTimezone, "America/Toronto");
+  assert.deepEqual(Array.from(changed.enabledWeekdays), [1, 3, 5]);
+  assert.equal(changed.localStartTime, "08:30:00");
+  assert.equal(changed.localEndTime, "17:30:00");
+  assert.equal(h.db.rows.planning_preferences.length, 1);
+  assert.equal(h.db.rows.planning_preferences[0].user_id, ownerA);
+  assert.equal(requests.at(-1).body.expectedVersion, custom.version);
+  assert.equal("userId" in requests.at(-1).body, false);
+
+  await client.saveCalendarTimezonePreference("B", "America/Los_Angeles", null);
+  assert.equal(h.db.rows.planning_preferences.length, 2);
+  assert.equal((await client.fetchCalendarTimezonePreference("A")).planningTimezone, "America/Toronto");
+  assert.equal((await client.fetchCalendarTimezonePreference("B")).planningTimezone, "America/Los_Angeles");
 });
 
 test("Task block create/read derives owner and rejects another user's Task", async () => {

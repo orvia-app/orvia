@@ -4,7 +4,6 @@ import { usePresence } from "@/components/ui/usePresence";
 import { Select, Input, Textarea } from "@/components/ui/Field";
 
 
-import { relatedTypeKey } from "@/lib/memory/presentation";
 import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 import {
@@ -601,25 +600,9 @@ function TasksContent() {
                         <span className="text-xs text-muted">{t(taskSourceLabelKey(taskSourcesById[task.id] ?? taskSource))}</span>
                       </div>
                       {context && context.relatedItems.length > 0 ? (
-                        <div className="mt-4 rounded-xl bg-subtle px-3 py-2.5 ring-1 ring-inset ring-line">
-                          <p className="text-xs font-medium text-muted">
-                            {t("tasks.connectedTo")}
-                          </p>
-                          <div className="mt-2 space-y-1.5">
-                            {context.relatedItems.slice(0, 2).map((item) => (
-                              <p
-                                key={item.entity.id}
-                                className="[overflow-wrap:anywhere] text-sm text-muted"
-                              >
-                                {item.entity.title}
-                                <span className="text-zinc-400 dark:text-zinc-600">
-                                  {" "}
-                                  · {t(relatedTypeKey(item.entity.type))}
-                                </span>
-                              </p>
-                            ))}
-                          </div>
-                        </div>
+                        <p className="mt-2 [overflow-wrap:anywhere] text-xs leading-5 text-muted">
+                          {t("tasks.connectedTo")}: {context.relatedItems.slice(0, 2).map((item) => item.entity.title).join(" · ")}
+                        </p>
                       ) : null}
                     </div>
 
